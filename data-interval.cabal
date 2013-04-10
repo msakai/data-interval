@@ -1,0 +1,43 @@
+Name:		data-interval
+Version:	0.1.0
+License:	BSD3
+License-File:	COPYING
+Author:		Masahiro Sakai (masahiro.sakai@gmail.com)
+Maintainer:	masahiro.sakai@gmail.com
+Category:	Data
+Cabal-Version:	>= 1.8
+Synopsis:	Interval Arithmetic
+Description:
+   Unlike the intervals package (<http://hackage.haskell.org/package/intervals>),
+   this module provides both open and closed intervals and is intended to be used
+   with @Rational@.
+Bug-Reports:	https://github.com/msakai/data-interval/issues
+Extra-Source-Files:
+   README.md
+   COPYING
+   .travis.yml
+Build-Type: Simple
+
+source-repository head
+  type:     git
+  location: git://github.com/msakai/data-interval.git
+
+Library
+  Exposed: False
+  Hs-source-dirs: src
+  Build-Depends:
+     base >=4 && <5, lattices >=1.2.1.1
+  Extensions:
+     ScopedTypeVariables
+     FlexibleInstances
+     MultiParamTypeClasses
+     DeriveDataTypeable
+  Exposed-Modules:
+     Data.Interval
+
+Test-suite TestInterval
+  Type:              exitcode-stdio-1.0
+  HS-Source-Dirs:    test
+  Main-is:           TestInterval.hs
+  Build-depends:     base >=4 && <5, containers, data-interval, test-framework, test-framework-th, test-framework-hunit, test-framework-quickcheck2, HUnit, QuickCheck >=2 && <3
+  Extensions: TemplateHaskell, DoAndIfThenElse
