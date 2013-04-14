@@ -89,7 +89,7 @@ instance (Num r, Ord r) => JoinSemiLattice (Interval r) where
   join = hull
 
 instance (Num r, Ord r) => MeetSemiLattice (Interval r) where
-  meet = hull
+  meet = intersection
 
 instance (Num r, Ord r) => Lattice (Interval r)
 
