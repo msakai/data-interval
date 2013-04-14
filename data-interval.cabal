@@ -25,7 +25,7 @@ source-repository head
 Library
   Hs-source-dirs: src
   Build-Depends:
-     base >=4 && <5, lattices >=1.2.1.1
+     base >=4 && <5, lattices >=1.2.1.1, deepseq
   Extensions:
      ScopedTypeVariables
      FlexibleInstances

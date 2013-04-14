@@ -57,6 +57,7 @@ module Data.Interval
   ) where
 
 import Algebra.Lattice
+import Control.DeepSeq
 import Control.Exception (assert)
 import Control.Monad hiding (join)
 import Data.List hiding (null)
@@ -84,6 +85,9 @@ lowerBound' (Interval lb _) = lb
 -- | Upper bound of the interval and whether it is included in the interval
 upperBound' :: Num r => Interval r -> (EndPoint r, Bool)
 upperBound' (Interval _ ub) = ub
+
+instance NFData r => NFData (Interval r) where
+  rnf (Interval lb ub) = rnf lb `seq` rnf ub
 
 instance (Num r, Ord r) => JoinSemiLattice (Interval r) where
   join = hull
@@ -426,6 +430,10 @@ instance Functor EndPoint where
   fmap f NegInf = NegInf
   fmap f (Finite x) = Finite (f x)
   fmap f PosInf = PosInf
+
+instance NFData r => NFData (EndPoint r) where
+  rnf (Finite x) = rnf x
+  rnf _ = ()
 
 isFinite :: EndPoint r -> Bool
 isFinite (Finite _) = True
