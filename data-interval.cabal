@@ -5,7 +5,7 @@ License-File:	COPYING
 Author:		Masahiro Sakai (masahiro.sakai@gmail.com)
 Maintainer:	masahiro.sakai@gmail.com
 Category:	Data
-Cabal-Version:	>= 1.8
+Cabal-Version:	>= 1.10
 Synopsis:	Interval arithmetic for both open and closed intervals
 Description:
    Unlike the intervals package (<http://hackage.haskell.org/package/intervals>),
@@ -26,7 +26,8 @@ Library
   Hs-source-dirs: src
   Build-Depends:
      base >=4 && <5, lattices >=1.2.1.1, deepseq
-  Extensions:
+  Default-Language: Haskell2010
+  Other-Extensions:
      ScopedTypeVariables
      DeriveDataTypeable
   Exposed-Modules:
@@ -37,4 +38,6 @@ Test-suite TestInterval
   HS-Source-Dirs:    test
   Main-is:           TestInterval.hs
   Build-depends:     base >=4 && <5, containers, data-interval, test-framework, test-framework-th, test-framework-hunit, test-framework-quickcheck2, HUnit, QuickCheck >=2 && <3
-  Extensions: TemplateHaskell, DoAndIfThenElse
+  Default-Language: Haskell2010
+  Other-Extensions: TemplateHaskell
+
