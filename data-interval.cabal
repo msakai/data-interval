@@ -6,11 +6,11 @@ Author:		Masahiro Sakai (masahiro.sakai@gmail.com)
 Maintainer:	masahiro.sakai@gmail.com
 Category:	Data
 Cabal-Version:	>= 1.8
-Synopsis:	Interval Arithmetic
+Synopsis:	Interval arithmetic for both open and closed intervals
 Description:
    Unlike the intervals package (<http://hackage.haskell.org/package/intervals>),
-   this module provides both open and closed intervals and is intended to be used
-   with @Rational@.
+   this package provides both open and closed intervals and is intended to be used
+   with Rational.
 Bug-Reports:	https://github.com/msakai/data-interval/issues
 Extra-Source-Files:
    README.md
@@ -28,8 +28,6 @@ Library
      base >=4 && <5, lattices >=1.2.1.1, deepseq
   Extensions:
      ScopedTypeVariables
-     FlexibleInstances
-     MultiParamTypeClasses
      DeriveDataTypeable
   Exposed-Modules:
      Data.Interval

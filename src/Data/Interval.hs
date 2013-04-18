@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables, FlexibleInstances, MultiParamTypeClasses, DeriveDataTypeable #-}
+{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Interval
@@ -7,13 +7,17 @@
 -- 
 -- Maintainer  :  masahiro.sakai@gmail.com
 -- Stability   :  provisional
--- Portability :  non-portable (ScopedTypeVariables, FlexibleInstances, MultiParamTypeClasses, DeriveDataTypeable)
+-- Portability :  non-portable (ScopedTypeVariables, DeriveDataTypeable)
 --
 -- Interval datatype and interval arithmetic.
 --
 -- Unlike the intervals package (<http://hackage.haskell.org/package/intervals>),
 -- this module provides both open and closed intervals and is intended to be used
--- with @Rational@.
+-- with 'Rational'.
+--
+-- For the purpose of abstract interpretation, it might be convenient to use
+-- 'Lattice' instance. See also lattices package
+-- (<http://hackage.haskell.org/package/lattices>).
 -- 
 -----------------------------------------------------------------------------
 module Data.Interval
@@ -78,11 +82,13 @@ lowerBound (Interval (lb,_) _) = lb
 upperBound :: Num r => Interval r -> EndPoint r
 upperBound (Interval _ (ub,_)) = ub
 
--- | Lower bound of the interval and whether it is included in the interval
+-- | Lower bound of the interval and whether it is included in the interval.
+-- The result is convenient to use as an argument for 'interval'.
 lowerBound' :: Num r => Interval r -> (EndPoint r, Bool)
 lowerBound' (Interval lb _) = lb
 
--- | Upper bound of the interval and whether it is included in the interval
+-- | Upper bound of the interval and whether it is included in the interval.
+-- The result is convenient to use as an argument for 'interval'.
 upperBound' :: Num r => Interval r -> (EndPoint r, Bool)
 upperBound' (Interval _ ub) = ub
 
@@ -183,7 +189,7 @@ empty = Interval (PosInf, False) (NegInf, False)
 singleton :: (Num r, Ord r) => r -> Interval r
 singleton x = interval (Finite x, True) (Finite x, True)
 
--- | intersection (greatest lower bounds) of two intervals
+-- | intersection of two intervals
 intersection :: forall r. (Ord r, Num r) => Interval r -> Interval r -> Interval r
 intersection (Interval l1 u1) (Interval l2 u2) = interval (maxLB l1 l2) (minUB u1 u2)
   where
