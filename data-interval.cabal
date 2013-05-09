@@ -4,7 +4,7 @@ License:	BSD3
 License-File:	COPYING
 Author:		Masahiro Sakai (masahiro.sakai@gmail.com)
 Maintainer:	masahiro.sakai@gmail.com
-Category:	Data
+Category:	Data, Math
 Cabal-Version:	>= 1.10
 Synopsis:	Interval arithmetic for both open and closed intervals
 Description:
