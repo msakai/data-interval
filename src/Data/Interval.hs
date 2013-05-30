@@ -64,6 +64,7 @@ import Algebra.Lattice
 import Control.DeepSeq
 import Control.Exception (assert)
 import Control.Monad hiding (join)
+import Data.Data
 import Data.List hiding (null)
 import Data.Maybe
 import Data.Monoid
@@ -129,6 +130,16 @@ instance (Num r, Ord r, Read r) => Read (Interval r) where
     ++
     (do ("empty", s) <- lex r
         return (empty, s))
+
+-- This instance preserves data abstraction at the cost of inefficiency.
+-- We omit reflection services for the sake of data abstraction.
+
+instance (Num r, Ord r, Data r) => Data (Interval r) where
+  gfoldl k z x   = z interval `k` upperBound' x `k` upperBound' x
+  toConstr _     = error "toConstr"
+  gunfold _ _    = error "gunfold"
+  dataTypeOf _   = mkNoRepType "Data.Interval.Interval"
+  dataCast1 f    = gcast1 f
 
 -- | smart constructor for 'Interval'
 interval
@@ -426,7 +437,7 @@ data EndPoint r
   = NegInf    -- ^ negative infinity (-∞)
   | Finite !r -- ^ finite value
   | PosInf    -- ^ positive infinity (+∞)
-  deriving (Ord, Eq, Show, Read, Typeable)
+  deriving (Ord, Eq, Show, Read, Typeable, Data)
 
 instance Bounded (EndPoint r) where
   minBound = NegInf
