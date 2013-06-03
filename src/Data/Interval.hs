@@ -135,7 +135,7 @@ instance (Num r, Ord r, Read r) => Read (Interval r) where
 -- We omit reflection services for the sake of data abstraction.
 
 instance (Num r, Ord r, Data r) => Data (Interval r) where
-  gfoldl k z x   = z interval `k` upperBound' x `k` upperBound' x
+  gfoldl k z x   = z interval `k` lowerBound' x `k` upperBound' x
   toConstr _     = error "toConstr"
   gunfold _ _    = error "gunfold"
   dataTypeOf _   = mkNoRepType "Data.Interval.Interval"
