@@ -65,6 +65,7 @@ import Control.DeepSeq
 import Control.Exception (assert)
 import Control.Monad hiding (join)
 import Data.Data
+import Data.Hashable
 import Data.List hiding (null)
 import Data.Maybe
 import Data.Monoid
@@ -95,6 +96,9 @@ upperBound' (Interval _ ub) = ub
 
 instance NFData r => NFData (Interval r) where
   rnf (Interval lb ub) = rnf lb `seq` rnf ub
+
+instance Hashable r => Hashable (Interval r) where
+  hashWithSalt s (Interval lb ub) = s `hashWithSalt` lb `hashWithSalt` ub
 
 instance (Num r, Ord r) => JoinSemiLattice (Interval r) where
   join = hull
@@ -451,6 +455,11 @@ instance Functor EndPoint where
 instance NFData r => NFData (EndPoint r) where
   rnf (Finite x) = rnf x
   rnf _ = ()
+
+instance Hashable r => Hashable (EndPoint r) where
+  hashWithSalt s NegInf     = s `hashWithSalt` (0::Int)
+  hashWithSalt s (Finite x) = s `hashWithSalt` (1::Int) `hashWithSalt` x
+  hashWithSalt s PosInf     = s `hashWithSalt` (2::Int)
 
 isFinite :: EndPoint r -> Bool
 isFinite (Finite _) = True
