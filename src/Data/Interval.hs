@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable #-}
+{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable, DoAndIfThenElse #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Interval
@@ -58,6 +58,7 @@ module Data.Interval
 
   -- * Operations
   , pickup
+  , simplestRationalWithin
   ) where
 
 import Algebra.Lattice
@@ -69,6 +70,7 @@ import Data.Hashable
 import Data.List hiding (null)
 import Data.Maybe
 import Data.Monoid
+import Data.Ratio
 import Data.Typeable
 import Prelude hiding (null)
 
@@ -305,6 +307,37 @@ pickup (Interval (Finite x1, in1) (Finite x2, in2)) =
     LT -> Just $ (x1+x2) / 2
     EQ -> if in1 && in2 then Just x1 else Nothing
 pickup x = Nothing
+
+-- | 'simplestRationalWithin' returns the simplest rational number within the interval.
+-- A rational number @y@ is said to be /simpler/ than another @y'@ if
+--
+-- * @'abs' ('numerator' y) <= 'abs' ('numerator' y')@, and
+--
+-- * @'denominator' y <= 'denominator' y'@.
+-- 
+-- (see also 'approxRational')
+--
+simplestRationalWithin :: RealFrac r => Interval r -> Maybe Rational
+simplestRationalWithin i | null i = Nothing
+simplestRationalWithin i 
+  | 0 <! i    = Just $ go i 
+  | i <! 0    = Just $ - go (- i)
+  | otherwise = assert (0 `member` i) $ Just $ 0
+  where
+    go i
+      | fromInteger lb_floor       `member'` i = fromInteger lb_floor
+      | fromInteger (lb_floor + 1) `member'` i = fromInteger (lb_floor + 1)
+      | otherwise = fromInteger lb_floor + recip (go (recip (i - singleton (fromInteger lb_floor))))
+      where
+        Finite lb = lowerBound i
+        lb_floor  = floor lb
+
+    member' :: (Real r, Fractional r) => Rational -> Interval r -> Bool
+    member' x (Interval (x1,in1) (x2,in2)) = condLB && condUB
+      where
+        x' = fromRational x
+        condLB = if in1 then x1 <= Finite x' else x1 < Finite x'
+        condUB = if in2 then Finite x' <= x2 else Finite x' < x2
 
 -- | For all @x@ in @X@, @y@ in @Y@. @x '<' y@
 (<!) :: Real r => Interval r -> Interval r -> Bool

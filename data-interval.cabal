@@ -11,6 +11,11 @@ Description:
    Unlike the intervals package (<http://hackage.haskell.org/package/intervals>),
    this package provides both open and closed intervals and is intended to be used
    with Rational.
+   .
+   Changes in 0.4.0
+   .
+   * add simplestRationalWithin :: RealFrac r => Interval r -> Maybe Rational
+
 Bug-Reports:	https://github.com/msakai/data-interval/issues
 Extra-Source-Files:
    README.md
@@ -39,5 +44,8 @@ Test-suite TestInterval
   Main-is:           TestInterval.hs
   Build-depends:     base >=4 && <5, containers, data-interval, test-framework, test-framework-th, test-framework-hunit, test-framework-quickcheck2, HUnit, QuickCheck >=2 && <3
   Default-Language: Haskell2010
-  Other-Extensions: TemplateHaskell
+  Other-Extensions:
+     TemplateHaskell
+     ScopedTypeVariables
+
 

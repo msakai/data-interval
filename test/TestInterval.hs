@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, ScopedTypeVariables #-}
 
 import Control.Monad
 import Data.Maybe
@@ -172,6 +172,41 @@ prop_isSubsetOf_trans =
 --   forAll intervals $ \b ->
 --     Interval.isSubsetOf a b && Interval.isSubsetOf b a
 --     ==> a == b
+
+{--------------------------------------------------------------------
+  simplestRationalWithin
+--------------------------------------------------------------------}
+
+prop_simplestRationalWithin_and_approxRational =
+  forAll arbitrary $ \(r::Rational) ->
+    forAll arbitrary $ \(eps::Rational) ->
+      eps > 0 ==> Interval.simplestRationalWithin (Finite (r-eps) <=..<= Finite (r+eps)) == Just (approxRational r eps)
+
+prop_simplestRationalWithin_singleton =
+  forAll arbitrary $ \(r::Rational) ->
+      Interval.simplestRationalWithin (Interval.singleton r) == Just r
+
+case_simplestRationalWithin_empty =
+  Interval.simplestRationalWithin Interval.empty @?= Nothing
+
+case_simplestRationalWithin_test1 =
+  Interval.simplestRationalWithin (Finite (-0.5 :: Rational) <=..<= Finite 0.5) @?= Just 0
+
+case_simplestRationalWithin_test2 =
+  Interval.simplestRationalWithin (Finite (2 :: Rational) <..< Finite 3) @?= Just 2.5
+
+case_simplestRationalWithin_test2' =
+  Interval.simplestRationalWithin (Finite (-3 :: Rational) <..< Finite (-2)) @?= Just (-2.5)
+
+case_simplestRationalWithin_test3 =
+  Interval.simplestRationalWithin (Finite (1.4142135623730951 :: Rational) <..< Finite 1.7320508075688772) @?= Just 1.5
+
+-- http://en.wikipedia.org/wiki/Best_rational_approximation#Best_rational_approximations
+case_simplestRationalWithin_test4 =
+  Interval.simplestRationalWithin (Finite (3.14155 :: Rational) <..< Finite 3.14165) @?= Just (355/113) 
+
+case_simplestRationalWithin_test5 =
+  Interval.simplestRationalWithin (Finite (1.1e-20 :: Rational) <..< Finite (1.2e-20)) @?= Just (1/83333333333333333334)
 
 {--------------------------------------------------------------------
   pickup
