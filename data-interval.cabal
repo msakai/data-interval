@@ -11,19 +11,11 @@ Description:
    Unlike the intervals package (<http://hackage.haskell.org/package/intervals>),
    this package provides both open and closed intervals and is intended to be used
    with Rational.
-   .
-   Changes in 0.5.0
-   .
-   * fix dependency issue with QuickCheck and test-framework-quickcheck2
-   .
-   Changes in 0.4.0
-   .
-   * add simplestRationalWithin :: RealFrac r => Interval r -> Maybe Rational
-
 Bug-Reports:	https://github.com/msakai/data-interval/issues
 Extra-Source-Files:
    README.md
    COPYING
+   CHANGELOG.markdown
    .travis.yml
 Build-Type: Simple
 
