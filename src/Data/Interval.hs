@@ -25,7 +25,8 @@ module Data.Interval
   (
   -- * Interval type
     Interval
-  , EndPoint (..)
+  , Extended (..)
+  , EndPoint
 
   -- * Construction
   , interval
@@ -72,6 +73,7 @@ import Control.DeepSeq
 import Control.Exception (assert)
 import Control.Monad hiding (join)
 import Data.Data
+import Data.ExtendedReal
 import Data.Hashable
 import Data.List hiding (null)
 import Data.Maybe
@@ -491,15 +493,15 @@ instance (Num r, Ord r) => Num (Interval r) where
 
   abs x = ((x `intersection` nonneg) `hull` (negate x `intersection` nonneg))
     where
-      nonneg = Finite 0 <=..< PosInf
+      nonneg = 0 <=..< PosInf
 
   signum x = zero `hull` pos `hull` neg
     where
       zero = if member 0 x then singleton 0 else empty
-      pos = if null $ (Finite 0 <..< PosInf) `intersection` x
+      pos = if null $ (0 <..< PosInf) `intersection` x
             then empty
             else singleton 1
-      neg = if null $ (NegInf <..< Finite 0) `intersection` x
+      neg = if null $ (NegInf <..< 0) `intersection` x
             then empty
             else singleton (-1)
 
@@ -525,38 +527,7 @@ cmpUB (x1,in1) (x2,in2) = compare x1 x2 `mappend` compare in1 in2
 cmpLB (x1,in1) (x2,in2) = compare x1 x2 `mappend` flip compare in1 in2
 
 -- | Endpoints of intervals
-data EndPoint r
-  = NegInf    -- ^ negative infinity (-∞)
-  | Finite !r -- ^ finite value
-  | PosInf    -- ^ positive infinity (+∞)
-  deriving (Ord, Eq, Show, Read, Typeable, Data)
-
-instance Bounded (EndPoint r) where
-  minBound = NegInf
-  maxBound = PosInf
-
-instance Functor EndPoint where
-  fmap _ NegInf = NegInf
-  fmap f (Finite x) = Finite (f x)
-  fmap _ PosInf = PosInf
-
-instance NFData r => NFData (EndPoint r) where
-  rnf (Finite x) = rnf x
-  rnf _ = ()
-
-instance Hashable r => Hashable (EndPoint r) where
-  hashWithSalt s NegInf     = s `hashWithSalt` (0::Int)
-  hashWithSalt s (Finite x) = s `hashWithSalt` (1::Int) `hashWithSalt` x
-  hashWithSalt s PosInf     = s `hashWithSalt` (2::Int)
-
-isFinite :: EndPoint r -> Bool
-isFinite (Finite _) = True
-isFinite _ = False
-
-negateEndPoint :: Num r => EndPoint r -> EndPoint r
-negateEndPoint NegInf = PosInf
-negateEndPoint PosInf = NegInf
-negateEndPoint (Finite x) = Finite (negate x)
+type EndPoint r = Extended r
 
 scaleInf' :: (Num r, Ord r) => r -> (EndPoint r, Bool) -> (EndPoint r, Bool)
 scaleInf' a (x1, in1) = (scaleEndPoint a x1, in1)
@@ -564,7 +535,7 @@ scaleInf' a (x1, in1) = (scaleEndPoint a x1, in1)
 scaleEndPoint :: (Num r, Ord r) => r -> EndPoint r -> EndPoint r
 scaleEndPoint a inf =
   case a `compare` 0 of
-    EQ -> Finite 0
+    EQ -> 0
     GT ->
       case inf of
         NegInf   -> NegInf
@@ -577,36 +548,14 @@ scaleEndPoint a inf =
         PosInf   -> NegInf
 
 mulInf' :: (Num r, Ord r) => (EndPoint r, Bool) -> (EndPoint r, Bool) -> (EndPoint r, Bool)
-mulInf' (Finite 0, True) _ = (Finite 0, True)
-mulInf' _ (Finite 0, True) = (Finite 0, True)
-mulInf' (x1,in1) (x2,in2) = (mulEndPoint x1 x2, in1 && in2)
-
-mulEndPoint :: (Num r, Ord r) => EndPoint r -> EndPoint r -> EndPoint r
-mulEndPoint (Finite x1) (Finite x2) = Finite (x1 * x2)
-mulEndPoint inf (Finite x2) =
-  case compare x2 0 of
-    EQ -> Finite 0
-    GT -> inf
-    LT -> negateEndPoint inf
-mulEndPoint (Finite x1) inf =
-  case compare x1 0 of
-    EQ -> Finite 0
-    GT -> inf
-    LT -> negateEndPoint inf
-mulEndPoint PosInf PosInf = PosInf
-mulEndPoint PosInf NegInf = NegInf
-mulEndPoint NegInf PosInf = NegInf
-mulEndPoint NegInf NegInf = PosInf
+mulInf' (0, True) _ = (0, True)
+mulInf' _ (0, True) = (0, True)
+mulInf' (x1,in1) (x2,in2) = (x1*x2, in1 && in2)
 
 recipLB :: (Fractional r, Ord r) => (EndPoint r, Bool) -> (EndPoint r, Bool)
-recipLB (Finite 0, _) = (PosInf, False)
-recipLB (x1, in1) = (recipEndPoint x1, in1)
+recipLB (0, _) = (PosInf, False)
+recipLB (x1, in1) = (recip x1, in1)
 
 recipUB :: (Fractional r, Ord r) => (EndPoint r, Bool) -> (EndPoint r, Bool)
-recipUB (Finite 0, _) = (NegInf, False)
-recipUB (x1, in1) = (recipEndPoint x1, in1)
-
-recipEndPoint :: (Fractional r, Ord r) => EndPoint r -> EndPoint r
-recipEndPoint PosInf = Finite 0
-recipEndPoint NegInf = Finite 0
-recipEndPoint (Finite x) = Finite (1/x)
+recipUB (0, _) = (NegInf, False)
+recipUB (x1, in1) = (recip x1, in1)
