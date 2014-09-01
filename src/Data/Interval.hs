@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable, DoAndIfThenElse #-}
 -----------------------------------------------------------------------------
 -- |
@@ -121,7 +122,7 @@ instance (Num r, Ord r) => BoundedMeetSemiLattice (Interval r) where
 instance (Num r, Ord r) => BoundedLattice (Interval r)
 
 instance (Num r, Ord r, Show r) => Show (Interval r) where
-  showsPrec p x | null x = showString "empty"
+  showsPrec _ x | null x = showString "empty"
   showsPrec p x = showParen (p > appPrec) $
     showString "interval " .
     showsPrec appPrec1 (lowerBound' x) .
@@ -308,7 +309,7 @@ width _ = error "Data.Interval.width: unbounded interval"
 
 -- | pick up an element from the interval if the interval is not empty.
 pickup :: (Real r, Fractional r) => Interval r -> Maybe r
-pickup (Interval (NegInf,in1) (PosInf,in2))   = Just 0
+pickup (Interval (NegInf,_) (PosInf,_))   = Just 0
 pickup (Interval (Finite x1, in1) (PosInf,_)) = Just $ if in1 then x1 else x1+1
 pickup (Interval (NegInf,_) (Finite x2, in2)) = Just $ if in2 then x2 else x2-1
 pickup (Interval (Finite x1, in1) (Finite x2, in2)) =
@@ -316,7 +317,7 @@ pickup (Interval (Finite x1, in1) (Finite x2, in2)) =
     GT -> Nothing
     LT -> Just $ (x1+x2) / 2
     EQ -> if in1 && in2 then Just x1 else Nothing
-pickup x = Nothing
+pickup _ = Nothing
 
 -- | 'simplestRationalWithin' returns the simplest rational number within the interval.
 -- A rational number @y@ is said to be /simpler/ than another @y'@ if
@@ -359,7 +360,7 @@ a <! b =
       case ub_a of
         NegInf   -> True -- a is empty, so it holds vacuously
         PosInf   -> True -- b is empty, so it holds vacuously
-        Finite x -> not (in1 && in2)
+        Finite _ -> not (in1 && in2)
   where
     (ub_a, in1) = upperBound' a
     (lb_b, in2) = lowerBound' b
@@ -397,7 +398,7 @@ a <=? b　=
       case lb_a of
         NegInf -> False -- b is empty
         PosInf -> True  -- a is empty
-        Finite x -> in1 && in2
+        Finite _ -> in1 && in2
   where
     (lb_a, in1) = lowerBound' a
     (ub_b, in2) = upperBound' b
@@ -491,9 +492,9 @@ instance Bounded (EndPoint r) where
   maxBound = PosInf
 
 instance Functor EndPoint where
-  fmap f NegInf = NegInf
+  fmap _ NegInf = NegInf
   fmap f (Finite x) = Finite (f x)
-  fmap f PosInf = PosInf
+  fmap _ PosInf = PosInf
 
 instance NFData r => NFData (EndPoint r) where
   rnf (Finite x) = rnf x
@@ -565,17 +566,3 @@ recipEndPoint :: (Fractional r, Ord r) => EndPoint r -> EndPoint r
 recipEndPoint PosInf = Finite 0
 recipEndPoint NegInf = Finite 0
 recipEndPoint (Finite x) = Finite (1/x)
-
--- | Combining two @Maybe@ values using given function.
-combineMaybe :: (a -> a -> a) -> Maybe a -> Maybe a -> Maybe a
-combineMaybe _ Nothing y = y
-combineMaybe _ x Nothing = x
-combineMaybe f (Just x) (Just y) = Just (f x y)
-
--- | is the number integral?
---
--- @
---    isInteger x = fromInteger (round x) == x
--- @
-isInteger :: RealFrac a => a -> Bool
-isInteger x = fromInteger (round x) == x
