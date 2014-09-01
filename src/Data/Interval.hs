@@ -397,7 +397,7 @@ a <=? b　=
     EQ -> 
       case lb_a of
         NegInf -> False -- b is empty
-        PosInf -> True  -- a is empty
+        PosInf -> False -- a is empty
         Finite _ -> in1 && in2
   where
     (lb_a, in1) = lowerBound' a

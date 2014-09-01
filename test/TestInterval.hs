@@ -356,6 +356,31 @@ prop_le_some_singleton_2 =
   forAll arbitrary $ \a ->
     Interval.singleton (a::Rational) <=? Interval.singleton a
 
+prop_lt_all_empty =
+  forAll intervals $ \a -> a <! Interval.empty
+
+prop_lt_all_empty_2 =
+  forAll intervals $ \a -> Interval.empty <! a
+
+prop_le_all_empty =
+  forAll intervals $ \a -> a <=! Interval.empty
+
+prop_le_all_empty_2 =
+  forAll intervals $ \a -> Interval.empty <=! a
+
+prop_lt_some_empty =
+  forAll intervals $ \a -> not (a <? Interval.empty)
+
+prop_lt_some_empty_2 =
+  forAll intervals $ \a -> not (Interval.empty <? a)
+
+prop_le_some_empty =
+  forAll intervals $ \a -> not (a <=? Interval.empty)
+
+prop_le_some_empty_2 =
+  forAll intervals $ \a -> not (Interval.empty <=? a)
+
+
 {--------------------------------------------------------------------
   Num
 --------------------------------------------------------------------}
