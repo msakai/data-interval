@@ -54,7 +54,9 @@ module Data.Interval
 
   -- * Combine
   , intersection
+  , intersections
   , hull
+  , hulls
 
   -- * Operations
   , pickup
@@ -227,6 +229,10 @@ intersection (Interval l1 u1) (Interval l2 u2) = interval (maxLB l1 l2) (minUB u
           GT -> in2
       )
 
+-- | intersection of a list of intervals.
+intersections :: (Ord r, Num r) => [Interval r] -> Interval r
+intersections xs = foldl' intersection whole xs
+
 -- | convex hull of two intervals
 hull :: forall r. (Ord r, Num r) => Interval r -> Interval r -> Interval r
 hull x1 x2
@@ -250,6 +256,10 @@ hull (Interval l1 u1) (Interval l2 u2) = interval (minLB l1 l2) (maxUB u1 u2)
           LT -> in1
           GT -> in2
       )
+
+-- | convex hull of a list of intervals.
+hulls :: (Ord r, Num r) => [Interval r] -> Interval r
+hulls xs = foldl' hull empty xs
 
 -- | Is the interval empty?
 null :: Ord r => Interval r -> Bool
