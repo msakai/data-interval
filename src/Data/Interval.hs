@@ -74,7 +74,6 @@ import Data.List hiding (null)
 import Data.Maybe
 import Data.Monoid
 import Data.Ratio
-import Data.Typeable
 import Prelude hiding (null)
 
 -- | Interval
