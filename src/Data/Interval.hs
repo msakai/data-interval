@@ -49,9 +49,12 @@ module Data.Interval
   , upperBound'
   , width
 
-  -- * Comparison
+  -- * Comparison operators
   , (<!), (<=!), (==!), (>=!), (>!)
   , (<?), (<=?), (==?), (>=?), (>?)
+
+  -- * Comparison operators that produce witnesses (experimental)
+  , (<??), (<=??), (==??), (>=??), (>??)
 
   -- * Combine
   , intersection
@@ -387,6 +390,23 @@ a <? b = lb_a < ub_b
     lb_a = lowerBound a
     ub_b = upperBound b
 
+-- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '<' y@?
+(<??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
+a <?? b = do
+  guard $ lowerBound a < upperBound b
+  let c = intersection a b
+  case pickup c of
+    Nothing -> do
+      x <- pickup a
+      y <- pickup b
+      return (x,y)
+    Just z -> do
+      let x:y:_ = take 2 $
+                    maybeToList (pickup (intersection a (NegInf <..< Finite z))) ++
+                    [z] ++
+                    maybeToList (pickup (intersection b (Finite z <..< PosInf)))
+      return (x,y)
+
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '<=' y@?
 (<=?) :: Real r => Interval r -> Interval r -> Bool
 a <=? b　=
@@ -402,9 +422,26 @@ a <=? b　=
     (lb_a, in1) = lowerBound' a
     (ub_b, in2) = upperBound' b
 
+-- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '<=' y@?
+(<=??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
+a <=?? b　= do
+  case pickup (intersection a b) of
+    Just x -> return (x,x)
+    Nothing -> do
+      guard $ upperBound a <= lowerBound b
+      x <- pickup a
+      y <- pickup b
+      return (x,y)
+
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '==' y@?
 (==?) :: Real r => Interval r -> Interval r -> Bool
 a ==? b = not $ null $ intersection a b
+
+-- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '==' y@?
+(==??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
+a ==?? b = do
+  x <- pickup (intersection a b)
+  return (x,x)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>=' y@?
 (>=?) :: Real r => Interval r -> Interval r -> Bool
@@ -413,6 +450,14 @@ a ==? b = not $ null $ intersection a b
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>' y@?
 (>?) :: Real r => Interval r -> Interval r -> Bool
 (>?) = flip (<?)
+
+-- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>=' y@?
+(>=??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
+(>=??) = flip (<=??)
+
+-- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>' y@?
+(>??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
+(>??) = flip (<??)
 
 appPrec, appPrec1 :: Int
 appPrec = 10

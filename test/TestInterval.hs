@@ -10,7 +10,7 @@ import Test.Framework.TH
 import Test.Framework.Providers.HUnit
 import Test.Framework.Providers.QuickCheck2
 
-import Data.Interval (Interval, EndPoint (..), (<=..<=), (<=..<), (<..<=), (<..<), (<!), (<=!), (==!), (>=!), (>!), (<?), (<=?), (==?), (>=?), (>?))
+import Data.Interval (Interval, EndPoint (..), (<=..<=), (<=..<), (<..<=), (<..<), (<!), (<=!), (==!), (>=!), (>!), (<?), (<=?), (==?), (>=?), (>?), (<??), (<=??), (==??), (>=??), (>??))
 import qualified Data.Interval as Interval
 
 {--------------------------------------------------------------------
@@ -405,6 +405,51 @@ prop_intersect_eq_some =
   forAll intervals $ \b -> 
     not (Interval.null (Interval.intersection a b))
     ==> a ==? b
+
+prop_le_some_witness =
+  forAll intervals $ \a ->
+  forAll intervals $ \b ->
+    case a <=?? b of
+      Nothing ->
+        forAll arbitrary $ \(x,y) ->
+          not (Interval.member x a && Interval.member y b && x <= y)
+      Just (x,y) ->
+        Interval.member x a .&&. Interval.member y b .&&. x <= y
+
+prop_lt_some_witness =
+  forAll intervals $ \a ->
+  forAll intervals $ \b ->
+    case a <?? b of
+      Nothing ->
+        forAll arbitrary $ \(x,y) ->
+          not (Interval.member x a && Interval.member y b && x < y)
+      Just (x,y) ->
+        Interval.member x a .&&. Interval.member y b .&&. x < y
+
+prop_eq_some_witness =
+  forAll intervals $ \a ->
+  forAll intervals $ \b ->
+    case a ==?? b of
+      Nothing ->
+        forAll arbitrary $ \x ->
+          not (Interval.member x a && Interval.member x b)
+      Just (x,y) ->
+        Interval.member x a .&&. Interval.member y b .&&. x == y
+
+prop_le_some_witness_forget =
+  forAll intervals $ \a ->
+  forAll intervals $ \b ->
+    isJust (a <=?? b) == (a <=? b)
+
+prop_lt_some_witness_forget =
+  forAll intervals $ \a ->
+  forAll intervals $ \b ->
+    isJust (a <?? b) == (a <? b)
+
+prop_eq_some_witness_forget =
+  forAll intervals $ \a ->
+  forAll intervals $ \b ->
+    isJust (a ==?? b) == (a ==? b)
 
 {--------------------------------------------------------------------
   Num
