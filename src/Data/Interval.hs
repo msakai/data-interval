@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable, DoAndIfThenElse #-}
+{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Interval
