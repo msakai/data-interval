@@ -10,7 +10,12 @@ import Test.Framework.TH
 import Test.Framework.Providers.HUnit
 import Test.Framework.Providers.QuickCheck2
 
-import Data.Interval (Interval, Extended (..), (<=..<=), (<=..<), (<..<=), (<..<), (<!), (<=!), (==!), (>=!), (>!), (<?), (<=?), (==?), (>=?), (>?), (<??), (<=??), (==??), (>=??), (>??))
+import Data.Interval
+  ( Interval, Extended (..), (<=..<=), (<=..<), (<..<=), (<..<)
+  , (<!), (<=!), (==!), (>=!), (>!), (/=!)
+  , (<?), (<=?), (==?), (>=?), (>?), (/=?)
+  , (<??), (<=??), (==??), (>=??), (>??), (/=??)
+  )
 import qualified Data.Interval as Interval
 
 {--------------------------------------------------------------------
@@ -320,6 +325,9 @@ prop_lt_all_not_refl =
 prop_le_some_refl =
   forAll intervals $ \a -> not (Interval.null a) ==> a <=? a
 
+prop_ne_all_not_refl =
+  forAll intervals $ \a -> not (Interval.null a) ==> not (a /=! a)
+
 prop_lt_all_singleton =
   forAll arbitrary $ \a ->
   forAll arbitrary $ \b ->
@@ -341,6 +349,15 @@ prop_le_all_singleton_2 =
 prop_eq_all_singleton =
   forAll arbitrary $ \a ->
     Interval.singleton (a::Rational) ==! Interval.singleton a
+
+prop_ne_all_singleton =
+  forAll arbitrary $ \a ->
+  forAll arbitrary $ \b ->
+    (a::Rational) /= b ==> Interval.singleton a /=! Interval.singleton b
+
+prop_ne_all_singleton_2 =
+  forAll arbitrary $ \a ->
+    not $ Interval.singleton (a::Rational) /=! Interval.singleton a
 
 prop_lt_some_singleton =
   forAll arbitrary $ \a ->
@@ -378,6 +395,9 @@ prop_le_all_empty_2 =
 
 prop_eq_all_empty =
   forAll intervals $ \a -> a ==! Interval.empty
+
+prop_ne_all_empty =
+  forAll intervals $ \a -> a /=! Interval.empty
 
 prop_lt_some_empty =
   forAll intervals $ \a -> not (a <? Interval.empty)
@@ -436,6 +456,17 @@ prop_eq_some_witness =
       Just (x,y) ->
         Interval.member x a .&&. Interval.member y b .&&. x == y
 
+prop_ne_some_witness =
+  forAll intervals $ \a ->
+  forAll intervals $ \b ->
+    case a /=?? b of
+      Nothing ->
+        forAll arbitrary $ \x ->
+        forAll arbitrary $ \y ->
+          not (Interval.member x a && Interval.member y b && x /= y)
+      Just (x,y) ->
+        Interval.member x a .&&. Interval.member y b .&&. x /= y
+
 prop_le_some_witness_forget =
   forAll intervals $ \a ->
   forAll intervals $ \b ->
@@ -450,6 +481,11 @@ prop_eq_some_witness_forget =
   forAll intervals $ \a ->
   forAll intervals $ \b ->
     isJust (a ==?? b) == (a ==? b)
+
+prop_ne_some_witness_forget =
+  forAll intervals $ \a ->
+  forAll intervals $ \b ->
+    isJust (a /=?? b) == (a /=? b)
 
 {--------------------------------------------------------------------
   Num

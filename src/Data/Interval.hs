@@ -51,11 +51,11 @@ module Data.Interval
   , width
 
   -- * Comparison operators
-  , (<!), (<=!), (==!), (>=!), (>!)
-  , (<?), (<=?), (==?), (>=?), (>?)
+  , (<!), (<=!), (==!), (>=!), (>!), (/=!)
+  , (<?), (<=?), (==?), (>=?), (>?), (/=?)
 
   -- * Comparison operators that produce witnesses (experimental)
-  , (<??), (<=??), (==??), (>=??), (>??)
+  , (<??), (<=??), (==??), (>=??), (>??), (/=??)
 
   -- * Combine
   , intersection
@@ -274,6 +274,10 @@ null (Interval (x1,in1) (x2,in2)) =
     LT -> False
     GT -> True
 
+isSingleton :: Ord r => Interval r -> Bool
+isSingleton (Interval (Finite l, True) (Finite u, True)) = l==u
+isSingleton _ = False
+
 -- | Is the element in the interval?
 member :: Ord r => r -> Interval r -> Bool
 member x (Interval (x1,in1) (x2,in2)) = condLB && condUB
@@ -377,6 +381,10 @@ a <=! b = upperBound a <= lowerBound b
 (==!) :: Real r => Interval r -> Interval r -> Bool
 a ==! b = a <=! b && a >=! b
 
+-- | For all @x@ in @X@, @y@ in @Y@. @x '/=' y@
+(/=!) :: Real r => Interval r -> Interval r -> Bool
+a /=! b = null $ a `intersection` b
+
 -- | For all @x@ in @X@, @y@ in @Y@. @x '>=' y@
 (>=!) :: Real r => Interval r -> Interval r -> Bool
 (>=!) = flip (<=!)
@@ -444,6 +452,25 @@ a ==? b = not $ null $ intersection a b
 a ==?? b = do
   x <- pickup (intersection a b)
   return (x,x)
+
+-- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '/=' y@?
+(/=?) :: Real r => Interval r -> Interval r -> Bool
+a /=? b = not (null a) && not (null b) && not (a == b && isSingleton a)
+
+-- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '/=' y@?
+(/=??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
+a /=?? b = do
+  guard $ not $ null a
+  guard $ not $ null b
+  guard $ not $ a == b && isSingleton a
+  if not (isSingleton b)
+    then f a b
+    else liftM (\(y,x) -> (x,y)) $ f b a
+  where
+    f a b = do
+      x <- pickup a
+      y <- msum [pickup (b `intersection` c) | c <- [NegInf <..< Finite x, Finite x <..< PosInf]]
+      return (x,y)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>=' y@?
 (>=?) :: Real r => Interval r -> Interval r -> Bool
