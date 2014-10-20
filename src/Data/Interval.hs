@@ -50,11 +50,13 @@ module Data.Interval
   , upperBound'
   , width
 
-  -- * Comparison operators
+  -- * Universal comparison operators
   , (<!), (<=!), (==!), (>=!), (>!), (/=!)
+
+  -- * Existential comparison operators
   , (<?), (<=?), (==?), (>=?), (>?), (/=?)
 
-  -- * Comparison operators that produce witnesses (experimental)
+  -- * Existential comparison operators that produce witnesses (experimental)
   , (<??), (<=??), (==??), (>=??), (>??), (/=??)
 
   -- * Combine
@@ -81,24 +83,36 @@ import Data.Monoid
 import Data.Ratio
 import Prelude hiding (null)
 
--- | Interval
+-- | The intervals (/i.e./ connected and convex subsets) over real numbers __R__.
 data Interval r = Interval !(EndPoint r, Bool) !(EndPoint r, Bool)
   deriving (Eq, Typeable)  
 
--- | Lower bound of the interval
+-- | Lower endpoint (/i.e./ greatest lower bound)  of the interval.
+--
+-- * 'lowerBound' of the empty interval is 'PosInf'.
+--
+-- * 'lowerBound' of a left unbounded interval is 'NegInf'.
+--
+-- * 'lowerBound' of an interval may or may not be a member of the interval.
 lowerBound :: Num r => Interval r -> EndPoint r
 lowerBound (Interval (lb,_) _) = lb
 
--- | Upper bound of the interval
+-- | Upper endpoint (/i.e./ least upper bound) of the interval.
+--
+-- * 'upperBound' of the empty interval is 'NegInf'.
+--
+-- * 'upperBound' of a right unbounded interval is 'PosInf'.
+-- 
+-- * 'upperBound' of an interval may or may not be a member of the interval.
 upperBound :: Num r => Interval r -> EndPoint r
 upperBound (Interval _ (ub,_)) = ub
 
--- | Lower bound of the interval and whether it is included in the interval.
+-- | 'lowerBound' of the interval and whether it is included in the interval.
 -- The result is convenient to use as an argument for 'interval'.
 lowerBound' :: Num r => Interval r -> (EndPoint r, Bool)
 lowerBound' (Interval lb _) = lb
 
--- | Upper bound of the interval and whether it is included in the interval.
+-- | 'upperBound' of the interval and whether it is included in the interval.
 -- The result is convenient to use as an argument for 'interval'.
 upperBound' :: Num r => Interval r -> (EndPoint r, Bool)
 upperBound' (Interval _ ub) = ub
@@ -235,6 +249,8 @@ intersection (Interval l1 u1) (Interval l2 u2) = interval (maxLB l1 l2) (minUB u
       )
 
 -- | intersection of a list of intervals.
+--
+-- Since 0.6.0
 intersections :: (Ord r, Num r) => [Interval r] -> Interval r
 intersections xs = foldl' intersection whole xs
 
@@ -263,6 +279,8 @@ hull (Interval l1 u1) (Interval l2 u2) = interval (minLB l1 l2) (maxUB u1 u2)
       )
 
 -- | convex hull of a list of intervals.
+--
+-- Since 0.6.0
 hulls :: (Ord r, Num r) => [Interval r] -> Interval r
 hulls xs = foldl' hull empty xs
 
@@ -290,7 +308,7 @@ notMember :: Ord r => r -> Interval r -> Bool
 notMember a i = not $ member a i
 
 -- | Is this a subset?
--- @(i1 `isSubsetOf` i2)@ tells whether @i1@ is a subset of @i2@.
+-- @(i1 \``isSubsetOf`\` i2)@ tells whether @i1@ is a subset of @i2@.
 isSubsetOf :: Ord r => Interval r -> Interval r -> Bool
 isSubsetOf (Interval lb1 ub1) (Interval lb2 ub2) = testLB lb1 lb2 && testUB ub1 ub2
   where
@@ -305,7 +323,7 @@ isSubsetOf (Interval lb1 ub1) (Interval lb2 ub2) = testLB lb1 lb2 && testUB ub1 
         GT -> False
         EQ -> not in1 || in2 -- in1 => in2
 
--- | Is this a proper subset? (ie. a subset but not equal).
+-- | Is this a proper subset? (/i.e./ a subset but not equal).
 isProperSubsetOf :: Ord r => Interval r -> Interval r -> Bool
 isProperSubsetOf i1 i2 = i1 /= i2 && i1 `isSubsetOf` i2
 
@@ -328,6 +346,7 @@ pickup (Interval (Finite x1, in1) (Finite x2, in2)) =
 pickup _ = Nothing
 
 -- | 'simplestRationalWithin' returns the simplest rational number within the interval.
+-- 
 -- A rational number @y@ is said to be /simpler/ than another @y'@ if
 --
 -- * @'abs' ('numerator' y) <= 'abs' ('numerator' y')@, and
@@ -336,6 +355,7 @@ pickup _ = Nothing
 -- 
 -- (see also 'approxRational')
 --
+-- Since 0.4.0
 simplestRationalWithin :: RealFrac r => Interval r -> Maybe Rational
 simplestRationalWithin i | null i = Nothing
 simplestRationalWithin i 
@@ -358,7 +378,7 @@ simplestRationalWithin i
         condLB = if in1 then x1 <= Finite x' else x1 < Finite x'
         condUB = if in2 then Finite x' <= x2 else Finite x' < x2
 
--- | For all @x@ in @X@, @y@ in @Y@. @x '<' y@
+-- | For all @x@ in @X@, @y@ in @Y@. @x '<' y@?
 (<!) :: Real r => Interval r -> Interval r -> Bool
 a <! b =
   case ub_a `compare` lb_b of
@@ -373,23 +393,25 @@ a <! b =
     (ub_a, in1) = upperBound' a
     (lb_b, in2) = lowerBound' b
 
--- | For all @x@ in @X@, @y@ in @Y@. @x '<=' y@
+-- | For all @x@ in @X@, @y@ in @Y@. @x '<=' y@?
 (<=!) :: Real r => Interval r -> Interval r -> Bool
 a <=! b = upperBound a <= lowerBound b
 
--- | For all @x@ in @X@, @y@ in @Y@. @x '==' y@
+-- | For all @x@ in @X@, @y@ in @Y@. @x '==' y@?
 (==!) :: Real r => Interval r -> Interval r -> Bool
 a ==! b = a <=! b && a >=! b
 
--- | For all @x@ in @X@, @y@ in @Y@. @x '/=' y@
+-- | For all @x@ in @X@, @y@ in @Y@. @x '/=' y@?
+--
+-- Since 1.0.1
 (/=!) :: Real r => Interval r -> Interval r -> Bool
 a /=! b = null $ a `intersection` b
 
--- | For all @x@ in @X@, @y@ in @Y@. @x '>=' y@
+-- | For all @x@ in @X@, @y@ in @Y@. @x '>=' y@?
 (>=!) :: Real r => Interval r -> Interval r -> Bool
 (>=!) = flip (<=!)
 
--- | For all @x@ in @X@, @y@ in @Y@. @x '>' y@
+-- | For all @x@ in @X@, @y@ in @Y@. @x '>' y@?
 (>!) :: Real r => Interval r -> Interval r -> Bool
 (>!) = flip (<!)
 
@@ -401,6 +423,8 @@ a <? b = lb_a < ub_b
     ub_b = upperBound b
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '<' y@?
+--
+-- Since 1.0.0
 (<??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
 a <?? b = do
   guard $ lowerBound a < upperBound b
@@ -433,6 +457,8 @@ a <=? b　=
     (ub_b, in2) = upperBound' b
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '<=' y@?
+-- 
+-- Since 1.0.0
 (<=??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
 a <=?? b　= do
   case pickup (intersection a b) of
@@ -444,20 +470,28 @@ a <=?? b　= do
       return (x,y)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '==' y@?
+-- 
+-- Since 1.0.0
 (==?) :: Real r => Interval r -> Interval r -> Bool
 a ==? b = not $ null $ intersection a b
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '==' y@?
+--
+-- Since 1.0.0
 (==??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
 a ==?? b = do
   x <- pickup (intersection a b)
   return (x,x)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '/=' y@?
+--
+-- Since 1.0.1
 (/=?) :: Real r => Interval r -> Interval r -> Bool
 a /=? b = not (null a) && not (null b) && not (a == b && isSingleton a)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '/=' y@?
+--
+-- Since 1.0.1
 (/=??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
 a /=?? b = do
   guard $ not $ null a
@@ -481,10 +515,14 @@ a /=?? b = do
 (>?) = flip (<?)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>=' y@?
+--
+-- Since 1.0.0
 (>=??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
 (>=??) = flip (<=??)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>' y@?
+--
+-- Since 1.0.0
 (>??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
 (>??) = flip (<??)
 
