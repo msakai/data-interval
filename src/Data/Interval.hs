@@ -94,7 +94,7 @@ data Interval r = Interval !(EndPoint r, Bool) !(EndPoint r, Bool)
 -- * 'lowerBound' of a left unbounded interval is 'NegInf'.
 --
 -- * 'lowerBound' of an interval may or may not be a member of the interval.
-lowerBound :: Num r => Interval r -> EndPoint r
+lowerBound :: Interval r -> EndPoint r
 lowerBound (Interval (lb,_) _) = lb
 
 -- | Upper endpoint (/i.e./ least upper bound) of the interval.
@@ -104,17 +104,17 @@ lowerBound (Interval (lb,_) _) = lb
 -- * 'upperBound' of a right unbounded interval is 'PosInf'.
 -- 
 -- * 'upperBound' of an interval may or may not be a member of the interval.
-upperBound :: Num r => Interval r -> EndPoint r
+upperBound :: Interval r -> EndPoint r
 upperBound (Interval _ (ub,_)) = ub
 
 -- | 'lowerBound' of the interval and whether it is included in the interval.
 -- The result is convenient to use as an argument for 'interval'.
-lowerBound' :: Num r => Interval r -> (EndPoint r, Bool)
+lowerBound' :: Interval r -> (EndPoint r, Bool)
 lowerBound' (Interval lb _) = lb
 
 -- | 'upperBound' of the interval and whether it is included in the interval.
 -- The result is convenient to use as an argument for 'interval'.
-upperBound' :: Num r => Interval r -> (EndPoint r, Bool)
+upperBound' :: Interval r -> (EndPoint r, Bool)
 upperBound' (Interval _ ub) = ub
 
 instance NFData r => NFData (Interval r) where
