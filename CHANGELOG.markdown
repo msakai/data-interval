@@ -1,3 +1,10 @@
+1.1.0
+-----
+* remove unnecessary Num constraint from bunch of constructors and operations:
+  `interval`, `(<=..<=)`, `(<..<=)`, `(<=..<)`, `(<..<)`, `whole`, `empty`,
+  `singleton`, `intersection`, `intersections`, `hull`, `hulls`.
+  Thanks to Tad Doxsee for pointing out that.
+
 1.0.0
 -----
 * use extended-reals package for representing endpoints

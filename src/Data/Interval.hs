@@ -123,23 +123,23 @@ instance NFData r => NFData (Interval r) where
 instance Hashable r => Hashable (Interval r) where
   hashWithSalt s (Interval lb ub) = s `hashWithSalt` lb `hashWithSalt` ub
 
-instance (Num r, Ord r) => JoinSemiLattice (Interval r) where
+instance (Ord r) => JoinSemiLattice (Interval r) where
   join = hull
 
-instance (Num r, Ord r) => MeetSemiLattice (Interval r) where
+instance (Ord r) => MeetSemiLattice (Interval r) where
   meet = intersection
 
-instance (Num r, Ord r) => Lattice (Interval r)
+instance (Ord r) => Lattice (Interval r)
 
-instance (Num r, Ord r) => BoundedJoinSemiLattice (Interval r) where
+instance (Ord r) => BoundedJoinSemiLattice (Interval r) where
   bottom = empty
 
-instance (Num r, Ord r) => BoundedMeetSemiLattice (Interval r) where
+instance (Ord r) => BoundedMeetSemiLattice (Interval r) where
   top = whole
 
-instance (Num r, Ord r) => BoundedLattice (Interval r)
+instance (Ord r) => BoundedLattice (Interval r)
 
-instance (Num r, Ord r, Show r) => Show (Interval r) where
+instance (Ord r, Show r) => Show (Interval r) where
   showsPrec _ x | null x = showString "empty"
   showsPrec p x = showParen (p > appPrec) $
     showString "interval " .
@@ -147,7 +147,7 @@ instance (Num r, Ord r, Show r) => Show (Interval r) where
     showChar ' ' . 
     showsPrec appPrec1 (upperBound' x)
 
-instance (Num r, Ord r, Read r) => Read (Interval r) where
+instance (Ord r, Read r) => Read (Interval r) where
   readsPrec p r =
     (readParen (p > appPrec) $ \s0 -> do
       ("interval",s1) <- lex s0
@@ -161,7 +161,7 @@ instance (Num r, Ord r, Read r) => Read (Interval r) where
 -- This instance preserves data abstraction at the cost of inefficiency.
 -- We omit reflection services for the sake of data abstraction.
 
-instance (Num r, Ord r, Data r) => Data (Interval r) where
+instance (Ord r, Data r) => Data (Interval r) where
   gfoldl k z x   = z interval `k` lowerBound' x `k` upperBound' x
   toConstr _     = error "toConstr"
   gunfold _ _    = error "gunfold"
@@ -170,7 +170,7 @@ instance (Num r, Ord r, Data r) => Data (Interval r) where
 
 -- | smart constructor for 'Interval'
 interval
-  :: (Ord r, Num r)
+  :: (Ord r)
   => (EndPoint r, Bool) -- ^ lower bound and whether it is included 
   -> (EndPoint r, Bool) -- ^ upper bound and whether it is included
   -> Interval r
@@ -185,7 +185,7 @@ interval lb@(x1,in1) ub@(x2,in2) =
 
 -- | closed interval [@l@,@u@]
 (<=..<=)
-  :: (Ord r, Num r)
+  :: (Ord r)
   => EndPoint r -- ^ lower bound @l@
   -> EndPoint r -- ^ upper bound @u@
   -> Interval r
@@ -193,7 +193,7 @@ interval lb@(x1,in1) ub@(x2,in2) =
 
 -- | left-open right-closed interval (@l@,@u@]
 (<..<=)
-  :: (Ord r, Num r)
+  :: (Ord r)
   => EndPoint r -- ^ lower bound @l@
   -> EndPoint r -- ^ upper bound @u@
   -> Interval r
@@ -201,7 +201,7 @@ interval lb@(x1,in1) ub@(x2,in2) =
 
 -- | left-closed right-open interval [@l@, @u@)
 (<=..<)
-  :: (Ord r, Num r)
+  :: (Ord r)
   => EndPoint r -- ^ lower bound @l@
   -> EndPoint r -- ^ upper bound @u@
   -> Interval r
@@ -209,26 +209,26 @@ interval lb@(x1,in1) ub@(x2,in2) =
 
 -- | open interval (@l@, @u@)
 (<..<)
-  :: (Ord r, Num r)
+  :: (Ord r)
   => EndPoint r -- ^ lower bound @l@
   -> EndPoint r -- ^ upper bound @u@
   -> Interval r
 (<..<) lb ub = interval (lb, False) (ub, False)
 
 -- | whole real number line (-∞, ∞)
-whole :: (Num r, Ord r) => Interval r
+whole :: Ord r => Interval r
 whole = Interval (NegInf, False) (PosInf, False)
 
 -- | empty (contradicting) interval
-empty :: Num r => Interval r
+empty :: Ord r => Interval r
 empty = Interval (PosInf, False) (NegInf, False)
 
 -- | singleton set \[x,x\]
-singleton :: (Num r, Ord r) => r -> Interval r
+singleton :: Ord r => r -> Interval r
 singleton x = interval (Finite x, True) (Finite x, True)
 
 -- | intersection of two intervals
-intersection :: forall r. (Ord r, Num r) => Interval r -> Interval r -> Interval r
+intersection :: forall r. Ord r => Interval r -> Interval r -> Interval r
 intersection (Interval l1 u1) (Interval l2 u2) = interval (maxLB l1 l2) (minUB u1 u2)
   where
     maxLB :: (EndPoint r, Bool) -> (EndPoint r, Bool) -> (EndPoint r, Bool)
@@ -251,11 +251,11 @@ intersection (Interval l1 u1) (Interval l2 u2) = interval (maxLB l1 l2) (minUB u
 -- | intersection of a list of intervals.
 --
 -- Since 0.6.0
-intersections :: (Ord r, Num r) => [Interval r] -> Interval r
+intersections :: Ord r => [Interval r] -> Interval r
 intersections xs = foldl' intersection whole xs
 
 -- | convex hull of two intervals
-hull :: forall r. (Ord r, Num r) => Interval r -> Interval r -> Interval r
+hull :: forall r. Ord r => Interval r -> Interval r -> Interval r
 hull x1 x2
   | null x1 = x2
   | null x2 = x1
@@ -281,7 +281,7 @@ hull (Interval l1 u1) (Interval l2 u2) = interval (minLB l1 l2) (maxUB u1 u2)
 -- | convex hull of a list of intervals.
 --
 -- Since 0.6.0
-hulls :: (Ord r, Num r) => [Interval r] -> Interval r
+hulls :: Ord r => [Interval r] -> Interval r
 hulls xs = foldl' hull empty xs
 
 -- | Is the interval empty?

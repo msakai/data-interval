@@ -109,7 +109,7 @@ prop_intersection_isSubsetOf_equiv =
     (Interval.intersection a b == a)
     == Interval.isSubsetOf a b
 
-case_intersections_empty_list = Interval.intersections [] @?= Interval.whole
+case_intersections_empty_list = Interval.intersections [] @?= (Interval.whole :: Interval Rational)
 
 prop_intersections_singleton_list =
   forAll intervals $ \a -> Interval.intersections [a] == a
@@ -158,7 +158,7 @@ prop_hull_isSubsetOf_equiv =
     (Interval.hull a b == b)
     == Interval.isSubsetOf a b
 
-case_hulls_empty_list = Interval.hulls [] @?= Interval.empty
+case_hulls_empty_list = Interval.hulls [] @?= (Interval.empty :: Interval Rational)
 
 prop_hulls_singleton_list =
   forAll intervals $ \a -> Interval.hulls [a] == a
