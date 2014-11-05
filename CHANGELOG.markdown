@@ -1,3 +1,7 @@
+1.1.1
+-----
+* remove unnecessary `Real` constraint from comparison operators.
+
 1.1.0
 -----
 * remove unnecessary Num constraint from bunch of constructors and operations:
