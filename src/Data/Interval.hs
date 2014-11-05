@@ -443,7 +443,7 @@ a <?? b = do
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '<=' y@?
 (<=?) :: Ord r => Interval r -> Interval r -> Bool
-a <=? b　=
+a <=? b =
   case lb_a `compare` ub_b of
     LT -> True
     GT -> False
@@ -460,7 +460,7 @@ a <=? b　=
 -- 
 -- Since 1.0.0
 (<=??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
-a <=?? b　= do
+a <=?? b = do
   case pickup (intersection a b) of
     Just x -> return (x,x)
     Nothing -> do
