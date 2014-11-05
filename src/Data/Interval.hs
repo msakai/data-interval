@@ -379,7 +379,7 @@ simplestRationalWithin i
         condUB = if in2 then Finite x' <= x2 else Finite x' < x2
 
 -- | For all @x@ in @X@, @y@ in @Y@. @x '<' y@?
-(<!) :: Real r => Interval r -> Interval r -> Bool
+(<!) :: Ord r => Interval r -> Interval r -> Bool
 a <! b =
   case ub_a `compare` lb_b of
     LT -> True
@@ -394,29 +394,29 @@ a <! b =
     (lb_b, in2) = lowerBound' b
 
 -- | For all @x@ in @X@, @y@ in @Y@. @x '<=' y@?
-(<=!) :: Real r => Interval r -> Interval r -> Bool
+(<=!) :: Ord r => Interval r -> Interval r -> Bool
 a <=! b = upperBound a <= lowerBound b
 
 -- | For all @x@ in @X@, @y@ in @Y@. @x '==' y@?
-(==!) :: Real r => Interval r -> Interval r -> Bool
+(==!) :: Ord r => Interval r -> Interval r -> Bool
 a ==! b = a <=! b && a >=! b
 
 -- | For all @x@ in @X@, @y@ in @Y@. @x '/=' y@?
 --
 -- Since 1.0.1
-(/=!) :: Real r => Interval r -> Interval r -> Bool
+(/=!) :: Ord r => Interval r -> Interval r -> Bool
 a /=! b = null $ a `intersection` b
 
 -- | For all @x@ in @X@, @y@ in @Y@. @x '>=' y@?
-(>=!) :: Real r => Interval r -> Interval r -> Bool
+(>=!) :: Ord r => Interval r -> Interval r -> Bool
 (>=!) = flip (<=!)
 
 -- | For all @x@ in @X@, @y@ in @Y@. @x '>' y@?
-(>!) :: Real r => Interval r -> Interval r -> Bool
+(>!) :: Ord r => Interval r -> Interval r -> Bool
 (>!) = flip (<!)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '<' y@?
-(<?) :: Real r => Interval r -> Interval r -> Bool
+(<?) :: Ord r => Interval r -> Interval r -> Bool
 a <? b = lb_a < ub_b
   where
     lb_a = lowerBound a
@@ -442,7 +442,7 @@ a <?? b = do
       return (x,y)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '<=' y@?
-(<=?) :: Real r => Interval r -> Interval r -> Bool
+(<=?) :: Ord r => Interval r -> Interval r -> Bool
 a <=? b　=
   case lb_a `compare` ub_b of
     LT -> True
@@ -472,7 +472,7 @@ a <=?? b　= do
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '==' y@?
 -- 
 -- Since 1.0.0
-(==?) :: Real r => Interval r -> Interval r -> Bool
+(==?) :: Ord r => Interval r -> Interval r -> Bool
 a ==? b = not $ null $ intersection a b
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '==' y@?
@@ -486,7 +486,7 @@ a ==?? b = do
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '/=' y@?
 --
 -- Since 1.0.1
-(/=?) :: Real r => Interval r -> Interval r -> Bool
+(/=?) :: Ord r => Interval r -> Interval r -> Bool
 a /=? b = not (null a) && not (null b) && not (a == b && isSingleton a)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '/=' y@?
@@ -507,11 +507,11 @@ a /=?? b = do
       return (x,y)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>=' y@?
-(>=?) :: Real r => Interval r -> Interval r -> Bool
+(>=?) :: Ord r => Interval r -> Interval r -> Bool
 (>=?) = flip (<=?)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>' y@?
-(>?) :: Real r => Interval r -> Interval r -> Bool
+(>?) :: Ord r => Interval r -> Interval r -> Bool
 (>?) = flip (<?)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>=' y@?
