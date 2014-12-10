@@ -364,19 +364,12 @@ simplestRationalWithin i
   | otherwise = assert (0 `member` i) $ Just $ 0
   where
     go i
-      | fromInteger lb_floor       `member'` i = fromInteger lb_floor
-      | fromInteger (lb_floor + 1) `member'` i = fromInteger (lb_floor + 1)
+      | fromInteger lb_floor       `member` i = fromInteger lb_floor
+      | fromInteger (lb_floor + 1) `member` i = fromInteger (lb_floor + 1)
       | otherwise = fromInteger lb_floor + recip (go (recip (i - singleton (fromInteger lb_floor))))
       where
         Finite lb = lowerBound i
         lb_floor  = floor lb
-
-    member' :: (Real r, Fractional r) => Rational -> Interval r -> Bool
-    member' x (Interval (x1,in1) (x2,in2)) = condLB && condUB
-      where
-        x' = fromRational x
-        condLB = if in1 then x1 <= Finite x' else x1 < Finite x'
-        condUB = if in2 then Finite x' <= x2 else Finite x' < x2
 
 -- | For all @x@ in @X@, @y@ in @Y@. @x '<' y@?
 (<!) :: Ord r => Interval r -> Interval r -> Bool
