@@ -166,9 +166,9 @@ instance (Ord r, Show r) => Show (Interval r) where
   showsPrec _ x | null x = showString "empty"
   showsPrec p x = showParen (p > appPrec) $
     showString "interval " .
-    showsPrec appPrec1 (lowerBound' x) .
+    showsPrec (appPrec+1) (lowerBound' x) .
     showChar ' ' .
-    showsPrec appPrec1 (upperBound' x)
+    showsPrec (appPrec+1) (upperBound' x)
 
 instance (Ord r, Read r) => Read (Interval r) where
   readsPrec p r =
@@ -542,9 +542,8 @@ a /=?? b = do
 (>??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
 (>??) = flip (<??)
 
-appPrec, appPrec1 :: Int
+appPrec :: Int
 appPrec = 10
-appPrec1 = appPrec + 1
 
 scaleInterval :: (Num r, Ord r) => r -> Interval r -> Interval r
 scaleInterval _ x | null x = empty
