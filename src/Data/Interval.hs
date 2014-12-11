@@ -5,7 +5,7 @@
 -- Module      :  Data.Interval
 -- Copyright   :  (c) Masahiro Sakai 2011-2013
 -- License     :  BSD-style
--- 
+--
 -- Maintainer  :  masahiro.sakai@gmail.com
 -- Stability   :  provisional
 -- Portability :  non-portable (ScopedTypeVariables, DeriveDataTypeable)
@@ -19,7 +19,7 @@
 -- For the purpose of abstract interpretation, it might be convenient to use
 -- 'Lattice' instance. See also lattices package
 -- (<http://hackage.haskell.org/package/lattices>).
--- 
+--
 -----------------------------------------------------------------------------
 module Data.Interval
   (
@@ -108,7 +108,7 @@ infix 4 /=??
 
 -- | The intervals (/i.e./ connected and convex subsets) over real numbers __R__.
 data Interval r = Interval !(EndPoint r, Bool) !(EndPoint r, Bool)
-  deriving (Eq, Typeable)  
+  deriving (Eq, Typeable)
 
 -- | Lower endpoint (/i.e./ greatest lower bound)  of the interval.
 --
@@ -125,7 +125,7 @@ lowerBound (Interval (lb,_) _) = lb
 -- * 'upperBound' of the empty interval is 'NegInf'.
 --
 -- * 'upperBound' of a right unbounded interval is 'PosInf'.
--- 
+--
 -- * 'upperBound' of an interval may or may not be a member of the interval.
 upperBound :: Interval r -> EndPoint r
 upperBound (Interval _ (ub,_)) = ub
@@ -167,7 +167,7 @@ instance (Ord r, Show r) => Show (Interval r) where
   showsPrec p x = showParen (p > appPrec) $
     showString "interval " .
     showsPrec appPrec1 (lowerBound' x) .
-    showChar ' ' . 
+    showChar ' ' .
     showsPrec appPrec1 (upperBound' x)
 
 instance (Ord r, Read r) => Read (Interval r) where
@@ -194,7 +194,7 @@ instance (Ord r, Data r) => Data (Interval r) where
 -- | smart constructor for 'Interval'
 interval
   :: (Ord r)
-  => (EndPoint r, Bool) -- ^ lower bound and whether it is included 
+  => (EndPoint r, Bool) -- ^ lower bound and whether it is included
   -> (EndPoint r, Bool) -- ^ upper bound and whether it is included
   -> Interval r
 interval lb@(x1,in1) ub@(x2,in2) =
@@ -309,7 +309,7 @@ hulls xs = foldl' hull empty xs
 
 -- | Is the interval empty?
 null :: Ord r => Interval r -> Bool
-null (Interval (x1,in1) (x2,in2)) = 
+null (Interval (x1,in1) (x2,in2)) =
   case x1 `compare` x2 of
     EQ -> assert (in1 && in2) False
     LT -> False
@@ -369,20 +369,20 @@ pickup (Interval (Finite x1, in1) (Finite x2, in2)) =
 pickup _ = Nothing
 
 -- | 'simplestRationalWithin' returns the simplest rational number within the interval.
--- 
+--
 -- A rational number @y@ is said to be /simpler/ than another @y'@ if
 --
 -- * @'abs' ('numerator' y) <= 'abs' ('numerator' y')@, and
 --
 -- * @'denominator' y <= 'denominator' y'@.
--- 
+--
 -- (see also 'approxRational')
 --
 -- Since 0.4.0
 simplestRationalWithin :: RealFrac r => Interval r -> Maybe Rational
 simplestRationalWithin i | null i = Nothing
-simplestRationalWithin i 
-  | 0 <! i    = Just $ go i 
+simplestRationalWithin i
+  | 0 <! i    = Just $ go i
   | i <! 0    = Just $ - go (- i)
   | otherwise = assert (0 `member` i) $ Just $ 0
   where
@@ -463,7 +463,7 @@ a <=? b =
   case lb_a `compare` ub_b of
     LT -> True
     GT -> False
-    EQ -> 
+    EQ ->
       case lb_a of
         NegInf -> False -- b is empty
         PosInf -> False -- a is empty
@@ -473,7 +473,7 @@ a <=? b =
     (ub_b, in2) = upperBound' b
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '<=' y@?
--- 
+--
 -- Since 1.0.0
 (<=??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
 a <=?? b = do
@@ -486,7 +486,7 @@ a <=?? b = do
       return (x,y)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '==' y@?
--- 
+--
 -- Since 1.0.0
 (==?) :: Ord r => Interval r -> Interval r -> Bool
 a ==? b = not $ null $ intersection a b

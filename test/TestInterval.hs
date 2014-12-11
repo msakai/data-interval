@@ -228,7 +228,7 @@ case_simplestRationalWithin_test3 =
 
 -- http://en.wikipedia.org/wiki/Best_rational_approximation#Best_rational_approximations
 case_simplestRationalWithin_test4 =
-  Interval.simplestRationalWithin (Finite (3.14155 :: Rational) <..< Finite 3.14165) @?= Just (355/113) 
+  Interval.simplestRationalWithin (Finite (3.14155 :: Rational) <..< Finite 3.14165) @?= Just (355/113)
 
 case_simplestRationalWithin_test5 =
   Interval.simplestRationalWithin (Finite (1.1e-20 :: Rational) <..< Finite (1.2e-20)) @?= Just (1/83333333333333333334)
@@ -415,14 +415,14 @@ prop_eq_some_empty =
   forAll intervals $ \a -> not (a ==? Interval.empty)
 
 prop_intersect_le_some =
-  forAll intervals $ \a -> 
-  forAll intervals $ \b -> 
+  forAll intervals $ \a ->
+  forAll intervals $ \b ->
     not (Interval.null (Interval.intersection a b))
     ==> a <=? b
 
 prop_intersect_eq_some =
-  forAll intervals $ \a -> 
-  forAll intervals $ \b -> 
+  forAll intervals $ \a ->
+  forAll intervals $ \b ->
     not (Interval.null (Interval.intersection a b))
     ==> a ==? b
 
@@ -551,7 +551,7 @@ prop_mult_empty =
   forAll intervals $ \a ->
     Interval.empty * a == Interval.empty
 
-prop_mult_zero = 
+prop_mult_zero =
   forAll intervals $ \a ->
     not (Interval.null a) ==> Interval.singleton 0 * a ==  Interval.singleton 0
 
@@ -640,7 +640,7 @@ prop_show_read_invariance =
 --------------------------------------------------------------------}
 
 instance Arbitrary r => Arbitrary (Extended r) where
-  arbitrary = 
+  arbitrary =
     oneof
     [ return NegInf
     , return PosInf
