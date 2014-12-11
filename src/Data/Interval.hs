@@ -83,6 +83,29 @@ import Data.Monoid
 import Data.Ratio
 import Prelude hiding (null)
 
+infix 5 <=..<=
+infix 5 <..<=
+infix 5 <=..<
+infix 5 <..<
+infix 4 <!
+infix 4 <=!
+infix 4 ==!
+infix 4 >=!
+infix 4 >!
+infix 4 /=!
+infix 4 <?
+infix 4 <=?
+infix 4 ==?
+infix 4 >=?
+infix 4 >?
+infix 4 /=?
+infix 4 <??
+infix 4 <=??
+infix 4 ==??
+infix 4 >=??
+infix 4 >??
+infix 4 /=??
+
 -- | The intervals (/i.e./ connected and convex subsets) over real numbers __R__.
 data Interval r = Interval !(EndPoint r, Bool) !(EndPoint r, Bool)
   deriving (Eq, Typeable)  
