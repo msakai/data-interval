@@ -16,6 +16,7 @@ import Data.IntegerInterval
   , (<??), (<=??), (==??), (>=??), (>??), (/=??)
   )
 import qualified Data.IntegerInterval as IntegerInterval
+import Data.Interval (Interval)
 import qualified Data.Interval as Interval
 
 {--------------------------------------------------------------------
@@ -582,13 +583,17 @@ prop_show_read_invariance =
   Conversion between Interval and IntegerInterval
 --------------------------------------------------------------------}
 
+prop_fromInterval_toInterval =
+  forAll integerIntervals $ \i ->
+    IntegerInterval.fromInterval (IntegerInterval.toInterval i) == i
+
 prop_fromIntervalOver_toInterval =
   forAll integerIntervals $ \i ->
-    IntegerInterval.fromIntervalOver (IntegerInterval.toInterval i) == i
+    IntegerInterval.fromIntervalOver (IntegerInterval.toInterval i :: Interval Rational) == i
 
 prop_fromIntervalUnder_toInterval =
   forAll integerIntervals $ \i ->
-    IntegerInterval.fromIntervalUnder (IntegerInterval.toInterval i) == i
+    IntegerInterval.fromIntervalUnder (IntegerInterval.toInterval i :: Interval Rational) == i
 
 prop_fromIntervalOver_toInterval_adjoint =
   forAll intervals $ \a ->
@@ -601,6 +606,10 @@ prop_toInterval_fromIntervalUnder_adjoint =
     forAll intervals $ \b ->
       IntegerInterval.toInterval a `Interval.isSubsetOf` b
       == a `IntegerInterval.isSubsetOf` IntegerInterval.fromIntervalUnder b
+
+prop_toInterval_fromInterval =
+  forAll arbitrary $ \(i :: Interval Integer) ->
+    IntegerInterval.toInterval (IntegerInterval.fromInterval i) `Interval.isSubsetOf` i
 
 {--------------------------------------------------------------------
   Generators
