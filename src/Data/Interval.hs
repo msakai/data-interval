@@ -107,7 +107,7 @@ infix 4 >??
 infix 4 /=??
 
 -- | The intervals (/i.e./ connected and convex subsets) over real numbers __R__.
-data Interval r = Interval !(EndPoint r, Bool) !(EndPoint r, Bool)
+data Interval r = Interval !(Extended r, Bool) !(Extended r, Bool)
   deriving (Eq, Typeable)
 
 -- | Lower endpoint (/i.e./ greatest lower bound)  of the interval.
@@ -117,7 +117,7 @@ data Interval r = Interval !(EndPoint r, Bool) !(EndPoint r, Bool)
 -- * 'lowerBound' of a left unbounded interval is 'NegInf'.
 --
 -- * 'lowerBound' of an interval may or may not be a member of the interval.
-lowerBound :: Interval r -> EndPoint r
+lowerBound :: Interval r -> Extended r
 lowerBound (Interval (lb,_) _) = lb
 
 -- | Upper endpoint (/i.e./ least upper bound) of the interval.
@@ -127,17 +127,17 @@ lowerBound (Interval (lb,_) _) = lb
 -- * 'upperBound' of a right unbounded interval is 'PosInf'.
 --
 -- * 'upperBound' of an interval may or may not be a member of the interval.
-upperBound :: Interval r -> EndPoint r
+upperBound :: Interval r -> Extended r
 upperBound (Interval _ (ub,_)) = ub
 
 -- | 'lowerBound' of the interval and whether it is included in the interval.
 -- The result is convenient to use as an argument for 'interval'.
-lowerBound' :: Interval r -> (EndPoint r, Bool)
+lowerBound' :: Interval r -> (Extended r, Bool)
 lowerBound' (Interval lb _) = lb
 
 -- | 'upperBound' of the interval and whether it is included in the interval.
 -- The result is convenient to use as an argument for 'interval'.
-upperBound' :: Interval r -> (EndPoint r, Bool)
+upperBound' :: Interval r -> (Extended r, Bool)
 upperBound' (Interval _ ub) = ub
 
 instance NFData r => NFData (Interval r) where
@@ -194,8 +194,8 @@ instance (Ord r, Data r) => Data (Interval r) where
 -- | smart constructor for 'Interval'
 interval
   :: (Ord r)
-  => (EndPoint r, Bool) -- ^ lower bound and whether it is included
-  -> (EndPoint r, Bool) -- ^ upper bound and whether it is included
+  => (Extended r, Bool) -- ^ lower bound and whether it is included
+  -> (Extended r, Bool) -- ^ upper bound and whether it is included
   -> Interval r
 interval lb@(x1,in1) ub@(x2,in2) =
   case x1 `compare` x2 of
@@ -209,32 +209,32 @@ interval lb@(x1,in1) ub@(x2,in2) =
 -- | closed interval [@l@,@u@]
 (<=..<=)
   :: (Ord r)
-  => EndPoint r -- ^ lower bound @l@
-  -> EndPoint r -- ^ upper bound @u@
+  => Extended r -- ^ lower bound @l@
+  -> Extended r -- ^ upper bound @u@
   -> Interval r
 (<=..<=) lb ub = interval (lb, True) (ub, True)
 
 -- | left-open right-closed interval (@l@,@u@]
 (<..<=)
   :: (Ord r)
-  => EndPoint r -- ^ lower bound @l@
-  -> EndPoint r -- ^ upper bound @u@
+  => Extended r -- ^ lower bound @l@
+  -> Extended r -- ^ upper bound @u@
   -> Interval r
 (<..<=) lb ub = interval (lb, False) (ub, True)
 
 -- | left-closed right-open interval [@l@, @u@)
 (<=..<)
   :: (Ord r)
-  => EndPoint r -- ^ lower bound @l@
-  -> EndPoint r -- ^ upper bound @u@
+  => Extended r -- ^ lower bound @l@
+  -> Extended r -- ^ upper bound @u@
   -> Interval r
 (<=..<) lb ub = interval (lb, True) (ub, False)
 
 -- | open interval (@l@, @u@)
 (<..<)
   :: (Ord r)
-  => EndPoint r -- ^ lower bound @l@
-  -> EndPoint r -- ^ upper bound @u@
+  => Extended r -- ^ lower bound @l@
+  -> Extended r -- ^ upper bound @u@
   -> Interval r
 (<..<) lb ub = interval (lb, False) (ub, False)
 
@@ -254,7 +254,7 @@ singleton x = interval (Finite x, True) (Finite x, True)
 intersection :: forall r. Ord r => Interval r -> Interval r -> Interval r
 intersection (Interval l1 u1) (Interval l2 u2) = interval (maxLB l1 l2) (minUB u1 u2)
   where
-    maxLB :: (EndPoint r, Bool) -> (EndPoint r, Bool) -> (EndPoint r, Bool)
+    maxLB :: (Extended r, Bool) -> (Extended r, Bool) -> (Extended r, Bool)
     maxLB (x1,in1) (x2,in2) =
       ( max x1 x2
       , case x1 `compare` x2 of
@@ -262,7 +262,7 @@ intersection (Interval l1 u1) (Interval l2 u2) = interval (maxLB l1 l2) (minUB u
           LT -> in2
           GT -> in1
       )
-    minUB :: (EndPoint r, Bool) -> (EndPoint r, Bool) -> (EndPoint r, Bool)
+    minUB :: (Extended r, Bool) -> (Extended r, Bool) -> (Extended r, Bool)
     minUB (x1,in1) (x2,in2) =
       ( min x1 x2
       , case x1 `compare` x2 of
@@ -284,7 +284,7 @@ hull x1 x2
   | null x2 = x1
 hull (Interval l1 u1) (Interval l2 u2) = interval (minLB l1 l2) (maxUB u1 u2)
   where
-    maxUB :: (EndPoint r, Bool) -> (EndPoint r, Bool) -> (EndPoint r, Bool)
+    maxUB :: (Extended r, Bool) -> (Extended r, Bool) -> (Extended r, Bool)
     maxUB (x1,in1) (x2,in2) =
       ( max x1 x2
       , case x1 `compare` x2 of
@@ -292,7 +292,7 @@ hull (Interval l1 u1) (Interval l2 u2) = interval (minLB l1 l2) (maxUB u1 u2)
           LT -> in2
           GT -> in1
       )
-    minLB :: (EndPoint r, Bool) -> (EndPoint r, Bool) -> (EndPoint r, Bool)
+    minLB :: (Extended r, Bool) -> (Extended r, Bool) -> (Extended r, Bool)
     minLB (x1,in1) (x2,in2) =
       ( min x1 x2
       , case x1 `compare` x2 of
@@ -602,17 +602,17 @@ instance forall r. (Real r, Fractional r) => Fractional (Interval r) where
       lb3 = minimumBy cmpLB xs
       xs = [recipLB lb, recipUB ub]
 
-cmpUB, cmpLB :: Ord r => (EndPoint r, Bool) -> (EndPoint r, Bool) -> Ordering
+cmpUB, cmpLB :: Ord r => (Extended r, Bool) -> (Extended r, Bool) -> Ordering
 cmpUB (x1,in1) (x2,in2) = compare x1 x2 `mappend` compare in1 in2
 cmpLB (x1,in1) (x2,in2) = compare x1 x2 `mappend` flip compare in1 in2
 
 -- | Endpoints of intervals
 type EndPoint r = Extended r
 
-scaleInf' :: (Num r, Ord r) => r -> (EndPoint r, Bool) -> (EndPoint r, Bool)
+scaleInf' :: (Num r, Ord r) => r -> (Extended r, Bool) -> (Extended r, Bool)
 scaleInf' a (x1, in1) = (scaleEndPoint a x1, in1)
 
-scaleEndPoint :: (Num r, Ord r) => r -> EndPoint r -> EndPoint r
+scaleEndPoint :: (Num r, Ord r) => r -> Extended r -> Extended r
 scaleEndPoint a e =
   case a `compare` 0 of
     EQ -> 0
@@ -627,15 +627,15 @@ scaleEndPoint a e =
         Finite b -> Finite (a*b)
         PosInf   -> NegInf
 
-mulInf' :: (Num r, Ord r) => (EndPoint r, Bool) -> (EndPoint r, Bool) -> (EndPoint r, Bool)
+mulInf' :: (Num r, Ord r) => (Extended r, Bool) -> (Extended r, Bool) -> (Extended r, Bool)
 mulInf' (0, True) _ = (0, True)
 mulInf' _ (0, True) = (0, True)
 mulInf' (x1,in1) (x2,in2) = (x1*x2, in1 && in2)
 
-recipLB :: (Fractional r, Ord r) => (EndPoint r, Bool) -> (EndPoint r, Bool)
+recipLB :: (Fractional r, Ord r) => (Extended r, Bool) -> (Extended r, Bool)
 recipLB (0, _) = (PosInf, False)
 recipLB (x1, in1) = (recip x1, in1)
 
-recipUB :: (Fractional r, Ord r) => (EndPoint r, Bool) -> (EndPoint r, Bool)
+recipUB :: (Fractional r, Ord r) => (Extended r, Bool) -> (Extended r, Bool)
 recipUB (0, _) = (NegInf, False)
 recipUB (x1, in1) = (recip x1, in1)
