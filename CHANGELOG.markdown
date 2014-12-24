@@ -1,4 +1,4 @@
-1.1.2
+1.2.0
 -----
 * add `Data.IntegerInterval`
 * use extended-reals >=0.2
