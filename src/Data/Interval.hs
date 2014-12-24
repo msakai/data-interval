@@ -25,7 +25,7 @@ module Data.Interval
   (
   -- * Interval type
     Interval
-  , Extended (..)
+  , module Data.ExtendedReal
   , EndPoint
 
   -- * Construction
@@ -452,9 +452,9 @@ a <?? b = do
       return (x,y)
     Just z -> do
       let x:y:_ = take 2 $
-                    maybeToList (pickup (intersection a (NegInf <..< Finite z))) ++
+                    maybeToList (pickup (intersection a (-inf <..< Finite z))) ++
                     [z] ++
-                    maybeToList (pickup (intersection b (Finite z <..< PosInf)))
+                    maybeToList (pickup (intersection b (Finite z <..< inf)))
       return (x,y)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '<=' y@?
@@ -519,7 +519,7 @@ a /=?? b = do
   where
     f a b = do
       x <- pickup a
-      y <- msum [pickup (b `intersection` c) | c <- [NegInf <..< Finite x, Finite x <..< PosInf]]
+      y <- msum [pickup (b `intersection` c) | c <- [-inf <..< Finite x, Finite x <..< inf]]
       return (x,y)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>=' y@?
@@ -558,13 +558,13 @@ instance (Num r, Ord r) => Num (Interval r) where
   Interval lb1 ub1 + Interval lb2 ub2 = interval (f lb1 lb2) (g ub1 ub2)
     where
       f (Finite x1, in1) (Finite x2, in2) = (Finite (x1+x2), in1 && in2)
-      f (NegInf,_) _ = (NegInf, False)
-      f _ (NegInf,_) = (NegInf, False)
+      f (NegInf,_) _ = (-inf, False)
+      f _ (NegInf,_) = (-inf, False)
       f _ _ = error "Interval.(+) should not happen"
 
       g (Finite x1, in1) (Finite x2, in2) = (Finite (x1+x2), in1 && in2)
-      g (PosInf,_) _ = (PosInf, False)
-      g _ (PosInf,_) = (PosInf, False)
+      g (PosInf,_) _ = (inf, False)
+      g _ (PosInf,_) = (inf, False)
       g _ _ = error "Interval.(+) should not happen"
 
   negate a = scaleInterval (-1) a
@@ -573,15 +573,15 @@ instance (Num r, Ord r) => Num (Interval r) where
 
   abs x = ((x `intersection` nonneg) `hull` (negate x `intersection` nonneg))
     where
-      nonneg = 0 <=..< PosInf
+      nonneg = 0 <=..< inf
 
   signum x = zero `hull` pos `hull` neg
     where
       zero = if member 0 x then singleton 0 else empty
-      pos = if null $ (0 <..< PosInf) `intersection` x
+      pos = if null $ (0 <..< inf) `intersection` x
             then empty
             else singleton 1
-      neg = if null $ (NegInf <..< 0) `intersection` x
+      neg = if null $ (-inf <..< 0) `intersection` x
             then empty
             else singleton (-1)
 
@@ -613,16 +613,16 @@ scaleInf' :: (Num r, Ord r) => r -> (EndPoint r, Bool) -> (EndPoint r, Bool)
 scaleInf' a (x1, in1) = (scaleEndPoint a x1, in1)
 
 scaleEndPoint :: (Num r, Ord r) => r -> EndPoint r -> EndPoint r
-scaleEndPoint a inf =
+scaleEndPoint a e =
   case a `compare` 0 of
     EQ -> 0
     GT ->
-      case inf of
+      case e of
         NegInf   -> NegInf
         Finite b -> Finite (a*b)
         PosInf   -> PosInf
     LT ->
-      case inf of
+      case e of
         NegInf   -> PosInf
         Finite b -> Finite (a*b)
         PosInf   -> NegInf

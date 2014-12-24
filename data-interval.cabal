@@ -11,7 +11,7 @@ Description:
    Interval datatype and interval arithmetic for Haskell.
    Unlike the intervals package (<http://hackage.haskell.org/package/intervals>),
    this package provides both open and closed intervals and is intended to be used
-   with Rational.
+   with exact number types such as Rational and Integer.
 Bug-Reports:	https://github.com/msakai/data-interval/issues
 Extra-Source-Files:
    README.md
@@ -27,7 +27,7 @@ source-repository head
 Library
   Hs-source-dirs: src
   Build-Depends:
-     base >=4 && <5, lattices >=1.2.1.1, deepseq, hashable >=1.1.2.5 && <1.3, extended-reals >=0.1 && <1.0
+     base >=4 && <5, lattices >=1.2.1.1, deepseq, hashable >=1.1.2.5 && <1.3, extended-reals >=0.2 && <1.0
   Default-Language: Haskell2010
   Other-Extensions:
      ScopedTypeVariables

@@ -21,7 +21,7 @@ module Data.IntegerInterval
   (
   -- * Interval type
     IntegerInterval
-  , Extended (..)
+  , module Data.ExtendedReal
 
   -- * Construction
   , interval
@@ -401,7 +401,7 @@ a /=?? b = do
   where
     f a b = do
       x <- pickup a
-      y <- msum [pickup (b `intersection` c) | c <- [NegInf <..< Finite x, Finite x <..< PosInf]]
+      y <- msum [pickup (b `intersection` c) | c <- [-inf <..< Finite x, Finite x <..< inf]]
       return (x,y)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>=' y@?
@@ -441,15 +441,15 @@ instance Num IntegerInterval where
 
   abs x = ((x `intersection` nonneg) `hull` (negate x `intersection` nonneg))
     where
-      nonneg = 0 <=..< PosInf
+      nonneg = 0 <=..< inf
 
   signum x = zero `hull` pos `hull` neg
     where
       zero = if member 0 x then singleton 0 else empty
-      pos = if null $ (0 <..< PosInf) `intersection` x
+      pos = if null $ (0 <..< inf) `intersection` x
             then empty
             else singleton 1
-      neg = if null $ (NegInf <..< 0) `intersection` x
+      neg = if null $ (-inf <..< 0) `intersection` x
             then empty
             else singleton (-1)
 

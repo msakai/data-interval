@@ -1,3 +1,8 @@
+1.1.2
+-----
+* add `Data.IntegerInterval`
+* use extended-reals >=0.2
+
 1.1.1
 -----
 * remove unnecessary `Real` constraint from comparison operators.
