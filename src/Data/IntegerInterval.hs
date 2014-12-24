@@ -12,6 +12,8 @@
 --
 -- Interval datatype and interval arithmetic over integers.
 --
+-- Since 1.2.0
+--
 -- For the purpose of abstract interpretation, it might be convenient to use
 -- 'Lattice' instance. See also lattices package
 -- (<http://hackage.haskell.org/package/lattices>).
@@ -190,7 +192,7 @@ instance Data IntegerInterval where
   gfoldl k z x   = z (<=..<=) `k` lowerBound x `k` upperBound x
   toConstr _     = error "toConstr"
   gunfold _ _    = error "gunfold"
-  dataTypeOf _   = mkNoRepType "Data.Interval.Integer.IntegerInterval"
+  dataTypeOf _   = mkNoRepType "Data.IntegerInterval"
 
 -- | smart constructor for 'Interval'
 interval
@@ -291,7 +293,7 @@ isProperSubsetOf i1 i2 = i1 /= i2 && i1 `isSubsetOf` i2
 width :: IntegerInterval -> Integer
 width x | null x = 0
 width (Interval (Finite l) (Finite u)) = u - l
-width _ = error "Data.Interval.width: unbounded interval"
+width _ = error "Data.IntegerInterval.width: unbounded interval"
 
 -- | pick up an element from the interval if the interval is not empty.
 pickup :: IntegerInterval -> Maybe Integer
@@ -463,21 +465,25 @@ instance Num IntegerInterval where
       mul _ 0 = 0
       mul x1 x2 = x1*x2
 
+-- | Convert the interval to 'Interval.Interval' data type.
 toInterval :: Real r => IntegerInterval -> Interval.Interval r
 toInterval (Interval l u) = fmap fromInteger l Interval.<=..<= fmap fromInteger u
 
+-- | Conversion from 'Interval.Interval' data type.
 fromInterval :: Interval.Interval Integer -> IntegerInterval
 fromInterval i = (if in1 then x1 else x1 + 1) <=..<= (if in2 then x2 else x2 - 1)
   where
     (x1,in1) = Interval.lowerBound' i
     (x2,in2) = Interval.upperBound' i
 
+-- | Given a 'Interval.Interval' @I@ over R, compute the smallest 'IntegerInterval' @J@ such that @I ⊆ J@.
 fromIntervalOver :: RealFrac r => Interval.Interval r -> IntegerInterval
 fromIntervalOver i = fmap floor lb <=..<= fmap ceiling ub
   where
     lb = Interval.lowerBound i
     ub = Interval.upperBound i
 
+-- | Given a 'Interval.Interval' @I@ over R, compute the largest 'IntegerInterval' @J@ such that @J ⊆ I@.
 fromIntervalUnder :: RealFrac r => Interval.Interval r -> IntegerInterval
 fromIntervalUnder i = fmap f lb <=..<= fmap g ub
   where
