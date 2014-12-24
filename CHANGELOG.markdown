@@ -2,6 +2,7 @@
 -----
 * add `Data.IntegerInterval`
 * use extended-reals >=0.2
+* `EndPoint` is deprecated. Use `Extended` instead.
 
 1.1.1
 -----

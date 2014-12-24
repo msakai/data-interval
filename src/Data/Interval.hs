@@ -606,6 +606,7 @@ cmpUB, cmpLB :: Ord r => (Extended r, Bool) -> (Extended r, Bool) -> Ordering
 cmpUB (x1,in1) (x2,in2) = compare x1 x2 `mappend` compare in1 in2
 cmpLB (x1,in1) (x2,in2) = compare x1 x2 `mappend` flip compare in1 in2
 
+{-# DEPRECATED EndPoint "EndPoint is deprecated. Please use Extended instead." #-}
 -- | Endpoints of intervals
 type EndPoint r = Extended r
 
