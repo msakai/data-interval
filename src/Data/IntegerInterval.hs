@@ -306,9 +306,9 @@ pickup _ = Nothing
 --
 -- An integer @y@ is said to be /simpler/ than another @y'@ if
 --
--- * @'abs' y <= 'abs' y@, and
+-- * @'abs' y <= 'abs' y'@
 --
--- (see also 'approxRational')
+-- (see also 'approxRational' and 'Interval.simplestRationalWithin')
 simplestIntegerWithin :: IntegerInterval -> Maybe Integer
 simplestIntegerWithin i
   | null i    = Nothing
