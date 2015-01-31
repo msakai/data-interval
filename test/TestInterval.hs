@@ -1,5 +1,6 @@
 {-# LANGUAGE TemplateHaskell, ScopedTypeVariables #-}
 
+import qualified Algebra.Lattice as L
 import Control.Monad
 import Data.Maybe
 import Data.Ratio
@@ -47,6 +48,10 @@ case_nonnull_top =
 {--------------------------------------------------------------------
   singleton
 --------------------------------------------------------------------}
+
+-- prop_singleton_isSingleton =
+--   forAll arbitrary $ \(r::Rational) ->
+--     Interval.isSingleton (Interval.singleton r)
 
 prop_singleton_member =
   forAll arbitrary $ \r ->
@@ -177,6 +182,10 @@ prop_member_isSubsetOf =
   forAll intervals $ \a ->
     Interval.member r a == Interval.isSubsetOf (Interval.singleton r) a
 
+prop_notMember_empty =
+  forAll arbitrary $ \(r::Rational) ->
+    r `Interval.notMember` Interval.empty
+
 {--------------------------------------------------------------------
   isSubsetOf
 --------------------------------------------------------------------}
@@ -198,9 +207,26 @@ prop_isSubsetOf_trans =
 --     Interval.isSubsetOf a b && Interval.isSubsetOf b a
 --     ==> a == b
 
+prop_isProperSubsetOf_not_refl =
+  forAll intervals $ \a ->
+    not (a `Interval.isProperSubsetOf` a)
+
+prop_isProperSubsetOf_trans =
+  forAll intervals $ \a ->
+  forAll intervals $ \b ->
+  forAll intervals $ \c ->
+    Interval.isProperSubsetOf a b && Interval.isProperSubsetOf b c
+    ==> Interval.isProperSubsetOf a c
+
 {--------------------------------------------------------------------
   simplestRationalWithin
 --------------------------------------------------------------------}
+
+prop_simplestRationalWithin_member =
+  forAll intervals $ \a ->
+    case Interval.simplestRationalWithin a of
+      Nothing -> True
+      Just x -> x `Interval.member` a
 
 prop_simplestRationalWithin_and_approxRational =
   forAll arbitrary $ \(r::Rational) ->
@@ -248,6 +274,21 @@ case_pickup_empty =
 
 case_pickup_whole =
   isJust (Interval.pickup (Interval.whole :: Interval Rational)) @?= True
+
+prop_pickup_singleton =
+  forAll arbitrary $ \(x::Rational) ->
+    Interval.pickup (Interval.singleton x) == Just x
+
+{--------------------------------------------------------------------
+  width
+--------------------------------------------------------------------}
+
+case_width_null =
+  Interval.width Interval.empty @?= 0
+
+prop_width_singleton =
+  forAll arbitrary $ \(r::Rational) ->
+    Interval.width (Interval.singleton r) == 0
 
 {--------------------------------------------------------------------
   Comparison
@@ -605,6 +646,14 @@ case_mult_test6 = ival1 * ival2 @?= ival3
     ival2 = NegInf <..< (-2)
     ival3 = NegInf <..< (-4)
 
+prop_abs_signum =
+  forAll intervals $ \a ->
+    abs (signum a) `Interval.isSubsetOf` (0 <=..<= 1)
+
+prop_negate_negate =
+  forAll intervals $ \a ->
+    negate (negate a) == a
+
 {--------------------------------------------------------------------
   Fractional
 --------------------------------------------------------------------}
@@ -614,6 +663,9 @@ prop_recip_singleton =
     let n = fromIntegral (numerator r)
         d = fromIntegral (denominator r)
     in Interval.singleton n / Interval.singleton d == Interval.singleton (r::Rational)
+
+case_recip_empty =
+  recip Interval.empty @?= Interval.empty
 
 case_recip_pos =
   recip pos @?= pos
@@ -626,6 +678,30 @@ case_recip_test1 = recip i1 @?= i2
     i1, i2 :: Interval Rational
     i1 = 2 <=..< PosInf
     i2 = 0 <..<= (1/2)
+
+case_recip_test2 = recip i1 @?= i2
+  where
+    i1, i2 :: Interval Rational
+    i1 = 0 <..<= 10
+    i2 = (1/10) <=..< PosInf
+
+case_recip_test3 = recip i1 @?= i2
+  where
+    i1, i2 :: Interval Rational
+    i1 = -10 <=..< 0
+    i2 = NegInf <..<= (-1/10)
+
+prop_recip_zero =
+  forAll intervals $ \a ->
+    0 `Interval.member` a ==> recip a == Interval.whole
+
+{--------------------------------------------------------------------
+  Lattice
+--------------------------------------------------------------------}
+
+prop_Lattice_Leq_welldefined =
+  forAll intervals $ \a b ->
+    a `L.meetLeq` b == a `L.joinLeq` b
 
 {--------------------------------------------------------------------
   Read

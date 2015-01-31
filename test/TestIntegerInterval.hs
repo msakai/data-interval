@@ -1,4 +1,6 @@
 {-# LANGUAGE TemplateHaskell, ScopedTypeVariables #-}
+
+import qualified Algebra.Lattice as L
 import Control.Monad
 import Data.Maybe
 import Data.Ratio
@@ -48,6 +50,10 @@ case_nonnull_top =
 {--------------------------------------------------------------------
   singleton
 --------------------------------------------------------------------}
+
+-- prop_singleton_isSingleton =
+--   forAll arbitrary $ \x ->
+--     IntegerInterval.isSingleton (IntegerInterval.singleton x)
 
 prop_singleton_member =
   forAll arbitrary $ \r ->
@@ -178,8 +184,12 @@ prop_member_isSubsetOf =
   forAll integerIntervals $ \a ->
     IntegerInterval.member r a == IntegerInterval.isSubsetOf (IntegerInterval.singleton r) a
 
+prop_notMember_empty =
+  forAll arbitrary $ \r ->
+    r `IntegerInterval.notMember` IntegerInterval.empty
+
 {--------------------------------------------------------------------
-  isSubsetOf
+  isSubsetOf, isProperSubsetOf
 --------------------------------------------------------------------}
 
 prop_isSubsetOf_refl =
@@ -199,6 +209,45 @@ prop_isSubsetOf_trans =
 --     IntegerInterval.isSubsetOf a b && IntegerInterval.isSubsetOf b a
 --     ==> a == b
 
+prop_isProperSubsetOf_not_refl =
+  forAll integerIntervals $ \a ->
+    not (a `IntegerInterval.isProperSubsetOf` a)
+
+prop_isProperSubsetOf_trans =
+  forAll integerIntervals $ \a ->
+  forAll integerIntervals $ \b ->
+  forAll integerIntervals $ \c ->
+    IntegerInterval.isProperSubsetOf a b && IntegerInterval.isProperSubsetOf b c
+    ==> IntegerInterval.isProperSubsetOf a c
+
+{--------------------------------------------------------------------
+  simplestIntegerWithin
+--------------------------------------------------------------------}
+
+prop_simplestIntegerWithin_member =
+  forAll integerIntervals $ \a ->
+    case IntegerInterval.simplestIntegerWithin a of
+      Nothing -> True
+      Just x -> x `IntegerInterval.member` a
+
+prop_simplestIntegerWithin_singleton =
+  forAll arbitrary $ \x ->
+    IntegerInterval.simplestIntegerWithin (IntegerInterval.singleton x) == Just x
+
+case_simplestIntegerWithin_empty =
+  IntegerInterval.simplestIntegerWithin IntegerInterval.empty @?= Nothing
+
+{--------------------------------------------------------------------
+  width
+--------------------------------------------------------------------}
+
+case_width_null =
+  IntegerInterval.width IntegerInterval.empty @?= 0
+
+prop_width_singleton =
+  forAll arbitrary $ \x ->
+    IntegerInterval.width (IntegerInterval.singleton x) == 0
+
 {--------------------------------------------------------------------
   pickup
 --------------------------------------------------------------------}
@@ -214,6 +263,10 @@ case_pickup_empty =
 
 case_pickup_whole =
   isJust (IntegerInterval.pickup (IntegerInterval.whole :: IntegerInterval)) @?= True
+
+prop_pickup_singleton =
+  forAll arbitrary $ \x ->
+    IntegerInterval.pickup (IntegerInterval.singleton x) == Just x
 
 {--------------------------------------------------------------------
   Comparison
@@ -571,6 +624,22 @@ case_mult_test6 = ival1 * ival2 @?= ival3
     ival2 = NegInf <..< (-2)
     ival3 = NegInf <..< (-8) -- *
 
+prop_abs_signum =
+  forAll integerIntervals $ \a ->
+    abs (signum a) `IntegerInterval.isSubsetOf` (0 <=..<= 1)
+
+prop_negate_negate =
+  forAll integerIntervals $ \a ->
+    negate (negate a) == a
+
+{--------------------------------------------------------------------
+  Lattice
+--------------------------------------------------------------------}
+
+prop_Lattice_Leq_welldefined =
+  forAll integerIntervals $ \a b ->
+    a `L.meetLeq` b == a `L.joinLeq` b
+
 {--------------------------------------------------------------------
   Read
 --------------------------------------------------------------------}
@@ -610,6 +679,12 @@ prop_toInterval_fromIntervalUnder_adjoint =
 prop_toInterval_fromInterval =
   forAll arbitrary $ \(i :: Interval Integer) ->
     IntegerInterval.toInterval (IntegerInterval.fromInterval i) `Interval.isSubsetOf` i
+
+case_fromIntervalUnder_test1 =
+  IntegerInterval.fromIntervalUnder ((0.5::Extended Rational) Interval.<=..<= 1.5) @?= IntegerInterval.singleton 1
+
+case_fromIntervalUnder_test2 =
+  IntegerInterval.fromIntervalUnder ((0::Extended Rational) Interval.<..< 2) @?= IntegerInterval.singleton 1
 
 {--------------------------------------------------------------------
   Generators
