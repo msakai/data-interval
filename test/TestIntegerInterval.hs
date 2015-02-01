@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell, ScopedTypeVariables #-}
+module TestIntegerInterval (integerIntervalTestGroup) where
 
 import qualified Algebra.Lattice as L
 import Control.Monad
@@ -731,5 +732,4 @@ nonneg = 0 <=..< PosInf
 ------------------------------------------------------------------------
 -- Test harness
 
-main :: IO ()
-main = $(defaultMainGenerator)
+integerIntervalTestGroup = $(testGroupGenerator)
