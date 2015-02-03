@@ -213,10 +213,10 @@ prop_isProperSubsetOf_not_refl =
 
 prop_isProperSubsetOf_trans =
   forAll intervals $ \a ->
-  forAll intervals $ \b ->
-  forAll intervals $ \c ->
-    Interval.isProperSubsetOf a b && Interval.isProperSubsetOf b c
-    ==> Interval.isProperSubsetOf a c
+  forAll (liftM (Interval.intersection a) intervals) $ \b ->
+  forAll (liftM (Interval.intersection b) intervals) $ \c ->
+    Interval.isProperSubsetOf c b && Interval.isProperSubsetOf b a
+    ==> Interval.isProperSubsetOf c a
 
 {--------------------------------------------------------------------
   simplestRationalWithin
