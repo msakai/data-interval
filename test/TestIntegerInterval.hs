@@ -213,12 +213,13 @@ prop_isProperSubsetOf_not_refl =
   forAll integerIntervals $ \a ->
     not (a `IntegerInterval.isProperSubsetOf` a)
 
-prop_isProperSubsetOf_trans =
-  forAll integerIntervals $ \a ->
-  forAll (liftM (IntegerInterval.intersection a) integerIntervals) $ \b ->
-  forAll (liftM (IntegerInterval.intersection b) integerIntervals) $ \c ->
-    IntegerInterval.isProperSubsetOf c b && IntegerInterval.isProperSubsetOf b a
-    ==> IntegerInterval.isProperSubsetOf c a
+-- too slow
+-- prop_isProperSubsetOf_trans =
+--   forAll integerIntervals $ \a ->
+--   forAll (liftM (IntegerInterval.intersection a) integerIntervals) $ \b ->
+--   forAll (liftM (IntegerInterval.intersection b) integerIntervals) $ \c ->
+--     IntegerInterval.isProperSubsetOf c b && IntegerInterval.isProperSubsetOf b a
+--     ==> IntegerInterval.isProperSubsetOf c a
 
 {--------------------------------------------------------------------
   simplestIntegerWithin
