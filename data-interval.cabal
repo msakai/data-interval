@@ -50,10 +50,10 @@ Test-suite test-interval
      , containers
      , lattices
      , data-interval
-     , test-framework
-     , test-framework-th
-     , test-framework-hunit
-     , test-framework-quickcheck2 >=0.2.12.3
+     , tasty >=0.10.1
+     , tasty-hunit ==0.9.*
+     , tasty-quickcheck ==0.8.*
+     , tasty-th
      , HUnit
      , QuickCheck >=2.5 && <3
   Default-Language: Haskell2010
