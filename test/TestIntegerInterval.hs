@@ -2,6 +2,7 @@
 module TestIntegerInterval (integerIntervalTestGroup) where
 
 import qualified Algebra.Lattice as L
+import Control.DeepSeq
 import Control.Monad
 import Data.Maybe
 import Data.Ratio
@@ -641,6 +642,14 @@ prop_Lattice_Leq_welldefined =
   forAll integerIntervals $ \a b ->
     a `L.meetLeq` b == a `L.joinLeq` b
 
+prop_top =
+  forAll integerIntervals $ \a ->
+    a `L.joinLeq` L.top
+
+prop_bottom =
+  forAll integerIntervals $ \a ->
+    L.bottom `L.joinLeq` a
+
 {--------------------------------------------------------------------
   Read
 --------------------------------------------------------------------}
@@ -648,6 +657,14 @@ prop_Lattice_Leq_welldefined =
 prop_show_read_invariance =
   forAll integerIntervals $ \i -> do
     i == read (show i)
+
+{--------------------------------------------------------------------
+  NFData
+--------------------------------------------------------------------}
+
+prop_rnf =
+  forAll intervals $ \a ->
+    rnf a == ()
 
 {--------------------------------------------------------------------
   Conversion between Interval and IntegerInterval

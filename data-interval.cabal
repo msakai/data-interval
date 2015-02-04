@@ -49,6 +49,7 @@ Test-suite test-interval
        base >=4 && <5
      , containers
      , lattices
+     , deepseq
      , data-interval
      , tasty >=0.10.1
      , tasty-hunit ==0.9.*
