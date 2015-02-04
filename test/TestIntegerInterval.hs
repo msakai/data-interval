@@ -222,6 +222,9 @@ prop_isProperSubsetOf_not_refl =
 --     IntegerInterval.isProperSubsetOf c b && IntegerInterval.isProperSubsetOf b a
 --     ==> IntegerInterval.isProperSubsetOf c a
 
+case_isProperSubsetOf =
+  (0 <=..<= 1) `IntegerInterval.isProperSubsetOf` (0 <=..<= 2) @?= True
+
 {--------------------------------------------------------------------
   simplestIntegerWithin
 --------------------------------------------------------------------}
@@ -487,6 +490,26 @@ prop_ne_some_witness =
           not (IntegerInterval.member x a && IntegerInterval.member y b && x /= y)
       Just (x,y) ->
         IntegerInterval.member x a .&&. IntegerInterval.member y b .&&. x /= y
+
+case_ne_some_witness_test1 = do
+  let i1 = 0
+      i2 = 0 <=..<= 1
+  case i1 /=?? i2 of
+    Nothing -> assertFailure "should not be Nothing"
+    Just (a,b) -> do
+      unless (a `IntegerInterval.member` i1) $ assertFailure (show a ++ "is not a member of " ++ show i1)
+      unless (b `IntegerInterval.member` i2) $ assertFailure (show b ++ "is not a member of " ++ show i2)
+      unless (a /= b) $ assertFailure (show a ++ " /= " ++ show b ++ " failed")
+
+case_ne_some_witness_test2 = do
+  let i1 = 0 <=..<= 1
+      i2 = 1
+  case i1 /=?? i2 of
+    Nothing -> assertFailure "should not be Nothing"
+    Just (a,b) -> do
+      unless (a `IntegerInterval.member` i1) $ assertFailure (show a ++ "is not a member of " ++ show i1)
+      unless (b `IntegerInterval.member` i2) $ assertFailure (show b ++ "is not a member of " ++ show i2)
+      unless (a /= b) $ assertFailure (show a ++ " /= " ++ show b ++ " failed")
 
 prop_le_some_witness_forget =
   forAll integerIntervals $ \a ->
