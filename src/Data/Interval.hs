@@ -275,7 +275,7 @@ intersection (Interval l1 u1) (Interval l2 u2) = interval (maxLB l1 l2) (minUB u
 --
 -- Since 0.6.0
 intersections :: Ord r => [Interval r] -> Interval r
-intersections xs = foldl' intersection whole xs
+intersections = foldl' intersection whole
 
 -- | convex hull of two intervals
 hull :: forall r. Ord r => Interval r -> Interval r -> Interval r
@@ -305,7 +305,7 @@ hull (Interval l1 u1) (Interval l2 u2) = interval (minLB l1 l2) (maxUB u1 u2)
 --
 -- Since 0.6.0
 hulls :: Ord r => [Interval r] -> Interval r
-hulls xs = foldl' hull empty xs
+hulls = foldl' hull empty
 
 -- | Is the interval empty?
 null :: Ord r => Interval r -> Bool
@@ -384,7 +384,7 @@ simplestRationalWithin i | null i = Nothing
 simplestRationalWithin i
   | 0 <! i    = Just $ go i
   | i <! 0    = Just $ - go (- i)
-  | otherwise = assert (0 `member` i) $ Just $ 0
+  | otherwise = assert (0 `member` i) $ Just 0
   where
     go i
       | fromInteger lb_floor       `member` i = fromInteger lb_floor
@@ -476,7 +476,7 @@ a <=? b =
 --
 -- Since 1.0.0
 (<=??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
-a <=?? b = do
+a <=?? b =
   case pickup (intersection a b) of
     Just x -> return (x,x)
     Nothing -> do
@@ -567,11 +567,11 @@ instance (Num r, Ord r) => Num (Interval r) where
       g _ (PosInf,_) = (inf, False)
       g _ _ = error "Interval.(+) should not happen"
 
-  negate a = scaleInterval (-1) a
+  negate = scaleInterval (-1)
 
   fromInteger i = singleton (fromInteger i)
 
-  abs x = ((x `intersection` nonneg) `hull` (negate x `intersection` nonneg))
+  abs x = (x `intersection` nonneg) `hull` (negate x `intersection` nonneg)
     where
       nonneg = 0 <=..< inf
 
@@ -604,7 +604,7 @@ instance forall r. (Real r, Fractional r) => Fractional (Interval r) where
 
 cmpUB, cmpLB :: Ord r => (Extended r, Bool) -> (Extended r, Bool) -> Ordering
 cmpUB (x1,in1) (x2,in2) = compare x1 x2 `mappend` compare in1 in2
-cmpLB (x1,in1) (x2,in2) = compare x1 x2 `mappend` flip compare in1 in2
+cmpLB (x1,in1) (x2,in2) = compare x1 x2 `mappend` compare in2 in1
 
 {-# DEPRECATED EndPoint "EndPoint is deprecated. Please use Extended instead." #-}
 -- | Endpoints of intervals

@@ -252,7 +252,7 @@ intersection (Interval l1 u1) (Interval l2 u2) = max l1 l2 <=..<= min u1 u2
 
 -- | intersection of a list of intervals.
 intersections :: [IntegerInterval] -> IntegerInterval
-intersections xs = foldl' intersection whole xs
+intersections = foldl' intersection whole
 
 -- | convex hull of two intervals
 hull :: IntegerInterval -> IntegerInterval -> IntegerInterval
@@ -263,7 +263,7 @@ hull (Interval l1 u1) (Interval l2 u2) = min l1 l2 <=..<= max u1 u2
 
 -- | convex hull of a list of intervals.
 hulls :: [IntegerInterval] -> IntegerInterval
-hulls xs = foldl' hull empty xs
+hulls = foldl' hull empty
 
 -- | Is the interval empty?
 null :: IntegerInterval -> Bool
@@ -314,7 +314,7 @@ simplestIntegerWithin i
   | null i    = Nothing
   | 0 <! i    = Just $ let Finite x = lowerBound i in x
   | i <! 0    = Just $ let Finite x = upperBound i in x
-  | otherwise = assert (0 `member` i) $ Just $ 0
+  | otherwise = assert (0 `member` i) $ Just 0
 
 -- | For all @x@ in @X@, @y@ in @Y@. @x '<' y@?
 (<!) :: IntegerInterval -> IntegerInterval -> Bool
@@ -368,7 +368,7 @@ a <=? b =
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '<=' y@?
 (<=??) :: IntegerInterval -> IntegerInterval -> Maybe (Integer,Integer)
-a <=?? b = do
+a <=?? b =
   case pickup (intersection a b) of
     Just x -> return (x,x)
     Nothing -> do
@@ -437,11 +437,11 @@ instance Num IntegerInterval where
   a + b | null a || null b = empty
   Interval lb1 ub1 + Interval lb2 ub2 = lb1 + lb2 <=..<= ub1 + ub2
 
-  negate a = scaleInterval (-1) a
+  negate = scaleInterval (-1)
 
   fromInteger i = singleton (fromInteger i)
 
-  abs x = ((x `intersection` nonneg) `hull` (negate x `intersection` nonneg))
+  abs x = (x `intersection` nonneg) `hull` (negate x `intersection` nonneg)
     where
       nonneg = 0 <=..< inf
 
