@@ -1,5 +1,9 @@
 1.2.0
 -----
+* add `Data.IntervalSet` module
+
+1.2.0
+-----
 * add `Data.IntegerInterval`
 * use extended-reals >=0.2
 * `EndPoint` is deprecated. Use `Extended` instead.
