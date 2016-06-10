@@ -39,6 +39,7 @@ Library
      DeriveDataTypeable
   Exposed-Modules:
      Data.Interval
+     Data.IntervalMap
      Data.IntervalSet
      Data.IntegerInterval
 
@@ -46,7 +47,7 @@ Test-suite test-interval
   Type:              exitcode-stdio-1.0
   HS-Source-Dirs:    test
   Main-is:           TestSuite.hs
-  Other-Modules:     TestInterval, TestIntervalSet, TestIntegerInterval
+  Other-Modules:     TestInterval, TestIntervalMap, TestIntervalSet, TestIntegerInterval
   Build-depends:
        base >=4 && <5
      , containers
