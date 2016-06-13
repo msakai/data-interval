@@ -499,11 +499,11 @@ prop_monoid_assoc =
 
 prop_monoid_unitL =
   forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
-    IntervalMap.empty <> a == a
+    mempty <> a == a
 
 prop_monoid_unitR =
   forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
-    a <> IntervalMap.empty == a
+    a <> mempty == a
 
 {--------------------------------------------------------------------
   NFData
