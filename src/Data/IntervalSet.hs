@@ -46,9 +46,8 @@ module Data.IntervalSet
   , difference
 
   -- * Conversion
-  , fromInterval
-  , fromIntervalList
-  , toIntervalList
+  , fromList
+  , toList
   )
   where
 
@@ -76,15 +75,15 @@ newtype IntervalSet r = IntervalSet (Map (Extended r) (Interval r))
 
 instance (Ord r, Show r) => Show (IntervalSet r) where
   showsPrec p (IntervalSet m) = showParen (p > appPrec) $
-    showString "fromIntervalList " .
+    showString "fromList " .
     showsPrec (appPrec+1) (Map.elems m)
 
 instance (Ord r, Read r) => Read (IntervalSet r) where
   readsPrec p =
     (readParen (p > appPrec) $ \s0 -> do
-      ("fromIntervalList",s1) <- lex s0
+      ("fromList",s1) <- lex s0
       (xs,s2) <- readsPrec (appPrec+1) s1
-      return (fromIntervalList xs, s2))
+      return (fromList xs, s2))
 
 appPrec :: Int
 appPrec = 10
@@ -93,19 +92,19 @@ appPrec = 10
 -- We provide limited reflection services for the sake of data abstraction.
 
 instance (Ord r, Data r) => Data (IntervalSet r) where
-  gfoldl k z x   = z fromIntervalList `k` toIntervalList x
-  toConstr _     = fromIntervalListConstr
+  gfoldl k z x   = z fromList `k` toList x
+  toConstr _     = fromListConstr
   gunfold k z c  = case constrIndex c of
-    1 -> k (z fromIntervalList)
+    1 -> k (z fromList)
     _ -> error "gunfold"
   dataTypeOf _   = mkNoRepType "Data.Interval.Interval"
   dataCast1 f    = gcast1 f
 
-fromIntervalListConstr :: Constr
-fromIntervalListConstr = mkConstr setDataType "fromIntervalList" [] Prefix
+fromListConstr :: Constr
+fromListConstr = mkConstr setDataType "fromList" [] Prefix
 
 setDataType :: DataType
-setDataType = mkDataType "Data.IntervalSet.IntervalSet" [fromIntervalListConstr]
+setDataType = mkDataType "Data.IntervalSet.IntervalSet" [fromListConstr]
 
 instance NFData r => NFData (IntervalSet r) where
   rnf (IntervalSet m) = rnf m
@@ -137,12 +136,12 @@ instance Ord r => Monoid (IntervalSet r) where
 lift1
   :: Ord r => (Interval r -> Interval r)
   -> IntervalSet r -> IntervalSet r
-lift1 f as = fromIntervalList [f a | a <- toIntervalList as]
+lift1 f as = fromList [f a | a <- toList as]
 
 lift2
   :: Ord r => (Interval r -> Interval r -> Interval r)
   -> IntervalSet r -> IntervalSet r -> IntervalSet r
-lift2 f as bs = fromIntervalList [f a b | a <- toIntervalList as, b <- toIntervalList bs]
+lift2 f as bs = fromList [f a b | a <- toList as, b <- toList bs]
 
 instance (Num r, Ord r) => Num (IntervalSet r) where
   (+) = lift2 (+)
@@ -155,8 +154,8 @@ instance (Num r, Ord r) => Num (IntervalSet r) where
 
   fromInteger i = singleton (fromInteger i)
 
-  signum xs = fromIntervalList $ do
-    x <- toIntervalList xs
+  signum xs = fromList $ do
+    x <- toList xs
     y <-
       [ if Interval.member 0 x
         then Interval.singleton 0
@@ -177,23 +176,25 @@ instance forall r. (Real r, Fractional r) => Fractional (IntervalSet r) where
 #if __GLASGOW_HASKELL__ >= 708
 instance Ord r => GHCExts.IsList (IntervalSet r) where
   type Item (IntervalSet r) = Interval r
-  fromList = fromIntervalList
-  toList = toIntervalList
+  fromList = fromList
+  toList = toList
 #endif
 
 -- -----------------------------------------------------------------------
 
 -- | whole real number line (-∞, ∞)
 whole :: Ord r => IntervalSet r
-whole = fromInterval $ Interval.whole
+whole = singleton $ Interval.whole
 
 -- | empty interval set
 empty :: Ord r => IntervalSet r
 empty = IntervalSet Map.empty
 
--- | singleton set \[x,x\]
-singleton :: Ord r => r -> IntervalSet r
-singleton = fromInterval . Interval.singleton
+-- | single interval
+singleton :: Ord r => Interval r -> IntervalSet r
+singleton i
+  | Interval.null i = empty
+  | otherwise = IntervalSet $ Map.singleton (Interval.lowerBound i) i
 
 -- -----------------------------------------------------------------------
 
@@ -215,7 +216,7 @@ notMember x is = not $ x `member` is
 -- | Is this a subset?
 -- @(is1 \``isSubsetOf`\` is2)@ tells whether @is1@ is a subset of @is2@.
 isSubsetOf :: Ord r => IntervalSet r -> IntervalSet r -> Bool
-isSubsetOf is1 is2 = all (\i1 -> f i1 is2) (toIntervalList is1)
+isSubsetOf is1 is2 = all (\i1 -> f i1 is2) (toList is1)
   where
     f i1 (IntervalSet m) =
       case Map.lookupLE (Interval.lowerBound i1) m of
@@ -259,7 +260,7 @@ insert i (IntervalSet is) = IntervalSet $
         (_, m2, larger) ->
           Map.unions
           [ smaller
-          , case fromIntervalList $ i : maybeToList m1 ++ maybeToList m2 of
+          , case fromList $ i : maybeToList m1 ++ maybeToList m2 of
               IntervalSet m -> m
           , larger
           ]
@@ -291,8 +292,8 @@ delete i (IntervalSet is) = IntervalSet $
 union :: Ord r => IntervalSet r -> IntervalSet r -> IntervalSet r
 union is1@(IntervalSet m1) is2@(IntervalSet m2) =
   if Map.size m1 >= Map.size m2
-  then foldl' (\is i -> insert i is) is1 (toIntervalList is2)
-  else foldl' (\is i -> insert i is) is2 (toIntervalList is1)
+  then foldl' (\is i -> insert i is) is1 (toList is2)
+  else foldl' (\is i -> insert i is) is2 (toList is1)
 
 -- | union of a list of interval sets
 unions :: Ord r => [IntervalSet r] -> IntervalSet r
@@ -309,19 +310,13 @@ intersections = foldl' intersection whole
 -- | difference of two interval sets
 difference :: Ord r => IntervalSet r -> IntervalSet r -> IntervalSet r
 difference is1 is2 =
-  foldl' (\is i -> delete i is) is1 (toIntervalList is2)
+  foldl' (\is i -> delete i is) is1 (toList is2)
 
 -- -----------------------------------------------------------------------
 
--- | Build a interval set from a single interval.
-fromInterval :: Ord r => Interval r -> IntervalSet r
-fromInterval i
-  | Interval.null i = empty
-  | otherwise = IntervalSet $ Map.singleton (Interval.lowerBound i) i
-
 -- | Build a interval set from a list of intervals.
-fromIntervalList :: Ord r => [Interval r] -> IntervalSet r
-fromIntervalList = IntervalSet . fromIntervalAscList' . sortBy (compareLB `on` Interval.lowerBound')
+fromList :: Ord r => [Interval r] -> IntervalSet r
+fromList = IntervalSet . fromIntervalAscList' . sortBy (compareLB `on` Interval.lowerBound')
 
 fromIntervalAscList' :: Ord r => [Interval r] -> Map (Extended r) (Interval r)
 fromIntervalAscList' = Map.fromDistinctAscList . map (\i -> (Interval.lowerBound i, i)) . f
@@ -336,8 +331,8 @@ fromIntervalAscList' = Map.fromDistinctAscList . map (\i -> (Interval.lowerBound
       | otherwise = x : g y ys
 
 -- | Convert a interval set into a list of intervals.
-toIntervalList :: Ord r => IntervalSet r -> [Interval r]
-toIntervalList (IntervalSet m) = Map.elems m
+toList :: Ord r => IntervalSet r -> [Interval r]
+toList (IntervalSet m) = Map.elems m
 
 -- -----------------------------------------------------------------------
 

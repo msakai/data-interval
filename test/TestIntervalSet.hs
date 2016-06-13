@@ -51,11 +51,11 @@ case_nonnull_top =
 
 prop_singleton_member =
   forAll arbitrary $ \r ->
-    IntervalSet.member (r::Rational) (IntervalSet.singleton r)
+    IntervalSet.member (r::Rational) (fromRational r)
 
 prop_singleton_nonnull =
   forAll arbitrary $ \r1 ->
-    not $ IntervalSet.null $ IntervalSet.singleton (r1::Rational)
+    not $ IntervalSet.null $ fromRational (r1::Rational)
 
 {--------------------------------------------------------------------
   complement
@@ -74,12 +74,12 @@ prop_complement_intersection =
     IntervalSet.intersection is (IntervalSet.complement is) == IntervalSet.empty
 
 {--------------------------------------------------------------------
-  fromIntervalList
+  fromList
 --------------------------------------------------------------------}
 
-case_fromIntervalList_connected =
-  IntervalSet.fromIntervalList [ (0 <=..< 1 :: Interval Rational), 1 <=..<2 ]
-  @?= IntervalSet.fromIntervalList [ 0 <=..<2 ]
+case_fromList_connected =
+  IntervalSet.fromList [ (0 <=..< 1 :: Interval Rational), 1 <=..<2 ]
+  @?= IntervalSet.fromList [ 0 <=..<2 ]
 
 {--------------------------------------------------------------------
   insert
@@ -102,8 +102,8 @@ prop_insert_comm =
      IntervalSet.insert i2 (IntervalSet.insert i1 is)
 
 case_insert_connected =
-  IntervalSet.insert (1 <=..< 2 :: Interval Rational) (IntervalSet.fromIntervalList [ 0 <=..< 1, 2 <=..< 3 ])
-  @?= IntervalSet.fromIntervalList [ 0 <=..< 3 ]
+  IntervalSet.insert (1 <=..< 2 :: Interval Rational) (IntervalSet.fromList [ 0 <=..< 1, 2 <=..< 3 ])
+  @?= IntervalSet.singleton (0 <=..< 3)
 
 {--------------------------------------------------------------------
   delete
@@ -126,8 +126,8 @@ prop_delete_comm =
      IntervalSet.delete i2 (IntervalSet.delete i1 is)
 
 case_delete_connected =
-  IntervalSet.delete (1 <=..< 2) (IntervalSet.fromIntervalList [ 0 <=..< 3 :: Interval Rational ])
-  @?=  (IntervalSet.fromIntervalList [ 0 <=..< 1, 2 <=..< 3 ])
+  IntervalSet.delete (1 <=..< 2) (IntervalSet.fromList [ 0 <=..< 3 :: Interval Rational ])
+  @?=  (IntervalSet.fromList [ 0 <=..< 1, 2 <=..< 3 ])
 
 {--------------------------------------------------------------------
   Intersection
@@ -246,12 +246,12 @@ prop_notMember_empty =
     r `IntervalSet.notMember` IntervalSet.empty
 
 {--------------------------------------------------------------------
-  toIntervalList / fromIntervalList
+  toList / fromList
 --------------------------------------------------------------------}
 
-prop_fromIntervalList_toIntervalList_id =
+prop_fromList_toList_id =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
-    IntervalSet.fromIntervalList (IntervalSet.toIntervalList a) == a
+    IntervalSet.fromList (IntervalSet.toList a) == a
 
 {--------------------------------------------------------------------
   Show / Read
@@ -293,7 +293,7 @@ prop_monoid_unitR =
 
 prop_scale_empty =
   forAll arbitrary $ \r ->
-    IntervalSet.singleton (r::Rational) * IntervalSet.empty == IntervalSet.empty
+    fromRational (r::Rational) * IntervalSet.empty == IntervalSet.empty
 
 prop_add_comm =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
@@ -365,7 +365,7 @@ prop_mult_member =
 
 prop_abs_signum =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
-    abs (signum a) `IntervalSet.isSubsetOf` IntervalSet.fromInterval (0 <=..<= 1)
+    abs (signum a) `IntervalSet.isSubsetOf` IntervalSet.singleton (0 <=..<= 1)
 
 prop_negate_negate =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
@@ -379,7 +379,7 @@ prop_recip_singleton =
   forAll arbitrary $ \r ->
     let n = fromIntegral (numerator r)
         d = fromIntegral (denominator r)
-    in IntervalSet.singleton n / IntervalSet.singleton d == IntervalSet.singleton (r::Rational)
+    in fromRational n / fromRational d == (fromRational (r::Rational) :: IntervalSet Rational)
 
 prop_recip_zero =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
@@ -409,7 +409,7 @@ instance (Arbitrary r, Ord r) => Arbitrary (IntervalSet r) where
     if b then
       return IntervalSet.whole
     else do
-      xs <- IntervalSet.fromIntervalList <$> listOf arbitrary
+      xs <- IntervalSet.fromList <$> listOf arbitrary
       b2 <- arbitrary
       if b2 then
         return xs
@@ -433,7 +433,7 @@ nonneg = 0 <=..< PosInf
 
 pickup :: (Ord r, Real r, Fractional r) => IntervalSet r -> Maybe r
 pickup xs = do
-  x <- listToMaybe (IntervalSet.toIntervalList xs)
+  x <- listToMaybe (IntervalSet.toList xs)
   Interval.pickup x
 
 ------------------------------------------------------------------------

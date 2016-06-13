@@ -38,10 +38,13 @@ module Data.IntervalMap
   -- * Construction
   , whole
   , empty
+  , singleton
 
-  -- * Construction
+  -- ** Insertion
   , insert
   , insertWith
+
+  -- ** Delete\/Update
   , delete
   , adjust
   , update
@@ -64,9 +67,8 @@ module Data.IntervalMap
   , keys
   , assocs
   , keysSet
-  , fromInterval
-  , fromIntervalList
-  , toIntervalList
+  , fromList
+  , toList
 
   -- * Filter
   , split
@@ -84,7 +86,7 @@ import Control.Applicative hiding (empty)
 import Control.DeepSeq
 import Control.Monad
 import Data.Data
-import Data.Foldable hiding (null, foldl', and)
+import Data.Foldable hiding (null, foldl', and, toList)
 import Data.ExtendedReal
 import Data.Hashable
 import Data.List (foldl')
@@ -109,15 +111,15 @@ newtype IntervalMap r a = IntervalMap (Map (LB r) (Interval r, a))
 
 instance (Ord k, Show k, Show a) => Show (IntervalMap k a) where
   showsPrec p (IntervalMap m) = showParen (p > appPrec) $
-    showString "fromIntervalList " .
+    showString "fromList " .
     showsPrec (appPrec+1) (Map.elems m)
 
 instance (Ord k, Read k, Read a) => Read (IntervalMap k a) where
   readsPrec p =
     (readParen (p > appPrec) $ \s0 -> do
-      ("fromIntervalList",s1) <- lex s0
+      ("fromList",s1) <- lex s0
       (xs,s2) <- readsPrec (appPrec+1) s1
-      return (fromIntervalList xs, s2))
+      return (fromList xs, s2))
 
 appPrec :: Int
 appPrec = 10
@@ -126,25 +128,25 @@ appPrec = 10
 -- We provide limited reflection services for the sake of data abstraction.
 
 instance (Data k, Data a, Ord k) => Data (IntervalMap k a) where
-  gfoldl k z x   = z fromIntervalList `k` toIntervalList x
-  toConstr _     = fromIntervalListConstr
+  gfoldl k z x   = z fromList `k` toList x
+  toConstr _     = fromListConstr
   gunfold k z c  = case constrIndex c of
-    1 -> k (z fromIntervalList)
+    1 -> k (z fromList)
     _ -> error "gunfold"
   dataTypeOf _   = mkNoRepType "Data.Interval.Interval"
   dataCast1 f    = gcast1 f
 
-fromIntervalListConstr :: Constr
-fromIntervalListConstr = mkConstr mapDataType "fromIntervalList" [] Prefix
+fromListConstr :: Constr
+fromListConstr = mkConstr mapDataType "fromList" [] Prefix
 
 mapDataType :: DataType
-mapDataType = mkDataType "Data.IntervalMap.IntervalMap" [fromIntervalListConstr]
+mapDataType = mkDataType "Data.IntervalMap.IntervalMap" [fromListConstr]
 
 instance (NFData k, NFData a) => NFData (IntervalMap k a) where
   rnf (IntervalMap m) = rnf m
 
 instance (Hashable k, Hashable a) => Hashable (IntervalMap k a) where
-  hashWithSalt s m = hashWithSalt s (toIntervalList m)
+  hashWithSalt s m = hashWithSalt s (toList m)
 
 instance Ord k => Monoid (IntervalMap k a) where
   mempty = empty
@@ -154,8 +156,8 @@ instance Ord k => Monoid (IntervalMap k a) where
 #if __GLASGOW_HASKELL__ >= 708
 instance Ord k => GHCExts.IsList (IntervalMap k a) where
   type Item (IntervalMap k a) = (Interval k, a)
-  fromList = fromIntervalList
-  toList = toIntervalList
+  fromList = fromList
+  toList = toList
 #endif
 
 -- ------------------------------------------------------------------------
@@ -226,6 +228,11 @@ whole a = IntervalMap $ Map.singleton (LB (Interval.lowerBound' i)) (i, a)
   where
     i = Interval.whole
 
+singleton :: Ord k => Interval k -> a -> IntervalMap k a
+singleton i a
+  | Interval.null i = empty
+  | otherwise = IntervalMap $ Map.singleton (LB (Interval.lowerBound' i)) (i, a)
+
 -- ------------------------------------------------------------------------
 -- Insertion
 
@@ -269,11 +276,11 @@ alter f i m =
   case split i m of
     (IntervalMap m1, IntervalMap m2, IntervalMap m3) ->
       let m2' = Map.mapMaybe (\(j,a) -> (\b -> (j,b)) <$> f (Just a)) m2
-          js = IntervalSet.fromInterval i `IntervalSet.difference` keysSet (IntervalMap m2)
+          js = IntervalSet.singleton i `IntervalSet.difference` keysSet (IntervalMap m2)
           IntervalMap m2'' =
             case f Nothing of
               Nothing -> empty
-              Just a -> fromIntervalList [(j,a) | j <- IntervalSet.toIntervalList js]
+              Just a -> fromList [(j,a) | j <- IntervalSet.toList js]
       in IntervalMap $ Map.unions [m1, m2', m2'', m3]
 
 -- ------------------------------------------------------------------------
@@ -281,11 +288,11 @@ alter f i m =
 
 union :: Ord k => IntervalMap k a -> IntervalMap k a -> IntervalMap k a
 union m1 m2 = 
-  foldl' (\m (i,a) -> insert i a m) m2 (toIntervalList m1)
+  foldl' (\m (i,a) -> insert i a m) m2 (toList m1)
 
 unionWith :: Ord k => (a -> a -> a) -> IntervalMap k a -> IntervalMap k a -> IntervalMap k a
 unionWith f m1 m2 = 
-  foldl' (\m (i,a) -> insertWith f i a m) m2 (toIntervalList m1)
+  foldl' (\m (i,a) -> insertWith f i a m) m2 (toList m1)
 
 unions :: Ord k => [IntervalMap k a] -> IntervalMap k a
 unions = foldl' union empty
@@ -294,10 +301,10 @@ unionsWith :: Ord k => (a -> a -> a) -> [IntervalMap k a] -> IntervalMap k a
 unionsWith f = foldl' (unionWith f) empty
 
 difference :: Ord k => IntervalMap k a -> IntervalMap k b -> IntervalMap k a
-difference m1 m2 = foldl' (\m i -> delete i m) m1 (IntervalSet.toIntervalList (keysSet m2))
+difference m1 m2 = foldl' (\m i -> delete i m) m1 (IntervalSet.toList (keysSet m2))
 
 intersection :: Ord k => IntervalMap k a -> IntervalMap k a -> IntervalMap k a
-intersection m1 m2 = foldl' (\m i -> delete i m) m1 (IntervalSet.toIntervalList (IntervalSet.complement (keysSet m2)))
+intersection m1 m2 = foldl' (\m i -> delete i m) m1 (IntervalSet.toList (IntervalSet.complement (keysSet m2)))
 
 -- ------------------------------------------------------------------------
 -- Traversal
@@ -315,7 +322,7 @@ map :: (a -> b) -> IntervalMap k a -> IntervalMap k b
 map f (IntervalMap m) = IntervalMap $ Map.map (\(i, a) -> (i, f a)) m
 
 mapKeysMonotonic :: forall k1 k2 a. (Ord k1, Ord k2) => (k1 -> k2) -> IntervalMap k1 a -> IntervalMap k2 a
-mapKeysMonotonic f = fromIntervalList . fmap g . toIntervalList
+mapKeysMonotonic f = fromList . fmap g . toList
   where
     g :: (Interval k1, a) -> (Interval k2, a)
     g (i, a) = (Interval.mapMonotonic f i, a)
@@ -329,22 +336,17 @@ keys :: IntervalMap k a -> [Interval k]
 keys (IntervalMap m) = [i | (i,_) <- Map.elems m]
 
 assocs :: IntervalMap k a -> [(Interval k, a)]
-assocs = toIntervalList
+assocs = toList
 
 -- FIXME: create Interval.fromIntervalAscList and use it
 keysSet :: Ord k => IntervalMap k a -> IntervalSet k
-keysSet (IntervalMap m) = IntervalSet.fromIntervalList [i | (i,_) <- Map.elems m]
+keysSet (IntervalMap m) = IntervalSet.fromList [i | (i,_) <- Map.elems m]
 
-fromInterval :: Ord k => Interval k -> a -> IntervalMap k a
-fromInterval i a
-  | Interval.null i = empty
-  | otherwise = IntervalMap $ Map.singleton (LB (Interval.lowerBound' i)) (i, a)
+toList :: IntervalMap k a -> [(Interval k, a)]
+toList (IntervalMap m) = Map.elems m
 
-toIntervalList :: IntervalMap k a -> [(Interval k, a)]
-toIntervalList (IntervalMap m) = Map.elems m
-
-fromIntervalList :: Ord k => [(Interval k, a)] -> IntervalMap k a
-fromIntervalList = foldl' (\m (i,a) -> insert i a m) empty
+fromList :: Ord k => [(Interval k, a)] -> IntervalMap k a
+fromList = foldl' (\m (i,a) -> insert i a m) empty
 
 -- ------------------------------------------------------------------------
 -- Filter
@@ -388,7 +390,7 @@ isSubmapOfBy f m1 m2 = and $
   [ case lookupInterval i m2 of
       Nothing -> False
       Just b -> f a b
-  | (i,a) <- toIntervalList m1 ]
+  | (i,a) <- toList m1 ]
 
 isProperSubmapOf :: (Ord k, Eq a) => IntervalMap k a -> IntervalMap k a -> Bool
 isProperSubmapOf = isProperSubmapOfBy (==)

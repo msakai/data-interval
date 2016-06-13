@@ -52,7 +52,7 @@ case_nonnull_top =
 prop_insert_whole =
   forAll arbitrary $ \(m :: IntervalMap Rational Integer) ->
      forAll arbitrary $ \a ->
-       IntervalMap.insert Interval.whole a m == IntervalMap.fromInterval Interval.whole a
+       IntervalMap.insert Interval.whole a m == IntervalMap.singleton Interval.whole a
 
 prop_insert_empty =
   forAll arbitrary $ \(m :: IntervalMap Rational Integer) ->
@@ -73,7 +73,7 @@ prop_insert_isSubmapOf =
   forAll arbitrary $ \(m :: IntervalMap Rational Integer) ->
     forAll arbitrary $ \i ->
       forAll arbitrary $ \a ->
-        IntervalMap.isSubmapOf (IntervalMap.fromInterval i a) (IntervalMap.insert i a m)
+        IntervalMap.isSubmapOf (IntervalMap.singleton i a) (IntervalMap.insert i a m)
 
 prop_insert_member =
   forAll arbitrary $ \(m :: IntervalMap Rational Integer) ->
@@ -140,7 +140,7 @@ prop_delete_lookup =
 case_asjust = IntervalMap.adjust (+1) (3 <=..< 7) m @?= expected
   where
     m =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (0 <=..< 2, 0)
       , (2 <=..< 4, 2)
       , (4 <=..< 6, 4)
@@ -148,7 +148,7 @@ case_asjust = IntervalMap.adjust (+1) (3 <=..< 7) m @?= expected
       , (8 <=..< 10, 8)
       ]
     expected =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (0 <=..< 2, 0)
       , (2 <=..< 3, 2)
       , (3 <=..< 4, 3)
@@ -201,9 +201,9 @@ prop_unions_two_elems =
     IntervalMap.unions [a,b] == IntervalMap.union a b
 
 case_unionWith =
-  IntervalMap.unionWith (+) (IntervalMap.fromInterval (0 <=..<= 10) 1) (IntervalMap.fromInterval (5 <=..<= 15) 2)
+  IntervalMap.unionWith (+) (IntervalMap.singleton (0 <=..<= 10) 1) (IntervalMap.singleton (5 <=..<= 15) 2)
   @?=
-  IntervalMap.fromIntervalList [(0 <=..< 5, 1), (5 <=..<= 10, 3), (10 <..<= 15, 2)]
+  IntervalMap.fromList [(0 <=..< 5, 1), (5 <=..<= 10, 3), (10 <..<= 15, 2)]
 
 {--------------------------------------------------------------------
   Intersection
@@ -234,12 +234,12 @@ prop_notMember_empty =
 case_findWithDefault_case1 = IntervalMap.findWithDefault "B" 0 m @?= "A"
   where
     m :: IntervalMap Rational String
-    m = IntervalMap.fromInterval (0 <=..<1) "A"
+    m = IntervalMap.singleton (0 <=..<1) "A"
 
 case_findWithDefault_case2 = IntervalMap.findWithDefault "B" 1 m @?= "B"
   where
     m :: IntervalMap Rational String
-    m = IntervalMap.fromInterval (0 <=..<1) "A"
+    m = IntervalMap.singleton (0 <=..<1) "A"
 
 {--------------------------------------------------------------------
   Traversal
@@ -258,12 +258,12 @@ prop_Functor_compsition =
         fmap (apply f . apply g) m == fmap (apply f) (fmap (apply g) m)
 
 {--------------------------------------------------------------------
-  toIntervalList / fromIntervalList
+  toList / fromList
 --------------------------------------------------------------------}
 
-prop_fromIntervalList_toIntervalList_id =
+prop_fromList_toList_id =
   forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
-    IntervalMap.fromIntervalList (IntervalMap.toIntervalList a) == a
+    IntervalMap.fromList (IntervalMap.toList a) == a
 
 {--------------------------------------------------------------------
   Split
@@ -287,21 +287,21 @@ case_split_case1 =
   where
     m :: IntervalMap Rational String
     m =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2  <..<= 10, "A")
       , (10 <..<= 20, "B")
       , (20 <..<= 30, "C")
       ]
     smaller =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2  <..< 5, "A")
       ]
     middle =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (5 <=..<= 9, "A")
       ]
     larger =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (9  <..<= 10, "A")
       , (10 <..<= 20, "B")
       , (20 <..<= 30, "C")
@@ -312,21 +312,21 @@ case_split_case2 =
   where
     m :: IntervalMap Rational String
     m =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2  <..<= 10, "A")
       , (10 <..<= 20, "B")
       , (20 <..<= 30, "C")
       ]
     smaller =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2 <..< 5, "A")
       ]
     middle =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (5 <=..< 10, "A")
       ]
     larger =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (10, "A")
       , (10 <..<= 20, "B")
       , (20 <..<= 30, "C")
@@ -337,21 +337,21 @@ case_split_case3 =
   where
     m :: IntervalMap Rational String
     m =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2  <..<= 10, "A")
       , (10 <..<= 20, "B")
       , (20 <..<= 30, "C")
       ]
     smaller =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2  <..< 5, "A")
       ]
     middle =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (5 <=..<= 10, "A")
       ]
     larger =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (10 <..<= 20, "B")
       , (20 <..<= 30, "C")
       ]
@@ -361,21 +361,21 @@ case_split_case4 =
   where
     m :: IntervalMap Rational String
     m =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2   <..<  10, "A")
       , (10 <=..<= 20, "B")
       , (20  <..<= 30, "C")
       ]
     smaller =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2  <..< 5, "A")
       ]
     middle =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (5 <=..< 10, "A")
       ]
     larger =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (10 <=..<= 20, "B")
       , (20  <..<= 30, "C")
       ]
@@ -385,22 +385,22 @@ case_split_case5 =
   where
     m :: IntervalMap Rational String
     m =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2   <..<  10, "A")
       , (10 <=..<= 20, "B")
       , (20  <..<= 30, "C")
       ]
     smaller =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2  <..< 5, "A")
       ]
     middle =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (5 <=..< 10, "A")
       , (10, "B")
       ]
     larger =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (10 <..<= 20, "B")
       , (20 <..<= 30, "C")
       ]
@@ -410,22 +410,22 @@ case_split_case6 =
   where
     m :: IntervalMap Rational String
     m =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2   <..<  10, "A")
       , (10 <=..<= 20, "B")
       , (20  <..<= 30, "C")
       ]
     smaller =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2  <..< 5, "A")
       ]
     middle =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (5  <=..< 10, "A")
       , (10 <=..< 20, "B")
       ]
     larger =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (20, "B")
       , (20 <..<= 30, "C")
       ]
@@ -435,22 +435,22 @@ case_split_case7 =
   where
     m :: IntervalMap Rational String
     m =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2   <..<  10, "A")
       , (10 <=..<= 20, "B")
       , (20  <..<= 30, "C")
       ]
     smaller =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2  <..< 5, "A")
       ]
     middle =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (5  <=..<  10, "A")
       , (10 <=..<= 20, "B")
       ]
     larger =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (20 <..<= 30, "C")
       ]
 
@@ -459,23 +459,23 @@ case_split_case8 =
   where
     m :: IntervalMap Rational String
     m =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2   <..<  10, "A")
       , (10 <=..<= 20, "B")
       , (20  <..<= 30, "C")
       ]
     smaller =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (2  <..< 5, "A")
       ]
     middle =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (5  <=..<  10, "A")
       , (10 <=..<= 20, "B")
       , (20  <..<  21, "C")
       ]
     larger =
-      IntervalMap.fromIntervalList
+      IntervalMap.fromList
       [ (21 <=..<= 30, "C")
       ]
 
@@ -532,7 +532,7 @@ instance (Arbitrary r, Ord r) => Arbitrary (Interval r) where
     return $ Interval.interval lb ub
 
 instance (Arbitrary k, Arbitrary a, Ord k) => Arbitrary (IntervalMap k a) where
-  arbitrary = IntervalMap.fromIntervalList <$> listOf arbitrary
+  arbitrary = IntervalMap.fromList <$> listOf arbitrary
 
 ------------------------------------------------------------------------
 -- Test harness
