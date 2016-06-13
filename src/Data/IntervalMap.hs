@@ -111,7 +111,8 @@ import qualified GHC.Exts as GHCExts
 
 -- ------------------------------------------------------------------------
 -- The IntervalMap type
-    
+
+-- | A Map from overtval over k to values a.
 newtype IntervalMap r a = IntervalMap (Map (LB r) (Interval r, a))
   deriving (Eq, Typeable)
 
@@ -181,36 +182,48 @@ instance Ord r => Ord (LB r) where
 
 infixl 9 !,\\ --
 
+-- | Find the value at a key. Calls 'error' when the element can not be found.
 (!) :: Ord k => IntervalMap k a -> k -> a
 IntervalMap m ! k =
   case Map.lookupLE (LB (Finite k, True)) m of
     Just (_, (i, a)) | k `Interval.member` i -> a
     _ -> error "IntervalMap.!: given key is not an element in the map"
 
+-- | Same as 'difference'.
 (\\) :: Ord k => IntervalMap k a -> IntervalMap k b -> IntervalMap k a
 m1 \\ m2 = difference m1 m2
 
 -- ------------------------------------------------------------------------
 -- Query
 
+-- | Is the map empty?
 null :: Ord k => IntervalMap k a -> Bool
 null (IntervalMap m) = Map.null m
 
+-- | Is the key a member of the map? See also 'notMember'.
 member :: Ord k => k -> IntervalMap k a -> Bool
 member k (IntervalMap m) =
   case Map.lookupLE (LB (Finite k, True)) m of
     Just (_, (i, _)) -> k `Interval.member` i
     Nothing -> False
 
+-- | Is the key not a member of the map? See also 'member'.
 notMember :: Ord k => k -> IntervalMap k a -> Bool
 notMember k m = not $ member k m
 
+-- | Lookup the value at a key in the map.
+--
+-- The function will return the corresponding value as @('Just' value)@,
+-- or 'Nothing' if the key isn't in the map.
 lookup :: Ord k => k -> IntervalMap k a -> Maybe a
 lookup k (IntervalMap m) =
   case Map.lookupLE (LB (Finite k, True)) m of
     Just (_, (i, a)) | k `Interval.member` i -> Just a
     _ -> Nothing
 
+-- | The expression @('findWithDefault' def k map)@ returns
+-- the value at key @k@ or returns default value @def@
+-- when the key is not in the map.
 findWithDefault :: Ord k => a -> k -> IntervalMap k a -> a
 findWithDefault def k (IntervalMap m) =
   case Map.lookupLE (LB (Finite k, True)) m of
@@ -226,14 +239,17 @@ lookupInterval i (IntervalMap m) =
 -- ------------------------------------------------------------------------
 -- Construction
 
+-- | The empty map.
 empty :: Ord k => IntervalMap k a
 empty = IntervalMap Map.empty
 
+-- | The map that maps whole range of k to a.
 whole :: Ord k => a -> IntervalMap k a
 whole a = IntervalMap $ Map.singleton (LB (Interval.lowerBound' i)) (i, a)
   where
     i = Interval.whole
 
+-- | A map with a single interval.
 singleton :: Ord k => Interval k -> a -> IntervalMap k a
 singleton i a
   | Interval.null i = empty
@@ -242,6 +258,9 @@ singleton i a
 -- ------------------------------------------------------------------------
 -- Insertion
 
+-- | insert a new key and value in the map.
+-- If the key is already present in the map, the associated value is
+-- replaced with the supplied value.
 insert :: Ord k => Interval k -> a -> IntervalMap k a -> IntervalMap k a
 insert i _ m | Interval.null i = m
 insert i a m =
@@ -249,6 +268,11 @@ insert i a m =
     (IntervalMap m1, _, IntervalMap m2) ->
       IntervalMap $ Map.union m1 (Map.insert (LB (Interval.lowerBound' i)) (i,a) m2)
 
+
+-- | Insert with a function, combining new value and old value.
+-- @'insertWith' f key value mp@ will insert the pair (interval, value) into @mp@.
+-- If the interval overlaps with existing entries, the value for the entry is replace
+-- with @(f new_value old_value)@.
 insertWith :: Ord k => (a -> a -> a) -> Interval k -> a -> IntervalMap k a -> IntervalMap k a
 insertWith _ i _ m | Interval.null i = m
 insertWith f i a m = alter g i m
@@ -259,6 +283,8 @@ insertWith f i a m = alter g i m
 -- ------------------------------------------------------------------------
 -- Delete/Update
 
+-- | Delete an interval and its value from the map. 
+-- When the interval does not overlap with the map, the original map is returned.
 delete :: Ord k => Interval k -> IntervalMap k a -> IntervalMap k a
 delete i m | Interval.null i = m
 delete i m =
@@ -266,9 +292,14 @@ delete i m =
     (IntervalMap m1, _, IntervalMap m2) ->
       IntervalMap $ Map.union m1 m2
 
+-- | Update a value at a specific interval with the result of the provided function.
+-- When the interval does not overlatp with the map, the original map is returned.
 adjust :: Ord k => (a -> a) -> Interval k -> IntervalMap k a -> IntervalMap k a
 adjust f = update (Just . f)  
 
+-- | The expression (@'update' f i map@) updates the value @x@
+-- at @i@ (if it is in the map). If (@f x@) is 'Nothing', the element is
+-- deleted. If it is (@'Just' y@), the key @i@ is bound to the new value @y@.
 update :: Ord k => (a -> Maybe a) -> Interval k -> IntervalMap k a -> IntervalMap k a
 update _ i m | Interval.null i = m
 update f i m =
@@ -276,6 +307,8 @@ update f i m =
     (IntervalMap m1, IntervalMap m2, IntervalMap m3) ->
       IntervalMap $ Map.unions [m1, Map.mapMaybe (\(i,a) -> (\b -> (i,b)) <$> f a) m2, m3]
 
+-- | The expression (@'alter' f i map@) alters the value @x@ at @i@, or absence thereof.
+-- 'alter' can be used to insert, delete, or update a value in a 'IntervalMap'.
 alter :: Ord k => (Maybe a -> Maybe a) -> Interval k -> IntervalMap k a -> IntervalMap k a
 alter _ i m | Interval.null i = m
 alter f i m =
@@ -292,23 +325,33 @@ alter f i m =
 -- ------------------------------------------------------------------------
 -- Combine
 
+-- | The expression (@'union' t1 t2@) takes the left-biased union of @t1@ and @t2@.
+-- It prefers @t1@ when overlapping keys are encountered,
 union :: Ord k => IntervalMap k a -> IntervalMap k a -> IntervalMap k a
 union m1 m2 = 
   foldl' (\m (i,a) -> insert i a m) m2 (toList m1)
 
+-- | Union with a combining function.
 unionWith :: Ord k => (a -> a -> a) -> IntervalMap k a -> IntervalMap k a -> IntervalMap k a
 unionWith f m1 m2 = 
   foldl' (\m (i,a) -> insertWith f i a m) m2 (toList m1)
 
+-- | The union of a list of maps:
+--   (@'unions' == 'Prelude.foldl' 'union' 'empty'@).
 unions :: Ord k => [IntervalMap k a] -> IntervalMap k a
 unions = foldl' union empty
 
+-- | The union of a list of maps, with a combining operation:
+--   (@'unionsWith' f == 'Prelude.foldl' ('unionWith' f) 'empty'@).
 unionsWith :: Ord k => (a -> a -> a) -> [IntervalMap k a] -> IntervalMap k a
 unionsWith f = foldl' (unionWith f) empty
 
+-- | Return elements of the first map not existing in the second map.
 difference :: Ord k => IntervalMap k a -> IntervalMap k b -> IntervalMap k a
 difference m1 m2 = foldl' (\m i -> delete i m) m1 (IntervalSet.toList (keysSet m2))
 
+-- | Intersection of two maps.
+-- Return data in the first map for the keys existing in both maps.
 intersection :: Ord k => IntervalMap k a -> IntervalMap k a -> IntervalMap k a
 intersection m1 m2 = foldl' (\m i -> delete i m) m1 (IntervalSet.toList (IntervalSet.complement (keysSet m2)))
 
@@ -324,9 +367,13 @@ instance Ord k => Foldable (IntervalMap k) where
 instance Ord k => Traversable (IntervalMap k) where
   traverse f (IntervalMap m) = IntervalMap <$> traverse (\(i,a) -> (\b -> (i,b)) <$> f a) m
 
+-- | Map a function over all values in the map.
 map :: (a -> b) -> IntervalMap k a -> IntervalMap k b
 map f (IntervalMap m) = IntervalMap $ Map.map (\(i, a) -> (i, f a)) m
 
+-- | @'mapKeys' f s@ is the map obtained by applying @f@ to each key of @s@.
+-- @f@ must be strictly monotonic.
+-- That is, for any values @x@ and @y@, if @x@ < @y@ then @f x@ < @f y@.
 mapKeysMonotonic :: forall k1 k2 a. (Ord k1, Ord k2) => (k1 -> k2) -> IntervalMap k1 a -> IntervalMap k2 a
 mapKeysMonotonic f = fromList . fmap g . toList
   where
@@ -335,36 +382,48 @@ mapKeysMonotonic f = fromList . fmap g . toList
 
 -- ------------------------------------------------------------------------
 
+-- | Return all elements of the map in the ascending order of their keys.
 elems :: IntervalMap k a -> [a]
 elems (IntervalMap m) = [a | (_,a) <- Map.elems m]
 
+-- | Return all keys of the map in ascending order. Subject to list
 keys :: IntervalMap k a -> [Interval k]
 keys (IntervalMap m) = [i | (i,_) <- Map.elems m]
 
+-- | An alias for 'toAscList'. Return all key\/value pairs in the map
+-- in ascending key order. 
 assocs :: IntervalMap k a -> [(Interval k, a)]
-assocs = toList
+assocs = toAscList
 
 -- FIXME: create Interval.fromIntervalAscList and use it
+-- | The set of all keys of the map.
 keysSet :: Ord k => IntervalMap k a -> IntervalSet k
 keysSet (IntervalMap m) = IntervalSet.fromList [i | (i,_) <- Map.elems m]
 
+-- | Convert the map to a list of key\/value pairs. 
 toList :: IntervalMap k a -> [(Interval k, a)]
 toList = toAscList
 
--- Convert the map to a list of key/value pairs where the keys are in ascending order. 
+-- | Convert the map to a list of key/value pairs where the keys are in ascending order. 
 toAscList :: IntervalMap k a -> [(Interval k, a)]
 toAscList (IntervalMap m) = Map.elems m
 
--- Convert the map to a list of key/value pairs where the keys are in descending order. 
+-- | Convert the map to a list of key/value pairs where the keys are in descending order. 
 toDescList :: IntervalMap k a -> [(Interval k, a)]
 toDescList (IntervalMap m) = fmap snd $ Map.toDescList m
 
+-- | Build a map from a list of key\/value pairs. See also 'fromAscList'.
+-- If the list contains more than one value for the same key, the last value
+-- for the key is retained.
 fromList :: Ord k => [(Interval k, a)] -> IntervalMap k a
 fromList = foldl' (\m (i,a) -> insert i a m) empty
 
 -- ------------------------------------------------------------------------
 -- Filter
 
+-- | The expression (@'split' i map@) is a pair @(map1,map2)@ where
+-- the keys in @map1@ are smaller than @i@ and the keys in @map2@ larger than @i@.
+-- Any key overlapping @i@ is found in neither @map1@ nor @map2@.
 split :: Ord k => Interval k -> IntervalMap k a -> (IntervalMap k a, IntervalMap k a, IntervalMap k a)
 split i (IntervalMap m) =
   case splitLookupLE (LB (Interval.lowerBound' i)) m of
@@ -396,9 +455,13 @@ split i (IntervalMap m) =
 -- ------------------------------------------------------------------------
 -- Submap
 
+-- | This function is defined as (@'isSubmapOf' = 'isSubmapOfBy' (==)@).
 isSubmapOf :: (Ord k, Eq a) => IntervalMap k a -> IntervalMap k a -> Bool
 isSubmapOf = isSubmapOfBy (==)
 
+-- |  The expression (@'isSubmapOfBy' f t1 t2@) returns 'True' if
+-- all keys in @t1@ are in tree @t2@, and when @f@ returns 'True' when
+-- applied to their respective values. 
 isSubmapOfBy :: Ord k => (a -> b -> Bool) -> IntervalMap k a -> IntervalMap k b -> Bool
 isSubmapOfBy f m1 m2 = and $
   [ case lookupInterval i m2 of
@@ -406,9 +469,16 @@ isSubmapOfBy f m1 m2 = and $
       Just b -> f a b
   | (i,a) <- toList m1 ]
 
+-- |  Is this a proper submap? (ie. a submap but not equal).
+-- Defined as (@'isProperSubmapOf' = 'isProperSubmapOfBy' (==)@).
 isProperSubmapOf :: (Ord k, Eq a) => IntervalMap k a -> IntervalMap k a -> Bool
 isProperSubmapOf = isProperSubmapOfBy (==)
 
+-- | Is this a proper submap? (ie. a submap but not equal).
+-- The expression (@'isProperSubmapOfBy' f m1 m2@) returns 'True' when
+-- @m1@ and @m2@ are not equal,
+-- all keys in @m1@ are in @m2@, and when @f@ returns 'True' when
+-- applied to their respective values.
 isProperSubmapOfBy :: Ord k => (a -> b -> Bool) -> IntervalMap k a -> IntervalMap k b -> Bool
 isProperSubmapOfBy f m1 m2 =
   isSubmapOfBy f m1 m2 &&
