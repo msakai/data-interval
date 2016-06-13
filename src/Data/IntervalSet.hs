@@ -102,10 +102,10 @@ instance (Ord r, Data r) => Data (IntervalSet r) where
   dataCast1 f    = gcast1 f
 
 fromIntervalListConstr :: Constr
-fromIntervalListConstr = mkConstr mapDataType "fromIntervalList" [] Prefix
+fromIntervalListConstr = mkConstr setDataType "fromIntervalList" [] Prefix
 
-mapDataType :: DataType
-mapDataType = mkDataType "Data.IntervalSet.IntervalSet" [fromIntervalListConstr]
+setDataType :: DataType
+setDataType = mkDataType "Data.IntervalSet.IntervalSet" [fromIntervalListConstr]
 
 instance NFData r => NFData (IntervalSet r) where
   rnf (IntervalSet m) = rnf m

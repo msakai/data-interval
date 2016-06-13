@@ -314,15 +314,11 @@ instance Ord k => Traversable (IntervalMap k) where
 map :: (a -> b) -> IntervalMap k a -> IntervalMap k b
 map f (IntervalMap m) = IntervalMap $ Map.map (\(i, a) -> (i, f a)) m
 
--- TODO: add Interval.mapMonotonic
 mapKeysMonotonic :: forall k1 k2 a. (Ord k1, Ord k2) => (k1 -> k2) -> IntervalMap k1 a -> IntervalMap k2 a
 mapKeysMonotonic f = fromIntervalList . fmap g . toIntervalList
   where
     g :: (Interval k1, a) -> (Interval k2, a)
-    g (i, a) = (Interval.interval (fmap f lb, in1) (fmap f ub, in2), a)
-      where
-        (lb, in1) = Interval.lowerBound' i
-        (ub, in2) = Interval.upperBound' i
+    g (i, a) = (Interval.mapMonotonic f i, a)
 
 -- ------------------------------------------------------------------------
 

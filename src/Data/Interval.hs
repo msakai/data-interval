@@ -65,6 +65,9 @@ module Data.Interval
   , hull
   , hulls
 
+  -- * Map
+  , mapMonotonic
+
   -- * Operations
   , pickup
   , simplestRationalWithin
@@ -393,6 +396,13 @@ simplestRationalWithin i
       where
         Finite lb = lowerBound i
         lb_floor  = floor lb
+
+-- @mapMonotonic f i@ is the image of @i@ under @f@, where @f@ must be a strict monotone function.
+mapMonotonic :: (Ord a, Ord b) => (a -> b) -> Interval a -> Interval b
+mapMonotonic f i = interval (fmap f lb, in1) (fmap f ub, in2)
+  where
+    (lb, in1) = lowerBound' i
+    (ub, in2) = upperBound' i
 
 -- | For all @x@ in @X@, @y@ in @Y@. @x '<' y@?
 (<!) :: Ord r => Interval r -> Interval r -> Bool
