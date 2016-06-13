@@ -253,6 +253,10 @@ prop_fromList_toList_id =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
     IntervalSet.fromList (IntervalSet.toList a) == a
 
+prop_toAscList_toDescList =
+  forAll arbitrary $ \(a :: IntervalSet Rational) ->
+    IntervalSet.toDescList a == reverse (IntervalSet.toAscList a)
+
 {--------------------------------------------------------------------
   Show / Read
 --------------------------------------------------------------------}

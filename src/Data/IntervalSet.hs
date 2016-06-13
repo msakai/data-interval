@@ -46,8 +46,15 @@ module Data.IntervalSet
   , difference
 
   -- * Conversion
+
+  -- ** List
   , fromList
   , toList
+
+  -- ** Ordered list
+  , toAscList
+  , toDescList
+  , fromAscList
   )
   where
 
@@ -318,6 +325,11 @@ difference is1 is2 =
 fromList :: Ord r => [Interval r] -> IntervalSet r
 fromList = IntervalSet . fromIntervalAscList' . sortBy (compareLB `on` Interval.lowerBound')
 
+-- | Build a map from an ascending list of intervals. 
+-- /The precondition is not checked./
+fromAscList :: Ord r => [Interval r] -> IntervalSet r
+fromAscList = IntervalSet . fromIntervalAscList'
+
 fromIntervalAscList' :: Ord r => [Interval r] -> Map (Extended r) (Interval r)
 fromIntervalAscList' = Map.fromDistinctAscList . map (\i -> (Interval.lowerBound i, i)) . f
   where
@@ -332,7 +344,15 @@ fromIntervalAscList' = Map.fromDistinctAscList . map (\i -> (Interval.lowerBound
 
 -- | Convert a interval set into a list of intervals.
 toList :: Ord r => IntervalSet r -> [Interval r]
-toList (IntervalSet m) = Map.elems m
+toList = toAscList
+
+-- | Convert a interval set into a list of intervals in ascending order.
+toAscList :: Ord r => IntervalSet r -> [Interval r]
+toAscList (IntervalSet m) = Map.elems m
+
+-- | Convert a interval set into a list of intervals in descending order.
+toDescList :: Ord r => IntervalSet r -> [Interval r]
+toDescList (IntervalSet m) = fmap snd $ Map.toDescList m
 
 -- -----------------------------------------------------------------------
 

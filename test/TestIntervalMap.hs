@@ -265,6 +265,10 @@ prop_fromList_toList_id =
   forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
     IntervalMap.fromList (IntervalMap.toList a) == a
 
+prop_toAscList_toDescList =
+  forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
+    IntervalMap.toDescList a == reverse (IntervalMap.toAscList a)
+
 {--------------------------------------------------------------------
   Split
 --------------------------------------------------------------------}

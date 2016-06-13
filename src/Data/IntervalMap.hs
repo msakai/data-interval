@@ -67,8 +67,14 @@ module Data.IntervalMap
   , keys
   , assocs
   , keysSet
+
+  -- ** List
   , fromList
   , toList
+
+  -- ** Ordered List
+  , toAscList
+  , toDescList
 
   -- * Filter
   , split
@@ -343,7 +349,15 @@ keysSet :: Ord k => IntervalMap k a -> IntervalSet k
 keysSet (IntervalMap m) = IntervalSet.fromList [i | (i,_) <- Map.elems m]
 
 toList :: IntervalMap k a -> [(Interval k, a)]
-toList (IntervalMap m) = Map.elems m
+toList = toAscList
+
+-- Convert the map to a list of key/value pairs where the keys are in ascending order. 
+toAscList :: IntervalMap k a -> [(Interval k, a)]
+toAscList (IntervalMap m) = Map.elems m
+
+-- Convert the map to a list of key/value pairs where the keys are in descending order. 
+toDescList :: IntervalMap k a -> [(Interval k, a)]
+toDescList (IntervalMap m) = fmap snd $ Map.toDescList m
 
 fromList :: Ord k => [(Interval k, a)] -> IntervalMap k a
 fromList = foldl' (\m (i,a) -> insert i a m) empty
