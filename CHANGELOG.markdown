@@ -2,6 +2,7 @@
 -----
 * add `Data.IntervalSet` module
 * add `Data.IntervalMap` module
+* add new function `mapMonotonic` to `Data.Interval` and `Data.IntegerInterval`
 
 1.2.0
 -----

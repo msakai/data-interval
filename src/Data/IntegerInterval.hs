@@ -62,6 +62,9 @@ module Data.IntegerInterval
   , hull
   , hulls
 
+  -- * Map
+  , mapMonotonic
+
   -- * Operations
   , pickup
   , simplestIntegerWithin
@@ -264,6 +267,10 @@ hull (Interval l1 u1) (Interval l2 u2) = min l1 l2 <=..<= max u1 u2
 -- | convex hull of a list of intervals.
 hulls :: [IntegerInterval] -> IntegerInterval
 hulls = foldl' hull empty
+
+-- | @mapMonotonic f i@ is the image of @i@ under @f@, where @f@ must be a strict monotone function.
+mapMonotonic :: (Integer -> Integer) -> IntegerInterval -> IntegerInterval
+mapMonotonic f (Interval l u) = Interval (fmap f l) (fmap f u)
 
 -- | Is the interval empty?
 null :: IntegerInterval -> Bool
