@@ -35,7 +35,9 @@ Library
      , extended-reals >=0.2 && <1.0
   Default-Language: Haskell2010
   Other-Extensions:
+     CPP
      ScopedTypeVariables
+     TypeFamilies
      DeriveDataTypeable
   Exposed-Modules:
      Data.Interval

@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable, MultiWayIf, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE CPP, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf, GeneralizedNewtypeDeriving #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.IntervalMap
@@ -8,7 +8,7 @@
 --
 -- Maintainer  :  masahiro.sakai@gmail.com
 -- Stability   :  provisional
--- Portability :  non-portable (ScopedTypeVariables, DeriveDataTypeable, MultiWayIf, GeneralizedNewtypeDeriving)
+-- Portability :  non-portable (CPP, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf, GeneralizedNewtypeDeriving)
 --
 -- Interval datatype and interval arithmetic.
 --
@@ -97,6 +97,9 @@ import Data.Interval (Interval, EndPoint)
 import qualified Data.Interval as Interval
 import Data.IntervalSet (IntervalSet)
 import qualified Data.IntervalSet as IntervalSet
+#if __GLASGOW_HASKELL__ >= 708
+import qualified GHC.Exts as GHCExts
+#endif
 
 -- ------------------------------------------------------------------------
 -- The IntervalMap type
@@ -148,6 +151,13 @@ instance Ord k => Monoid (IntervalMap k a) where
   mappend = union
   mconcat = unions
 
+#if __GLASGOW_HASKELL__ >= 708
+instance Ord k => GHCExts.IsList (IntervalMap k a) where
+  type Item (IntervalMap k a) = (Interval k, a)
+  fromList = fromIntervalList
+  toList = toIntervalList
+#endif
+
 -- ------------------------------------------------------------------------
 
 newtype LB r = LB (Extended r, Bool)
@@ -161,7 +171,7 @@ instance Ord r => Ord (LB r) where
 -- ------------------------------------------------------------------------
 -- Operators
 
-infixl 9 !,\\
+infixl 9 !,\\ --
 
 (!) :: Ord k => IntervalMap k a -> k -> a
 IntervalMap m ! k =

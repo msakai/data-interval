@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable, MultiWayIf #-}
+{-# LANGUAGE CPP, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.IntervalSet
@@ -8,7 +8,7 @@
 --
 -- Maintainer  :  masahiro.sakai@gmail.com
 -- Stability   :  provisional
--- Portability :  non-portable (ScopedTypeVariables, DeriveDataTypeable, MultiWayIf)
+-- Portability :  non-portable (CPP, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf)
 --
 -- Interval datatype and interval arithmetic.
 --
@@ -66,6 +66,9 @@ import Data.Maybe
 import Data.Monoid
 import Data.Interval (Interval, EndPoint)
 import qualified Data.Interval as Interval
+#if __GLASGOW_HASKELL__ >= 708
+import qualified GHC.Exts as GHCExts
+#endif
 
 -- | A set comprising zero or more non-empty, disconnected intervals.
 newtype IntervalSet r = IntervalSet (Map (Extended r) (Interval r))
@@ -170,6 +173,13 @@ instance (Num r, Ord r) => Num (IntervalSet r) where
 instance forall r. (Real r, Fractional r) => Fractional (IntervalSet r) where
   fromRational r = singleton (fromRational r)
   recip = lift1 recip
+
+#if __GLASGOW_HASKELL__ >= 708
+instance Ord r => GHCExts.IsList (IntervalSet r) where
+  type Item (IntervalSet r) = Interval r
+  fromList = fromIntervalList
+  toList = toIntervalList
+#endif
 
 -- -----------------------------------------------------------------------
 
