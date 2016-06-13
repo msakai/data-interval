@@ -6,6 +6,7 @@ import Control.Applicative ((<$>))
 import Control.DeepSeq
 import Control.Monad
 import Data.Maybe
+import Data.Monoid
 import Data.Ratio
 
 import Test.Tasty
@@ -267,6 +268,24 @@ prop_show_read_invariance =
 prop_rnf =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
     rnf a == ()
+
+{--------------------------------------------------------------------
+  Monoid
+--------------------------------------------------------------------}
+
+prop_monoid_assoc =
+  forAll arbitrary $ \(a :: IntervalSet Rational) ->
+  forAll arbitrary $ \b ->
+  forAll arbitrary $ \c ->
+    a <> (b <> c) == (a <> b) <> c
+
+prop_monoid_unitL =
+  forAll arbitrary $ \(a :: IntervalSet Rational) ->
+    mempty <> a == a
+
+prop_monoid_unitR =
+  forAll arbitrary $ \(a :: IntervalSet Rational) ->
+    a <> mempty == a
 
 {--------------------------------------------------------------------
   Num

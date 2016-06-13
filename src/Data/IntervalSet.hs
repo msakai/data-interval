@@ -126,6 +126,11 @@ instance (Ord r) => BoundedMeetSemiLattice (IntervalSet r) where
 
 instance (Ord r) => BoundedLattice (IntervalSet r)
 
+instance Ord r => Monoid (IntervalSet r) where
+  mempty = empty
+  mappend = union
+  mconcat = unions
+
 lift1
   :: Ord r => (Interval r -> Interval r)
   -> IntervalSet r -> IntervalSet r
