@@ -1,6 +1,7 @@
-1.2.0
+1.2.1
 -----
 * add `Data.IntervalSet` module
+* add `Data.IntervalMap` module
 
 1.2.0
 -----
