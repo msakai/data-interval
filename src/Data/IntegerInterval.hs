@@ -189,13 +189,19 @@ instance Read IntegerInterval where
         return (empty, s))
 
 -- This instance preserves data abstraction at the cost of inefficiency.
--- We omit reflection services for the sake of data abstraction.
+-- We provide limited reflection services for the sake of data abstraction.
 
 instance Data IntegerInterval where
   gfoldl k z x   = z (<=..<=) `k` lowerBound x `k` upperBound x
-  toConstr _     = error "toConstr"
+  toConstr _     = intervalConstr
   gunfold _ _    = error "gunfold"
   dataTypeOf _   = mkNoRepType "Data.IntegerInterval"
+
+intervalConstr :: Constr
+intervalConstr = mkConstr intervalDataType "<=..<=" [] Infix
+
+intervalDataType :: DataType
+intervalDataType = mkDataType "Data.IntegerInterval.IntegerInterval" [intervalConstr]
 
 -- | smart constructor for 'Interval'
 interval
