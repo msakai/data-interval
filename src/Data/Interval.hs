@@ -185,14 +185,22 @@ instance (Ord r, Read r) => Read (Interval r) where
         return (empty, s))
 
 -- This instance preserves data abstraction at the cost of inefficiency.
--- We omit reflection services for the sake of data abstraction.
+-- We provide limited reflection services for the sake of data abstraction.
 
 instance (Ord r, Data r) => Data (Interval r) where
   gfoldl k z x   = z interval `k` lowerBound' x `k` upperBound' x
-  toConstr _     = error "toConstr"
-  gunfold _ _    = error "gunfold"
+  toConstr _     = intervalConstr
+  gunfold k z c  = case constrIndex c of
+    1 -> k (k (z interval))
+    _ -> error "gunfold"
   dataTypeOf _   = mkNoRepType "Data.Interval.Interval"
   dataCast1 f    = gcast1 f
+
+intervalConstr :: Constr
+intervalConstr = mkConstr intervalDataType "interval" [] Prefix
+
+intervalDataType :: DataType
+intervalDataType = mkDataType "Data.Interval.Interval" [intervalConstr]
 
 -- | smart constructor for 'Interval'
 interval
