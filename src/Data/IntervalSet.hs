@@ -249,7 +249,7 @@ hull (IntervalSet m) =
 
 -- | Complement the interval set.
 complement :: Ord r => IntervalSet r -> IntervalSet r
-complement (IntervalSet m) = IntervalSet $ fromIntervalAscList' $ f (NegInf,False) (Map.elems m)
+complement (IntervalSet m) = fromAscList $ f (NegInf,False) (Map.elems m)
   where
     f prev [] = [ Interval.interval prev (PosInf,False) ]
     f prev (i : is) =
@@ -323,15 +323,15 @@ difference is1 is2 =
 
 -- | Build a interval set from a list of intervals.
 fromList :: Ord r => [Interval r] -> IntervalSet r
-fromList = IntervalSet . fromIntervalAscList' . sortBy (compareLB `on` Interval.lowerBound')
+fromList = IntervalSet . fromAscList' . sortBy (compareLB `on` Interval.lowerBound')
 
 -- | Build a map from an ascending list of intervals. 
 -- /The precondition is not checked./
 fromAscList :: Ord r => [Interval r] -> IntervalSet r
-fromAscList = IntervalSet . fromIntervalAscList'
+fromAscList = IntervalSet . fromAscList'
 
-fromIntervalAscList' :: Ord r => [Interval r] -> Map (Extended r) (Interval r)
-fromIntervalAscList' = Map.fromDistinctAscList . map (\i -> (Interval.lowerBound i, i)) . f
+fromAscList' :: Ord r => [Interval r] -> Map (Extended r) (Interval r)
+fromAscList' = Map.fromDistinctAscList . map (\i -> (Interval.lowerBound i, i)) . f
   where
     f :: Ord r => [Interval r] -> [Interval r]
     f [] = []

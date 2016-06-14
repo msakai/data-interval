@@ -30,10 +30,6 @@ module Data.IntervalMap
   , notMember
   , lookup
   , findWithDefault
-{-
-  , isSubsetOf
-  , isProperSubsetOf
--}
 
   -- * Construction
   , whole
@@ -395,10 +391,9 @@ keys (IntervalMap m) = [i | (i,_) <- Map.elems m]
 assocs :: IntervalMap k a -> [(Interval k, a)]
 assocs = toAscList
 
--- FIXME: create Interval.fromIntervalAscList and use it
 -- | The set of all keys of the map.
 keysSet :: Ord k => IntervalMap k a -> IntervalSet k
-keysSet (IntervalMap m) = IntervalSet.fromList [i | (i,_) <- Map.elems m]
+keysSet (IntervalMap m) = IntervalSet.fromAscList [i | (i,_) <- Map.elems m]
 
 -- | Convert the map to a list of key\/value pairs. 
 toList :: IntervalMap k a -> [(Interval k, a)]
@@ -412,7 +407,7 @@ toAscList (IntervalMap m) = Map.elems m
 toDescList :: IntervalMap k a -> [(Interval k, a)]
 toDescList (IntervalMap m) = fmap snd $ Map.toDescList m
 
--- | Build a map from a list of key\/value pairs. See also 'fromAscList'.
+-- | Build a map from a list of key\/value pairs.
 -- If the list contains more than one value for the same key, the last value
 -- for the key is retained.
 fromList :: Ord k => [(Interval k, a)] -> IntervalMap k a
