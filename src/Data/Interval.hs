@@ -167,11 +167,13 @@ instance (Ord r) => BoundedLattice (Interval r)
 
 instance (Ord r, Show r) => Show (Interval r) where
   showsPrec _ x | null x = showString "empty"
-  showsPrec p x = showParen (p > appPrec) $
-    showString "interval " .
-    showsPrec (appPrec+1) (lowerBound' x) .
-    showChar ' ' .
-    showsPrec (appPrec+1) (upperBound' x)
+  showsPrec p (Interval (lb,in1) (ub,in2)) =
+    showParen (p > rangeOpPrec) $
+      showsPrec (rangeOpPrec+1) lb . 
+      showChar ' ' . showString op . showChar ' ' .
+      showsPrec (rangeOpPrec+1) ub
+    where
+      op = (if in1 then "<=" else "<") ++ ".." ++ (if in2 then "<=" else "<")
 
 instance (Ord r, Read r) => Read (Interval r) where
   readsPrec p r =
@@ -180,6 +182,19 @@ instance (Ord r, Read r) => Read (Interval r) where
       (lb,s2) <- readsPrec (appPrec+1) s1
       (ub,s3) <- readsPrec (appPrec+1) s2
       return (interval lb ub, s3)) r
+    ++
+    (readParen (p > rangeOpPrec) $ \s0 -> do
+      (do (l,s1) <- readsPrec (rangeOpPrec+1) s0
+          (op',s2) <- lex s1
+          op <-
+            case op' of
+              "<=..<=" -> return (<=..<=)
+              "<..<="  -> return (<..<=)
+              "<=..<"  -> return (<=..<)
+              "<..<"   -> return (<..<)
+              _ -> []
+          (u,s3) <- readsPrec (rangeOpPrec+1) s2
+          return (op l u, s3))) r
     ++
     (do ("empty", s) <- lex r
         return (empty, s))
@@ -562,6 +577,9 @@ a /=?? b = do
 
 appPrec :: Int
 appPrec = 10
+
+rangeOpPrec :: Int
+rangeOpPrec = 5
 
 scaleInterval :: (Num r, Ord r) => r -> Interval r -> Interval r
 scaleInterval _ x | null x = empty
