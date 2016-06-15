@@ -171,11 +171,11 @@ instance BoundedLattice IntegerInterval
 
 instance Show IntegerInterval where
   showsPrec _ x | null x = showString "empty"
-  showsPrec p x = showParen (p > appPrec) $
-    showString "interval " .
-    showsPrec (appPrec+1) (lowerBound' x) .
-    showChar ' ' .
-    showsPrec (appPrec+1) (upperBound' x)
+  showsPrec p x =
+    showParen (p > rangeOpPrec) $
+      showsPrec (rangeOpPrec+1) (lowerBound x) . 
+      showString " <=..<= " .
+      showsPrec (rangeOpPrec+1) (upperBound x)
 
 instance Read IntegerInterval where
   readsPrec p r =
@@ -184,6 +184,12 @@ instance Read IntegerInterval where
       (lb,s2) <- readsPrec (appPrec+1) s1
       (ub,s3) <- readsPrec (appPrec+1) s2
       return (interval lb ub, s3)) r
+    ++
+    (readParen (p > rangeOpPrec) $ \s0 -> do
+      (do (lb,s1) <- readsPrec (rangeOpPrec+1) s0
+          ("<=..<=",s2) <- lex s1
+          (ub,s3) <- readsPrec (rangeOpPrec+1) s2
+          return (lb <=..<= ub, s3))) r
     ++
     (do ("empty", s) <- lex r
         return (empty, s))
@@ -437,6 +443,9 @@ a /=?? b = do
 
 appPrec :: Int
 appPrec = 10
+
+rangeOpPrec :: Int
+rangeOpPrec = 5
 
 scaleInterval :: Integer -> IntegerInterval -> IntegerInterval
 scaleInterval _ x | null x = empty

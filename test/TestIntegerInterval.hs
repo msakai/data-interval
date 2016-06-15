@@ -681,6 +681,9 @@ prop_show_read_invariance =
   forAll integerIntervals $ \i -> do
     i == read (show i)
 
+case_read_old =
+  read "interval (Finite 0, True) (PosInf, False)" @?= IntegerInterval.interval (Finite 0, True) (PosInf, False)
+
 {--------------------------------------------------------------------
   NFData
 --------------------------------------------------------------------}
