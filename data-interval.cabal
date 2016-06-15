@@ -55,6 +55,7 @@ Test-suite test-interval
      , containers
      , lattices
      , deepseq
+     , hashable
      , data-interval
      , tasty >=0.10.1
      , tasty-hunit ==0.9.*

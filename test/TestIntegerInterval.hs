@@ -4,6 +4,7 @@ module TestIntegerInterval (integerIntervalTestGroup) where
 import qualified Algebra.Lattice as L
 import Control.DeepSeq
 import Control.Monad
+import Data.Hashable
 import Data.Maybe
 import Data.Ratio
 
@@ -689,8 +690,16 @@ case_read_old =
 --------------------------------------------------------------------}
 
 prop_rnf =
-  forAll intervals $ \a ->
+  forAll integerIntervals $ \a ->
     rnf a == ()
+
+{--------------------------------------------------------------------
+  Hashable
+--------------------------------------------------------------------}
+
+prop_hash =
+  forAll integerIntervals $ \i ->
+    hash i `seq` True
 
 {--------------------------------------------------------------------
   Conversion between Interval and IntegerInterval

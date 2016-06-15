@@ -6,6 +6,7 @@ import qualified Algebra.Lattice as L
 import Control.Applicative ((<$>))
 import Control.DeepSeq
 import Control.Monad
+import Data.Hashable
 import Data.Monoid
 import Data.Maybe
 import Data.Ratio
@@ -158,6 +159,15 @@ case_asjust = IntervalMap.adjust (+1) (3 <=..< 7) m @?= expected
       , (8 <=..< 10, 8)
       ]
 
+prop_alter =
+  forAll arbitrary $ \(f :: Fun (Maybe Int) (Maybe Int)) ->
+  forAll arbitrary $ \(i :: Interval Rational) ->
+  forAll arbitrary $ \(m :: IntervalMap Rational Int) ->
+    case Interval.pickup i of
+      Nothing -> True
+      Just k ->
+        IntervalMap.lookup k (IntervalMap.alter (apply f) i m) == apply f (IntervalMap.lookup k m)
+
 {--------------------------------------------------------------------
   Union
 --------------------------------------------------------------------}
@@ -245,6 +255,16 @@ case_findWithDefault_case2 = IntervalMap.findWithDefault "B" 1 m @?= "B"
   where
     m :: IntervalMap Rational String
     m = IntervalMap.singleton (0 <=..<1) "A"
+
+{--------------------------------------------------------------------
+  map
+--------------------------------------------------------------------}
+
+case_mapKeysMonotonic = IntervalMap.mapKeysMonotonic (+1) m1 @?= m2
+  where
+    m1, m2 :: IntervalMap Rational String
+    m1 = IntervalMap.fromList [(0 <=..< 1, "A"), (2 <..<= 3, "B")]
+    m2 = IntervalMap.fromList [(1 <=..< 2, "A"), (3 <..<= 4, "B")]
 
 {--------------------------------------------------------------------
   Traversal
@@ -531,6 +551,14 @@ prop_monoid_unitR =
 prop_rnf =
   forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
     rnf a == ()
+
+{--------------------------------------------------------------------
+  Hashable
+--------------------------------------------------------------------}
+
+prop_hash =
+  forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
+    hash a `seq` True
 
 {--------------------------------------------------------------------
   Generators

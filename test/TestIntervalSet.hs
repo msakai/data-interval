@@ -5,6 +5,7 @@ import qualified Algebra.Lattice as L
 import Control.Applicative ((<$>))
 import Control.DeepSeq
 import Control.Monad
+import Data.Hashable
 import Data.Maybe
 import Data.Monoid
 import Data.Ratio
@@ -238,12 +239,32 @@ prop_union_intersection_duality =
     IntervalSet.intersection (IntervalSet.complement a) (IntervalSet.complement b)
 
 {--------------------------------------------------------------------
+  hull
+--------------------------------------------------------------------}
+
+prop_hull =
+  forAll arbitrary $ \(a :: IntervalSet Rational) ->
+    a `IntervalSet.isSubsetOf` IntervalSet.singleton (IntervalSet.hull a)
+
+{--------------------------------------------------------------------
   member
 --------------------------------------------------------------------}
 
 prop_notMember_empty =
   forAll arbitrary $ \(r::Rational) ->
     r `IntervalSet.notMember` IntervalSet.empty
+
+{--------------------------------------------------------------------
+  isSubsetOf
+--------------------------------------------------------------------}
+
+prop_isSubsetOf_reflexive =
+  forAll arbitrary $ \(a :: IntervalSet Rational) ->
+    a `IntervalSet.isSubsetOf` a
+
+prop_isProperSubsetOf_irreflexive =
+  forAll arbitrary $ \(a :: IntervalSet Rational) ->
+    not (a `IntervalSet.isProperSubsetOf` a)
 
 {--------------------------------------------------------------------
   toList / fromList
@@ -256,6 +277,30 @@ prop_fromList_toList_id =
 prop_toAscList_toDescList =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
     IntervalSet.toDescList a == reverse (IntervalSet.toAscList a)
+
+{--------------------------------------------------------------------
+  Eq
+--------------------------------------------------------------------}
+
+prop_Eq_reflexive =
+  forAll arbitrary $ \(i :: IntervalSet Rational) ->
+    i == i
+
+{--------------------------------------------------------------------
+  Lattice
+--------------------------------------------------------------------}
+
+prop_Lattice_Leq_welldefined =
+  forAll arbitrary $ \(a :: IntervalSet Rational) (b :: IntervalSet Rational) ->
+    a `L.meetLeq` b == a `L.joinLeq` b
+
+prop_top =
+  forAll arbitrary $ \(a :: IntervalSet Rational) ->
+    a `L.joinLeq` L.top
+
+prop_bottom =
+  forAll arbitrary $ \(a :: IntervalSet Rational) ->
+    L.bottom `L.joinLeq` a
 
 {--------------------------------------------------------------------
   Show / Read
@@ -272,6 +317,14 @@ prop_show_read_invariance =
 prop_rnf =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
     rnf a == ()
+
+{--------------------------------------------------------------------
+  Hashable
+--------------------------------------------------------------------}
+
+prop_hash =
+  forAll arbitrary $ \(i :: IntervalSet Rational) ->
+    hash i `seq` True
 
 {--------------------------------------------------------------------
   Monoid

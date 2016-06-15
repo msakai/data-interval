@@ -4,6 +4,7 @@ module TestInterval (intervalTestGroup) where
 import qualified Algebra.Lattice as L
 import Control.DeepSeq
 import Control.Monad
+import Data.Hashable
 import Data.Maybe
 import Data.Ratio
 
@@ -307,6 +308,13 @@ case_width_null =
 prop_width_singleton =
   forAll arbitrary $ \(r::Rational) ->
     Interval.width (Interval.singleton r) == 0
+
+{--------------------------------------------------------------------
+  map
+--------------------------------------------------------------------}
+
+case_mapMonotonic =
+  Interval.mapMonotonic (+1) (0 <=..< 10) @?= ((1 <=..<11) :: Interval Rational)
 
 {--------------------------------------------------------------------
   Comparison
@@ -778,6 +786,14 @@ case_read_old =
 prop_rnf =
   forAll intervals $ \a ->
     rnf a == ()
+
+{--------------------------------------------------------------------
+  Hashable
+--------------------------------------------------------------------}
+
+prop_hash =
+  forAll intervals $ \i ->
+    hash i `seq` True
 
 {--------------------------------------------------------------------
   Generators
