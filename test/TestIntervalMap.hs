@@ -214,6 +214,11 @@ prop_intersection_isSubmapOf =
     forAll arbitrary $ \b ->
       IntervalMap.isSubmapOf (IntervalMap.intersection a b) a
 
+case_intersectionWith =
+  IntervalMap.intersectionWith (+) (IntervalMap.singleton (0 <=..< 10) 1) (IntervalMap.singleton (5 <..<= 5) 1)
+  @?=
+  IntervalMap.singleton (5 <..< 5) 2
+
 {--------------------------------------------------------------------
   Difference
 --------------------------------------------------------------------}
@@ -268,6 +273,16 @@ prop_fromList_toList_id =
 prop_toAscList_toDescList =
   forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
     IntervalMap.toDescList a == reverse (IntervalMap.toAscList a)
+
+case_fromList =
+  IntervalMap.fromList [(0 <=..< 10, 1), (5 <..<= 15, 2)]
+  @?=
+  IntervalMap.fromList [(0 <=..<= 5, 1), (5 <..<= 15, 2)]
+
+case_fromListWith =
+  IntervalMap.fromListWith (+) [(0 <=..< 10, 1), (5 <..<= 15, 2)]
+  @?=
+  IntervalMap.fromList [(0 <=..<= 5, 1), (5 <..< 10, 3), (10 <=..<= 15, 2)]
 
 {--------------------------------------------------------------------
   Split

@@ -52,6 +52,7 @@ module Data.IntervalMap
   , unions
   , unionsWith
   , intersection
+  , intersectionWith
   , difference
 
   -- * Traversal
@@ -66,6 +67,7 @@ module Data.IntervalMap
 
   -- ** List
   , fromList
+  , fromListWith
   , toList
 
   -- ** Ordered List
@@ -349,7 +351,22 @@ difference m1 m2 = foldl' (\m i -> delete i m) m1 (IntervalSet.toList (keysSet m
 -- | Intersection of two maps.
 -- Return data in the first map for the keys existing in both maps.
 intersection :: Ord k => IntervalMap k a -> IntervalMap k a -> IntervalMap k a
-intersection m1 m2 = foldl' (\m i -> delete i m) m1 (IntervalSet.toList (IntervalSet.complement (keysSet m2)))
+intersection = intersectionWith const
+
+-- | Intersection with a combining function.
+intersectionWith :: Ord k => (a -> b -> c) -> IntervalMap k a -> IntervalMap k b -> IntervalMap k c 
+intersectionWith f im1@(IntervalMap m1) im2@(IntervalMap m2)
+  | Map.size m1 >= Map.size m2 = g f im1 im2
+  | otherwise = g (flip f) im2 im1
+  where
+    g :: Ord k => (a -> b -> c) -> IntervalMap k a -> IntervalMap k b -> IntervalMap k c 
+    g f im1 (IntervalMap m2) = IntervalMap $ Map.unions $ go im1 (Map.elems m2)
+      where
+        go _ [] = []
+        go im ((i,b) : xs) =
+          case split i im of
+            (_, IntervalMap m, im2) ->
+              Map.map (\(j, a) -> (j, f a b)) m : go im2 xs
 
 -- ------------------------------------------------------------------------
 -- Traversal
@@ -412,6 +429,10 @@ toDescList (IntervalMap m) = fmap snd $ Map.toDescList m
 -- for the key is retained.
 fromList :: Ord k => [(Interval k, a)] -> IntervalMap k a
 fromList = foldl' (\m (i,a) -> insert i a m) empty
+
+-- | Build a map from a list of key\/value pairs with a combining function.
+fromListWith :: Ord k => (a -> a -> a) -> [(Interval k, a)] -> IntervalMap k a
+fromListWith f = foldl' (\m (i,a) -> insertWith f i a m) empty
 
 -- ------------------------------------------------------------------------
 -- Filter
