@@ -246,6 +246,9 @@ prop_hull =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
     a `IntervalSet.isSubsetOf` IntervalSet.singleton (IntervalSet.hull a)
 
+case_hull_empty =
+  IntervalSet.hull IntervalSet.empty @?= (Interval.empty :: Interval Rational)
+
 {--------------------------------------------------------------------
   member
 --------------------------------------------------------------------}

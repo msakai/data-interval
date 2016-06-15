@@ -6,6 +6,8 @@ import qualified Algebra.Lattice as L
 import Control.Applicative ((<$>))
 import Control.DeepSeq
 import Control.Monad
+import Data.Functor.Identity
+import qualified Data.Foldable as F
 import Data.Hashable
 import Data.Monoid
 import Data.Maybe
@@ -267,7 +269,7 @@ case_mapKeysMonotonic = IntervalMap.mapKeysMonotonic (+1) m1 @?= m2
     m2 = IntervalMap.fromList [(1 <=..< 2, "A"), (3 <..<= 4, "B")]
 
 {--------------------------------------------------------------------
-  Traversal
+  Functor / Foldable / Traversal
 --------------------------------------------------------------------}
 
 prop_Functor_identity :: Property
@@ -281,6 +283,17 @@ prop_Functor_compsition =
     forAll arbitrary $ \(f :: Fun Int Int) ->
       forAll arbitrary $ \(g :: Fun Int Int) ->
         fmap (apply f . apply g) m == fmap (apply f) (fmap (apply g) m)
+
+prop_Foldable_foldMap :: Property
+prop_Foldable_foldMap =
+  forAll arbitrary $ \(m :: IntervalMap Rational Int) ->
+    forAll arbitrary $ \(f :: Fun Int String) ->
+      F.foldMap (apply f) m == F.fold (fmap (apply f) m)
+
+prop_Traversable_identity :: Property
+prop_Traversable_identity =
+  forAll arbitrary $ \(m :: IntervalMap Rational Int) ->
+    traverse Identity m == Identity m
 
 {--------------------------------------------------------------------
   toList / fromList
@@ -517,6 +530,14 @@ case_split_case8 =
       IntervalMap.fromList
       [ (21 <=..<= 30, "C")
       ]
+
+{--------------------------------------------------------------------
+  Eq
+--------------------------------------------------------------------}
+
+prop_Eq_reflexive =
+  forAll arbitrary $ \(i :: IntervalMap Rational Integer) ->
+    i == i
 
 {--------------------------------------------------------------------
   Show / Read
