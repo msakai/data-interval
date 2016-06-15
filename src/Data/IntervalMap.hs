@@ -110,7 +110,10 @@ import qualified GHC.Exts as GHCExts
 -- ------------------------------------------------------------------------
 -- The IntervalMap type
 
--- | A Map from overtval over k to values a.
+-- | A Map from non-empty, disjoint intervals over k to values a.
+--
+-- Unlike 'IntervalSet', 'IntervalMap' never merge adjacent mappings,
+-- even if adjacent intervals are connected and mapped to the same value.
 newtype IntervalMap r a = IntervalMap (Map (LB r) (Interval r, a))
   deriving (Eq, Typeable)
 

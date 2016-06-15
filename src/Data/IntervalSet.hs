@@ -76,7 +76,9 @@ import qualified Data.Interval as Interval
 import qualified GHC.Exts as GHCExts
 #endif
 
--- | A set comprising zero or more non-empty, disconnected intervals.
+-- | A set comprising zero or more non-empty, /disconnected/ intervals.
+--
+-- Any connected intervals are merged together, and empty intervals are ignored.
 newtype IntervalSet r = IntervalSet (Map (Extended r) (Interval r))
   deriving (Eq, Typeable)
 
@@ -339,7 +341,7 @@ fromAscList' = Map.fromDistinctAscList . map (\i -> (Interval.lowerBound i, i)) 
     g x [] = [x | not (Interval.null x)]
     g x (y : ys)
       | Interval.null x = g y ys
-      | isConnected x y = g (x `Interval.hull` y) ys
+      | Interval.isConnected x y = g (x `Interval.hull` y) ys
       | otherwise = x : g y ys
 
 -- | Convert a interval set into a list of intervals.
@@ -396,11 +398,3 @@ downTo i =
     (NegInf, _) -> Interval.whole
     (Finite ub, incl) ->
       Interval.interval (Finite ub, not incl) (PosInf,False)
-
-isConnected :: Ord r => Interval r -> Interval r -> Bool
-isConnected x y = x Interval.==? y || (lb1==ub2 && (lb1in || ub2in)) || (ub1==lb2 && (ub1in || lb2in))
-  where
-    (lb1,lb1in) = Interval.lowerBound' x
-    (lb2,lb2in) = Interval.lowerBound' y
-    (ub1,ub1in) = Interval.upperBound' x
-    (ub2,ub2in) = Interval.upperBound' y

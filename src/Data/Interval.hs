@@ -44,6 +44,7 @@ module Data.Interval
   , notMember
   , isSubsetOf
   , isProperSubsetOf
+  , isConnected
   , lowerBound
   , upperBound
   , lowerBound'
@@ -375,6 +376,20 @@ isSubsetOf (Interval lb1 ub1) (Interval lb2 ub2) = testLB lb1 lb2 && testUB ub1 
 -- | Is this a proper subset? (/i.e./ a subset but not equal).
 isProperSubsetOf :: Ord r => Interval r -> Interval r -> Bool
 isProperSubsetOf i1 i2 = i1 /= i2 && i1 `isSubsetOf` i2
+
+-- | Does the union of two range form a connected set?
+--
+-- Since 1.3.0
+isConnected :: Ord r => Interval r -> Interval r -> Bool
+isConnected x y
+  | null x = True
+  | null y = True
+  | otherwise = x ==? y || (lb1==ub2 && (lb1in || ub2in)) || (ub1==lb2 && (ub1in || lb2in))
+  where
+    (lb1,lb1in) = lowerBound' x
+    (lb2,lb2in) = lowerBound' y
+    (ub1,ub1in) = upperBound' x
+    (ub2,ub2in) = upperBound' y
 
 -- | Width of a interval. Width of an unbounded interval is @undefined@.
 width :: (Num r, Ord r) => Interval r -> r

@@ -223,6 +223,19 @@ prop_isProperSubsetOf_not_refl =
 case_isProperSubsetOf =
   (0 <=..<= 1) `Interval.isProperSubsetOf` (0 <=..<= 2) @?= True
 
+{-- -----------------------------------------------------------------
+  isConnected
+----------------------------------------------------------------- --}
+
+prop_isConnected_reflexive =
+  forAll intervals $ \a ->
+    a `Interval.isConnected` a
+
+prop_isConnected_symmetric =
+  forAll intervals $ \a ->
+    forAll intervals $ \b ->
+      (a `Interval.isConnected` b) == (b `Interval.isConnected` a)
+
 {--------------------------------------------------------------------
   simplestRationalWithin
 --------------------------------------------------------------------}
