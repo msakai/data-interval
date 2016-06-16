@@ -200,8 +200,10 @@ instance Read IntegerInterval where
 instance Data IntegerInterval where
   gfoldl k z x   = z (<=..<=) `k` lowerBound x `k` upperBound x
   toConstr _     = intervalConstr
-  gunfold _ _    = error "gunfold"
-  dataTypeOf _   = mkNoRepType "Data.IntegerInterval"
+  gunfold k z c  = case constrIndex c of
+    1 -> k (k (z (<=..<=)))
+    _ -> error "gunfold"
+  dataTypeOf _   = intervalDataType
 
 intervalConstr :: Constr
 intervalConstr = mkConstr intervalDataType "<=..<=" [] Infix

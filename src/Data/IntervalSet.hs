@@ -106,7 +106,7 @@ instance (Ord r, Data r) => Data (IntervalSet r) where
   gunfold k z c  = case constrIndex c of
     1 -> k (z fromList)
     _ -> error "gunfold"
-  dataTypeOf _   = mkNoRepType "Data.Interval.Interval"
+  dataTypeOf _   = setDataType
   dataCast1 f    = gcast1 f
 
 fromListConstr :: Constr

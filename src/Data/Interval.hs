@@ -209,7 +209,7 @@ instance (Ord r, Data r) => Data (Interval r) where
   gunfold k z c  = case constrIndex c of
     1 -> k (k (z interval))
     _ -> error "gunfold"
-  dataTypeOf _   = mkNoRepType "Data.Interval.Interval"
+  dataTypeOf _   = intervalDataType
   dataCast1 f    = gcast1 f
 
 intervalConstr :: Constr
