@@ -63,6 +63,9 @@ Test-suite test-interval
      , tasty-th
      , HUnit
      , QuickCheck >=2.5 && <3
+  if impl(ghc <7.10)
+    Build-depends:
+      transformers >=0.2
   Default-Language: Haskell2010
   Other-Extensions:
      TemplateHaskell

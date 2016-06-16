@@ -12,6 +12,7 @@ import Data.Hashable
 import Data.Monoid
 import Data.Maybe
 import Data.Ratio
+import Data.Traversable
 
 import Test.QuickCheck.Function
 import Test.Tasty
