@@ -260,6 +260,18 @@ case_findWithDefault_case2 = IntervalMap.findWithDefault "B" 1 m @?= "B"
     m = IntervalMap.singleton (0 <=..<1) "A"
 
 {--------------------------------------------------------------------
+  isSubsetOf
+--------------------------------------------------------------------}
+
+prop_isSubmapOf_reflexive =
+  forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
+    a `IntervalMap.isSubmapOf` a
+
+prop_isProperSubsetOf_irreflexive =
+  forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
+    not (a `IntervalMap.isProperSubmapOf` a)
+
+{--------------------------------------------------------------------
   map
 --------------------------------------------------------------------}
 
