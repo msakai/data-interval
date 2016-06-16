@@ -211,7 +211,7 @@ intervalConstr = mkConstr intervalDataType "<=..<=" [] Infix
 intervalDataType :: DataType
 intervalDataType = mkDataType "Data.IntegerInterval.IntegerInterval" [intervalConstr]
 
--- | smart constructor for 'Interval'
+-- | smart constructor for 'IntegerInterval'
 interval
   :: (Extended Integer, Bool) -- ^ lower bound and whether it is included
   -> (Extended Integer, Bool) -- ^ upper bound and whether it is included
