@@ -41,9 +41,12 @@ Library
      DeriveDataTypeable
   Exposed-Modules:
      Data.Interval
-     Data.IntervalMap
+     Data.IntervalMap.Lazy
+     Data.IntervalMap.Strict
      Data.IntervalSet
      Data.IntegerInterval
+  Other-Modules:
+     Data.IntervalMap.Base
 
 Test-suite test-interval
   Type:              exitcode-stdio-1.0
@@ -52,6 +55,7 @@ Test-suite test-interval
   Other-Modules:     TestInterval, TestIntervalMap, TestIntervalSet, TestIntegerInterval
   Build-depends:
        base >=4 && <5
+     , ChasingBottoms
      , containers
      , lattices
      , deepseq

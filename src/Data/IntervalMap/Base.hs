@@ -2,7 +2,7 @@
 {-# LANGUAGE CPP, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf, GeneralizedNewtypeDeriving #-}
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Data.IntervalMap
+-- Module      :  Data.IntervalMap.Base
 -- Copyright   :  (c) Masahiro Sakai 2016
 -- License     :  BSD-style
 --
@@ -13,10 +13,10 @@
 -- Interval datatype and interval arithmetic.
 --
 -----------------------------------------------------------------------------
-module Data.IntervalMap
+module Data.IntervalMap.Base
   (
   -- * IntervalMap type
-    IntervalMap
+    IntervalMap (..)
   , module Data.ExtendedReal
   , EndPoint
 

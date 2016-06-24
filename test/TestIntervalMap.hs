@@ -5,6 +5,7 @@ module TestIntervalMap (intervalMapTestGroup) where
 import qualified Algebra.Lattice as L
 import Control.Applicative ((<$>))
 import Control.DeepSeq
+import Control.Exception (evaluate)
 import Control.Monad
 import Data.Functor.Identity
 import qualified Data.Foldable as F
@@ -14,6 +15,7 @@ import Data.Maybe
 import Data.Ratio
 import Data.Traversable
 
+import Test.ChasingBottoms.IsBottom
 import Test.QuickCheck.Function
 import Test.Tasty
 import Test.Tasty.QuickCheck
@@ -24,8 +26,9 @@ import Data.Interval ( Interval, Extended (..), (<=..<=), (<=..<), (<..<=), (<..
 import qualified Data.Interval as Interval
 import Data.IntervalSet (IntervalSet)
 import qualified Data.IntervalSet as IntervalSet
-import Data.IntervalMap (IntervalMap)
-import qualified Data.IntervalMap as IntervalMap
+import Data.IntervalMap.Lazy (IntervalMap)
+import qualified Data.IntervalMap.Lazy as IntervalMap
+import qualified Data.IntervalMap.Strict as IntervalMapStrict
 
 {--------------------------------------------------------------------
   empty
@@ -48,6 +51,24 @@ case_null_empty =
 
 case_nonnull_top =
   IntervalMap.null (IntervalMap.whole 0 :: IntervalMap Rational Integer) @?= False
+
+case_whole_nonstrict = do
+  _ <- evaluate (IntervalMap.whole bottom :: IntervalMap Rational Integer)
+  return ()
+
+case_whole_strict =
+  isBottom (IntervalMapStrict.whole bottom :: IntervalMap Rational Integer) @?= True
+
+{--------------------------------------------------------------------
+  singleton
+--------------------------------------------------------------------}
+
+case_singleton_nonstrict = do
+  _ <- evaluate (IntervalMap.singleton 0 bottom :: IntervalMap Rational Integer)
+  return ()
+
+case_singleton_strict =
+  isBottom (IntervalMapStrict.singleton 0 bottom :: IntervalMap Rational Integer) @?= True
 
 {--------------------------------------------------------------------
   insert
@@ -103,6 +124,26 @@ prop_insert_bang =
           Just k -> IntervalMap.insert i a m IntervalMap.! k == a
           Nothing -> True
 
+prop_insert_nonstrict =
+  forAll arbitrary $ \(m :: IntervalMap Rational Integer) ->
+    forAll arbitrary $ \i ->
+      IntervalMap.insert i bottom m `seq` True
+
+prop_insert_strict =
+  forAll arbitrary $ \(m :: IntervalMap Rational Integer) ->
+    forAll arbitrary $ \i ->
+      isBottom $ IntervalMapStrict.insert i bottom m
+
+case_insertWith_nonstrict = evaluate (IntervalMap.insertWith (\_ _ -> bottom) (3 <=..< 7) 1 m) >> return ()
+  where
+    m :: IntervalMap Rational Integer
+    m = IntervalMap.singleton (0 <=..< 10) 0
+
+case_insertWith_strict = isBottom (IntervalMapStrict.insertWith (\_ _ -> bottom) (3 <=..< 7) 1 m) @?= True
+  where
+    m :: IntervalMap Rational Integer
+    m = IntervalMap.singleton (0 <=..< 10) 0
+
 {--------------------------------------------------------------------
   delete / update
 --------------------------------------------------------------------}
@@ -141,7 +182,7 @@ prop_delete_lookup =
         Just k -> IntervalMap.lookup k (IntervalMap.delete i m) == Nothing
         Nothing -> True
 
-case_asjust = IntervalMap.adjust (+1) (3 <=..< 7) m @?= expected
+case_adjust = IntervalMap.adjust (+1) (3 <=..< 7) m @?= expected
   where
     m =
       IntervalMap.fromList
@@ -162,6 +203,18 @@ case_asjust = IntervalMap.adjust (+1) (3 <=..< 7) m @?= expected
       , (8 <=..< 10, 8)
       ]
 
+case_asjust_nonstrict = do
+  _ <- evaluate $ IntervalMap.adjust (\_ -> bottom) (3 <=..< 7) m
+  return ()
+  where
+    m :: IntervalMap Rational Integer
+    m = IntervalMap.singleton (0 <=..< 10) 0
+
+case_asjust_strict = isBottom (IntervalMapStrict.adjust (\_ -> bottom) (3 <=..< 7) m) @?= True
+  where
+    m :: IntervalMap Rational Integer
+    m = IntervalMap.singleton (0 <=..< 10) 0
+
 prop_alter =
   forAll arbitrary $ \(f :: Fun (Maybe Int) (Maybe Int)) ->
   forAll arbitrary $ \(i :: Interval Rational) ->
@@ -170,6 +223,20 @@ prop_alter =
       Nothing -> True
       Just k ->
         IntervalMap.lookup k (IntervalMap.alter (apply f) i m) == apply f (IntervalMap.lookup k m)
+
+prop_alter_nonstrict =
+  forAll arbitrary $ \(i :: Interval Rational) ->
+  forAll arbitrary $ \(m :: IntervalMap Rational Int) ->
+    case Interval.pickup i of
+      Nothing -> True
+      Just k -> IntervalMap.alter (\_ -> Just bottom) i m `seq` True
+
+prop_alter_strict =
+  forAll arbitrary $ \(i :: Interval Rational) ->
+  forAll arbitrary $ \(m :: IntervalMap Rational Int) ->
+    case Interval.pickup i of
+      Nothing -> True
+      Just k -> isBottom $ IntervalMapStrict.alter (\_ -> Just bottom) i m
 
 {--------------------------------------------------------------------
   Union
@@ -218,6 +285,18 @@ case_unionWith =
   @?=
   IntervalMap.fromList [(0 <=..< 5, 1), (5 <=..<= 10, 3), (10 <..<= 15, 2)]
 
+prop_unionWith_nonstrict =
+  forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
+  forAll arbitrary $ \b ->
+    IntervalMap.unionWith (\_ _ -> bottom) a b `seq` True
+
+prop_unionWith_strict =
+  forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
+  forAll arbitrary $ \b ->
+    not (IntervalSet.null (IntervalMapStrict.keysSet a `IntervalSet.intersection` IntervalMapStrict.keysSet b))
+    ==>
+    isBottom (IntervalMapStrict.unionWith (\_ _ -> bottom) a b)
+
 {--------------------------------------------------------------------
   Intersection
 --------------------------------------------------------------------}
@@ -231,6 +310,18 @@ case_intersectionWith =
   IntervalMap.intersectionWith (+) (IntervalMap.singleton (0 <=..< 10) 1) (IntervalMap.singleton (5 <..<= 5) 1)
   @?=
   IntervalMap.singleton (5 <..< 5) 2
+
+prop_intersectionWith_nonstrict =
+  forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
+  forAll arbitrary $ \(b :: IntervalMap Rational Integer) ->
+    IntervalMap.intersectionWith (\_ _ -> bottom :: Integer) a b `seq` True
+
+prop_intersectionWith_strict =
+  forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
+  forAll arbitrary $ \(b :: IntervalMap Rational Integer) ->
+    not (IntervalSet.null (IntervalMapStrict.keysSet a `IntervalSet.intersection` IntervalMapStrict.keysSet b))
+    ==>
+    isBottom (IntervalMapStrict.intersectionWith (\_ _ -> bottom :: Integer) a b)
 
 {--------------------------------------------------------------------
   Difference
@@ -281,6 +372,16 @@ case_mapKeysMonotonic = IntervalMap.mapKeysMonotonic (+1) m1 @?= m2
     m1 = IntervalMap.fromList [(0 <=..< 1, "A"), (2 <..<= 3, "B")]
     m2 = IntervalMap.fromList [(1 <=..< 2, "A"), (3 <..<= 4, "B")]
 
+prop_map_nonstrict =
+  forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
+    IntervalMap.map (const (bottom :: Integer)) a `seq` True
+
+prop_map_strict =
+  forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
+    not (IntervalMapStrict.null a)
+    ==>
+    isBottom (IntervalMapStrict.map (const (bottom :: Integer)) a)
+
 {--------------------------------------------------------------------
   Functor / Foldable / Traversal
 --------------------------------------------------------------------}
@@ -329,6 +430,26 @@ case_fromListWith =
   IntervalMap.fromListWith (+) [(0 <=..< 10, 1), (5 <..<= 15, 2)]
   @?=
   IntervalMap.fromList [(0 <=..<= 5, 1), (5 <..< 10, 3), (10 <=..<= 15, 2)]
+
+case_fromList_nonstrict = evaluate m >> return ()
+  where
+    m :: IntervalMap Rational Integer
+    m = IntervalMap.fromList [(0 <=..< 10, bottom), (5 <..<= 15, bottom)]
+
+case_fromList_strict = isBottom m @?= True
+  where
+    m :: IntervalMap Rational Integer
+    m = IntervalMapStrict.fromList [(0 <=..< 10, bottom), (5 <..<= 15, bottom)]
+
+case_fromListWith_nonstrict = evaluate m >> return ()
+  where
+    m :: IntervalMap Rational Integer
+    m = IntervalMap.fromListWith (\_ _ -> bottom) [(0 <=..< 10, 1), (5 <..<= 15, 2)]
+
+case_fromListWith_strict = isBottom m @?= True
+  where
+    m :: IntervalMap Rational Integer
+    m = IntervalMapStrict.fromListWith (\_ _ -> bottom) [(0 <=..< 10, 1), (5 <..<= 15, 2)]
 
 {--------------------------------------------------------------------
   Split
