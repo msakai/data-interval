@@ -1,8 +1,7 @@
-{-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -Wall -fno-warn-orphans #-}
 {-# LANGUAGE TemplateHaskell, ScopedTypeVariables #-}
 module TestIntervalMap (intervalMapTestGroup) where
 
-import qualified Algebra.Lattice as L
 import Control.Applicative ((<$>))
 import Control.DeepSeq
 import Control.Exception (evaluate)
@@ -11,20 +10,15 @@ import Data.Functor.Identity
 import qualified Data.Foldable as F
 import Data.Hashable
 import Data.Monoid
-import Data.Maybe
-import Data.Ratio
-import Data.Traversable
 
 import Test.ChasingBottoms.IsBottom
 import Test.QuickCheck.Function
-import Test.Tasty
 import Test.Tasty.QuickCheck
 import Test.Tasty.HUnit
 import Test.Tasty.TH
 
 import Data.Interval ( Interval, Extended (..), (<=..<=), (<=..<), (<..<=), (<..<), (<!))
 import qualified Data.Interval as Interval
-import Data.IntervalSet (IntervalSet)
 import qualified Data.IntervalSet as IntervalSet
 import Data.IntervalMap.Lazy (IntervalMap)
 import qualified Data.IntervalMap.Lazy as IntervalMap
@@ -184,6 +178,7 @@ prop_delete_lookup =
 
 case_adjust = IntervalMap.adjust (+1) (3 <=..< 7) m @?= expected
   where
+    m :: IntervalMap Rational Integer
     m =
       IntervalMap.fromList
       [ (0 <=..< 2, 0)
@@ -227,16 +222,16 @@ prop_alter =
 prop_alter_nonstrict =
   forAll arbitrary $ \(i :: Interval Rational) ->
   forAll arbitrary $ \(m :: IntervalMap Rational Int) ->
-    case Interval.pickup i of
-      Nothing -> True
-      Just k -> IntervalMap.alter (\_ -> Just bottom) i m `seq` True
+    not (Interval.null i)
+    ==>
+    (IntervalMap.alter (\_ -> Just bottom) i m `seq` True)
 
 prop_alter_strict =
   forAll arbitrary $ \(i :: Interval Rational) ->
   forAll arbitrary $ \(m :: IntervalMap Rational Int) ->
-    case Interval.pickup i of
-      Nothing -> True
-      Just k -> isBottom $ IntervalMapStrict.alter (\_ -> Just bottom) i m
+    not (Interval.null i)
+    ==>
+    isBottom (IntervalMapStrict.alter (\_ -> Just bottom) i m)
 
 {--------------------------------------------------------------------
   Union
@@ -280,10 +275,11 @@ prop_unions_two_elems =
   forAll arbitrary $ \b ->
     IntervalMap.unions [a,b] == IntervalMap.union a b
 
-case_unionWith =
-  IntervalMap.unionWith (+) (IntervalMap.singleton (0 <=..<= 10) 1) (IntervalMap.singleton (5 <=..<= 15) 2)
-  @?=
-  IntervalMap.fromList [(0 <=..< 5, 1), (5 <=..<= 10, 3), (10 <..<= 15, 2)]
+case_unionWith = actual @?= expected
+  where
+    actual, expected :: IntervalMap Rational Integer
+    actual = IntervalMap.unionWith (+) (IntervalMap.singleton (0 <=..<= 10) 1) (IntervalMap.singleton (5 <=..<= 15) 2)
+    expected = IntervalMap.fromList [(0 <=..< 5, 1), (5 <=..<= 10, 3), (10 <..<= 15, 2)]
 
 prop_unionWith_nonstrict =
   forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
@@ -306,10 +302,11 @@ prop_intersection_isSubmapOf =
     forAll arbitrary $ \b ->
       IntervalMap.isSubmapOf (IntervalMap.intersection a b) a
 
-case_intersectionWith =
-  IntervalMap.intersectionWith (+) (IntervalMap.singleton (0 <=..< 10) 1) (IntervalMap.singleton (5 <..<= 5) 1)
-  @?=
-  IntervalMap.singleton (5 <..< 5) 2
+case_intersectionWith = actual @?= expected
+  where
+    actual, expected :: IntervalMap Rational Integer
+    actual = IntervalMap.intersectionWith (+) (IntervalMap.singleton (0 <=..< 10) 1) (IntervalMap.singleton (5 <..<= 5) 1)
+    expected = IntervalMap.singleton (5 <..< 5) 2
 
 prop_intersectionWith_nonstrict =
   forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
@@ -421,15 +418,17 @@ prop_toAscList_toDescList =
   forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
     IntervalMap.toDescList a == reverse (IntervalMap.toAscList a)
 
-case_fromList =
-  IntervalMap.fromList [(0 <=..< 10, 1), (5 <..<= 15, 2)]
-  @?=
-  IntervalMap.fromList [(0 <=..<= 5, 1), (5 <..<= 15, 2)]
+case_fromList = actual @?= expected  
+  where
+    actual, expected :: IntervalMap Rational Integer
+    actual = IntervalMap.fromList [(0 <=..< 10, 1), (5 <..<= 15, 2)]
+    expected = IntervalMap.fromList [(0 <=..<= 5, 1), (5 <..<= 15, 2)]
 
-case_fromListWith =
-  IntervalMap.fromListWith (+) [(0 <=..< 10, 1), (5 <..<= 15, 2)]
-  @?=
-  IntervalMap.fromList [(0 <=..<= 5, 1), (5 <..< 10, 3), (10 <=..<= 15, 2)]
+case_fromListWith = actual @?= expected  
+  where
+    actual, expected :: IntervalMap Rational Integer
+    actual = IntervalMap.fromListWith (+) [(0 <=..< 10, 1), (5 <..<= 15, 2)]
+    expected = IntervalMap.fromList [(0 <=..<= 5, 1), (5 <..< 10, 3), (10 <=..<= 15, 2)]
 
 case_fromList_nonstrict = evaluate m >> return ()
   where
