@@ -6,9 +6,9 @@ Author:		Masahiro Sakai (masahiro.sakai@gmail.com)
 Maintainer:	masahiro.sakai@gmail.com
 Category:	Data, Math
 Cabal-Version:	>= 1.10
-Synopsis:	Interval arithmetic for both open and closed intervals
+Synopsis:	Interval datatype, interval arithmetic and interval-based containers
 Description:
-   Interval datatype and interval arithmetic for Haskell.
+   Interval datatype, interval arithmetic and interval-based containers for Haskell.
    Unlike the intervals package (<http://hackage.haskell.org/package/intervals>),
    this package provides both open and closed intervals and is intended to be used
    with exact number types such as Rational and Integer.
