@@ -10,6 +10,7 @@ import Data.Functor.Identity
 import qualified Data.Foldable as F
 import Data.Hashable
 import Data.Monoid
+import Data.Traversable
 
 import Test.ChasingBottoms.IsBottom
 import Test.QuickCheck.Function
