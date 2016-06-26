@@ -98,10 +98,8 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe
 import Data.Monoid
-#if MIN_VERSION_base(4,9,0)
 import Data.Semigroup (Semigroup)
 import qualified Data.Semigroup as Semigroup
-#endif
 import Data.Traversable
 import Data.Interval (Interval, EndPoint)
 import qualified Data.Interval as Interval
@@ -165,11 +163,9 @@ instance Ord k => Monoid (IntervalMap k a) where
   mappend = union
   mconcat = unions
 
-#if MIN_VERSION_base(4,9,0)
 instance Ord k => Semigroup (IntervalMap k a) where
   (<>)   = union
   stimes = Semigroup.stimesIdempotentMonoid
-#endif
 
 #if __GLASGOW_HASKELL__ >= 708
 instance Ord k => GHCExts.IsList (IntervalMap k a) where
