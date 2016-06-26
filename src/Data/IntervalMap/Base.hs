@@ -446,9 +446,8 @@ fromListWith f = foldl' (\m (i,a) -> insertWith f i a m) empty
 -- ------------------------------------------------------------------------
 -- Filter
 
--- | The expression (@'split' i map@) is a pair @(map1,map2)@ where
--- the keys in @map1@ are smaller than @i@ and the keys in @map2@ larger than @i@.
--- Any key overlapping @i@ is found in neither @map1@ nor @map2@.
+-- | The expression (@'split' i map@) is a triple @(map1,map2,map3)@ where
+-- the keys in @map1@ are smaller than @i@, the keys in @map2@ are included in @i@, and the keys in @map3@ are larger than @i@.
 split :: Ord k => Interval k -> IntervalMap k a -> (IntervalMap k a, IntervalMap k a, IntervalMap k a)
 split i (IntervalMap m) =
   case splitLookupLE (LB (Interval.lowerBound' i)) m of

@@ -10,11 +10,26 @@
 -- Stability   :  provisional
 -- Portability :  non-portable (BangPatterns, TupleSections)
 --
--- Interval datatype and interval arithmetic.
+-- Mapping from intervals to values.
+--
+-- API of this module is strict in both the keys and the values.
+-- If you need value-lazy maps, use "Data.IntervalMap.Lazy" instead.
+-- The 'IntervalMap' type itself is shared between the lazy and strict modules,
+-- meaning that the same 'IntervalMap' value can be passed to functions in
+-- both modules (although that is rarely needed).
+--
+-- These modules are intended to be imported qualified, to avoid name
+-- clashes with Prelude functions, e.g.
+--
+-- >  import Data.IntervalMap.Strict (IntervalMap)
+-- >  import qualified Data.IntervalMap.Strict as IntervalMap
 --
 -----------------------------------------------------------------------------
 module Data.IntervalMap.Strict
   (
+  -- * Strictness properties
+  -- $strictness
+
   -- * IntervalMap type
     IntervalMap
   , module Data.ExtendedReal
@@ -110,6 +125,24 @@ import qualified Data.IntervalMap.Base as B
 import qualified Data.IntervalSet as IntervalSet
 import Data.List (foldl')
 import qualified Data.Map.Strict as Map
+
+-- $strictness
+--
+-- This module satisfies the following strictness properties:
+--
+-- 1. Key arguments are evaluated to WHNF;
+--
+-- 2. Keys and values are evaluated to WHNF before they are stored in
+--    the map.
+--
+-- Here's an example illustrating the first property:
+--
+-- > delete undefined m  ==  undefined
+--
+-- Here are some examples that illustrate the second property:
+--
+-- > map (\ v -> undefined) m  ==  undefined      -- m is not empty
+-- > mapKeysMonotonic (\ k -> undefined) m  ==  undefined  -- m is not empty
 
 -- | The map that maps whole range of k to a.
 whole :: Ord k => a -> IntervalMap k a
