@@ -70,6 +70,8 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe
 import Data.Monoid
+import Data.Semigroup (Semigroup)
+import qualified Data.Semigroup as Semigroup
 import Data.Interval (Interval, EndPoint)
 import qualified Data.Interval as Interval
 #if __GLASGOW_HASKELL__ >= 708
@@ -141,6 +143,10 @@ instance Ord r => Monoid (IntervalSet r) where
   mempty = empty
   mappend = union
   mconcat = unions
+
+instance (Ord r) => Semigroup (IntervalSet r) where
+  (<>)    = union
+  stimes  = Semigroup.stimesIdempotentMonoid
 
 lift1
   :: Ord r => (Interval r -> Interval r)
