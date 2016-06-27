@@ -151,7 +151,7 @@ fromListConstr :: Constr
 fromListConstr = mkConstr mapDataType "fromList" [] Prefix
 
 mapDataType :: DataType
-mapDataType = mkDataType "Data.IntervalMap.IntervalMap" [fromListConstr]
+mapDataType = mkDataType "Data.IntervalMap.Base.IntervalMap" [fromListConstr]
 
 instance (NFData k, NFData a) => NFData (IntervalMap k a) where
   rnf (IntervalMap m) = rnf m
