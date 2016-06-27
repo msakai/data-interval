@@ -8,9 +8,12 @@ import Control.Exception (evaluate)
 import Control.Monad
 import Data.Functor.Identity
 import qualified Data.Foldable as F
+import Data.Generics.Schemes
 import Data.Hashable
+import Data.Maybe
 import Data.Monoid
 import Data.Traversable
+import Data.Typeable
 
 import Test.ChasingBottoms.IsBottom
 import Test.QuickCheck.Function
@@ -791,6 +794,18 @@ prop_rnf =
 prop_hash =
   forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
     hash a `seq` True
+
+{- ------------------------------------------------------------------
+  Data
+------------------------------------------------------------------ -}
+
+case_Data = everywhere f i @?= (IML.singleton (1 <=..<= 2) 3 :: IntervalMap Integer Integer)
+  where
+    i :: IntervalMap Integer Integer
+    i = IML.singleton (0 <=..<= 1) 2
+    f x
+      | Just (y :: Integer) <- cast x = fromJust $ cast (y + 1)
+      | otherwise = x
 
 {--------------------------------------------------------------------
   Generators

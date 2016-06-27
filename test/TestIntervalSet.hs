@@ -5,10 +5,12 @@ import qualified Algebra.Lattice as L
 import Control.Applicative ((<$>))
 import Control.DeepSeq
 import Control.Monad
+import Data.Generics.Schemes
 import Data.Hashable
 import Data.Maybe
 import Data.Monoid
 import Data.Ratio
+import Data.Typeable
 
 import Test.Tasty
 import Test.Tasty.QuickCheck
@@ -444,6 +446,18 @@ prop_recip_singleton =
 prop_recip_zero =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
     0 `IntervalSet.member` a ==> recip a == IntervalSet.whole
+
+{- ------------------------------------------------------------------
+  Data
+------------------------------------------------------------------ -}
+
+case_Data = everywhere f i @?= (IntervalSet.singleton (1 <=..<= 2) :: IntervalSet Integer)
+  where
+    i :: IntervalSet Integer
+    i = IntervalSet.singleton (0 <=..<= 1)
+    f x
+      | Just (y :: Integer) <- cast x = fromJust $ cast (y + 1)
+      | otherwise = x
 
 {--------------------------------------------------------------------
   Generators

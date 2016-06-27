@@ -64,6 +64,7 @@ Test-suite test-interval
      , deepseq
      , hashable
      , data-interval
+     , syb
      , tasty >=0.10.1
      , tasty-hunit ==0.9.*
      , tasty-quickcheck ==0.8.*

@@ -4,9 +4,11 @@ module TestIntegerInterval (integerIntervalTestGroup) where
 import qualified Algebra.Lattice as L
 import Control.DeepSeq
 import Control.Monad
+import Data.Generics.Schemes
 import Data.Hashable
 import Data.Maybe
 import Data.Ratio
+import Data.Typeable
 
 import Test.Tasty
 import Test.Tasty.QuickCheck
@@ -707,6 +709,18 @@ prop_rnf =
 prop_hash =
   forAll integerIntervals $ \i ->
     hash i `seq` True
+
+{- ------------------------------------------------------------------
+  Data
+------------------------------------------------------------------ -}
+
+case_Data = everywhere f i @?= (1 <=..<= 2 :: IntegerInterval)
+  where
+    i :: IntegerInterval
+    i = 0 <=..<= 1
+    f x
+      | Just (y :: Integer) <- cast x = fromJust $ cast (y + 1)
+      | otherwise = x
 
 {--------------------------------------------------------------------
   Conversion between Interval and IntegerInterval
