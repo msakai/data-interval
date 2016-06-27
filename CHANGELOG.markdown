@@ -1,7 +1,6 @@
 1.3.0
 -----
-* add `Data.IntervalSet` module
-* add `Data.IntervalMap` module
+* add `Data.IntervalSet`, `Data.IntervalMap.Lazy`, `Data.IntervalMap.Strict` modules
 * add new function `mapMonotonic` to `Data.Interval` and `Data.IntegerInterval`
 * add new function `isConnected` to `Data.Interval`.
 
