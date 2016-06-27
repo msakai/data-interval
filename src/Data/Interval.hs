@@ -1,5 +1,8 @@
 {-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable #-}
+{-# LANGUAGE CPP, ScopedTypeVariables, DeriveDataTypeable #-}
+#if __GLASGOW_HASKELL__ >= 708
+{-# LANGUAGE RoleAnnotations #-}
+#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Interval
@@ -8,7 +11,7 @@
 --
 -- Maintainer  :  masahiro.sakai@gmail.com
 -- Stability   :  provisional
--- Portability :  non-portable (ScopedTypeVariables, DeriveDataTypeable)
+-- Portability :  non-portable (CPP, ScopedTypeVariables, DeriveDataTypeable)
 --
 -- Interval datatype and interval arithmetic.
 --
@@ -113,6 +116,10 @@ infix 4 /=??
 -- | The intervals (/i.e./ connected and convex subsets) over real numbers __R__.
 data Interval r = Interval !(Extended r, Bool) !(Extended r, Bool)
   deriving (Eq, Typeable)
+
+#if __GLASGOW_HASKELL__ >= 708
+type role Interval nominal
+#endif
 
 -- | Lower endpoint (/i.e./ greatest lower bound)  of the interval.
 --

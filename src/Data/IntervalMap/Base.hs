@@ -1,5 +1,8 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE CPP, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf, GeneralizedNewtypeDeriving #-}
+#if __GLASGOW_HASKELL__ >= 708
+{-# LANGUAGE RoleAnnotations #-}
+#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.IntervalMap.Base
@@ -119,6 +122,10 @@ import qualified GHC.Exts as GHCExts
 -- even if adjacent intervals are connected and mapped to the same value.
 newtype IntervalMap r a = IntervalMap (Map (LB r) (Interval r, a))
   deriving (Eq, Typeable)
+
+#if __GLASGOW_HASKELL__ >= 708
+type role IntervalMap nominal representational
+#endif
 
 instance (Ord k, Show k, Show a) => Show (IntervalMap k a) where
   showsPrec p (IntervalMap m) = showParen (p > appPrec) $

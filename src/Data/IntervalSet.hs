@@ -1,5 +1,8 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE CPP, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf #-}
+#if __GLASGOW_HASKELL__ >= 708
+{-# LANGUAGE RoleAnnotations #-}
+#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.IntervalSet
@@ -83,6 +86,10 @@ import qualified GHC.Exts as GHCExts
 -- Any connected intervals are merged together, and empty intervals are ignored.
 newtype IntervalSet r = IntervalSet (Map (Extended r) (Interval r))
   deriving (Eq, Typeable)
+
+#if __GLASGOW_HASKELL__ >= 708
+type role IntervalSet nominal
+#endif
 
 instance (Ord r, Show r) => Show (IntervalSet r) where
   showsPrec p (IntervalSet m) = showParen (p > appPrec) $
