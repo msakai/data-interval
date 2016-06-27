@@ -90,6 +90,7 @@ module Data.IntervalMap.Strict
   , toDescList
 
   -- * Filter
+  , filter
   , split
 
   -- * Submap
@@ -101,7 +102,7 @@ module Data.IntervalMap.Strict
   where
 
 
-import Prelude hiding (null, lookup, map)
+import Prelude hiding (null, lookup, map, filter)
 import Control.Applicative hiding (empty)
 import Data.ExtendedReal
 import Data.Interval (Interval, EndPoint)

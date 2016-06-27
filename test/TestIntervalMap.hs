@@ -512,8 +512,25 @@ case_fromListWith_strict = isBottom m @?= True
     m = IMS.fromListWith (\_ _ -> bottom) [(0 <=..< 10, 1), (5 <..<= 15, 2)]
 
 {--------------------------------------------------------------------
-  Split
+  Filter
 --------------------------------------------------------------------}
+
+case_filter = actual @?= expected
+  where
+    m, expected, actual :: IntervalMap Rational Integer
+    m =
+      IML.fromList
+      [ (2  <..<= 10, 1)
+      , (10 <..<= 20, 2)
+      , (20 <..<= 30, 3)
+      , (30 <..<= 40, 4)
+      ]
+    expected =
+      IML.fromList
+      [ (10 <..<= 20, 2)
+      , (30 <..<= 40, 4)
+      ]
+    actual = IML.filter even m
 
 prop_split =
   forAll arbitrary $ \(m :: IntervalMap Rational Integer) ->

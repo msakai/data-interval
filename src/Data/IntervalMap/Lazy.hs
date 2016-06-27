@@ -90,6 +90,7 @@ module Data.IntervalMap.Lazy
   , toDescList
 
   -- * Filter
+  , filter
   , split
 
   -- * Submap
@@ -101,7 +102,7 @@ module Data.IntervalMap.Lazy
   where
 
 
-import Prelude hiding (null, lookup, map)
+import Prelude hiding (null, lookup, map, filter)
 import Data.IntervalMap.Base
 import Data.ExtendedReal
 

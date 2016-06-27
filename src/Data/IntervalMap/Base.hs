@@ -75,6 +75,7 @@ module Data.IntervalMap.Base
   , toDescList
 
   -- * Filter
+  , filter
   , split
 
   -- * Submap
@@ -85,7 +86,7 @@ module Data.IntervalMap.Base
   )
   where
 
-import Prelude hiding (null, lookup, map)
+import Prelude hiding (null, lookup, map, filter)
 import Control.Applicative hiding (empty)
 import Control.DeepSeq
 import Control.Monad
@@ -445,6 +446,10 @@ fromListWith f = foldl' (\m (i,a) -> insertWith f i a m) empty
 
 -- ------------------------------------------------------------------------
 -- Filter
+
+-- | Filter all values that satisfy some predicate.
+filter :: Ord k => (a -> Bool) -> IntervalMap k a -> IntervalMap k a
+filter p (IntervalMap m) = IntervalMap $ Map.filter (\(_,a) -> p a) m
 
 -- | The expression (@'split' i map@) is a triple @(map1,map2,map3)@ where
 -- the keys in @map1@ are smaller than @i@, the keys in @map2@ are included in @i@, and the keys in @map3@ are larger than @i@.
