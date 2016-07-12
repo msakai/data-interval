@@ -241,15 +241,15 @@ prop_union_intersection_duality =
     IntervalSet.intersection (IntervalSet.complement a) (IntervalSet.complement b)
 
 {--------------------------------------------------------------------
-  hull
+  span
 --------------------------------------------------------------------}
 
-prop_hull =
+prop_span =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
-    a `IntervalSet.isSubsetOf` IntervalSet.singleton (IntervalSet.hull a)
+    a `IntervalSet.isSubsetOf` IntervalSet.singleton (IntervalSet.span a)
 
-case_hull_empty =
-  IntervalSet.hull IntervalSet.empty @?= (Interval.empty :: Interval Rational)
+case_span_empty =
+  IntervalSet.span IntervalSet.empty @?= (Interval.empty :: Interval Rational)
 
 {--------------------------------------------------------------------
   member

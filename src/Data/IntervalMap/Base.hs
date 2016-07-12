@@ -34,6 +34,7 @@ module Data.IntervalMap.Base
   , notMember
   , lookup
   , findWithDefault
+  , span
 
   -- * Construction
   , whole
@@ -90,7 +91,7 @@ module Data.IntervalMap.Base
   )
   where
 
-import Prelude hiding (null, lookup, map, filter)
+import Prelude hiding (null, lookup, map, filter, span)
 import Control.Applicative hiding (empty)
 import Control.DeepSeq
 import Control.Monad
@@ -251,6 +252,10 @@ lookupInterval i (IntervalMap m) =
   case Map.lookupLE (LB (Interval.lowerBound' i)) m of
     Just (_, (j, a)) | i `Interval.isSubsetOf` j -> Just a
     _ -> Nothing
+
+-- | convex hull of key intervals.
+span :: Ord k => IntervalMap k a -> Interval k
+span = IntervalSet.span . keysSet
 
 -- ------------------------------------------------------------------------
 -- Construction

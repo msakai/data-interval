@@ -35,7 +35,7 @@ module Data.IntervalSet
   , notMember
   , isSubsetOf
   , isProperSubsetOf
-  , hull
+  , span
 
   -- * Construction
   , complement
@@ -62,7 +62,7 @@ module Data.IntervalSet
   )
   where
 
-import Prelude hiding (null)
+import Prelude hiding (null, span)
 import Algebra.Lattice
 import Control.DeepSeq
 import Data.Data
@@ -251,8 +251,8 @@ isProperSubsetOf :: Ord r => IntervalSet r -> IntervalSet r -> Bool
 isProperSubsetOf is1 is2 = isSubsetOf is1 is2 && is1 /= is2
 
 -- | convex hull of a set of intervals.
-hull :: Ord r => IntervalSet r -> Interval r
-hull (IntervalSet m) =
+span :: Ord r => IntervalSet r -> Interval r
+span (IntervalSet m) =
   case Map.minView m of
     Nothing -> Interval.empty
     Just (i1, _) ->

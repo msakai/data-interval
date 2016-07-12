@@ -45,6 +45,7 @@ module Data.IntervalMap.Lazy
   , notMember
   , lookup
   , findWithDefault
+  , span
 
   -- * Construction
   , whole
@@ -102,7 +103,7 @@ module Data.IntervalMap.Lazy
   where
 
 
-import Prelude hiding (null, lookup, map, filter)
+import Prelude hiding (null, lookup, map, filter, span)
 import Data.IntervalMap.Base
 import Data.ExtendedReal
 

@@ -46,6 +46,7 @@ module Data.IntervalMap.Strict
   , notMember
   , lookup
   , findWithDefault
+  , span
 
   -- * Construction
   , whole
@@ -103,7 +104,7 @@ module Data.IntervalMap.Strict
   where
 
 
-import Prelude hiding (null, lookup, map, filter)
+import Prelude hiding (null, lookup, map, filter, span)
 import Control.Applicative hiding (empty)
 import Data.ExtendedReal
 import Data.Interval (Interval, EndPoint)

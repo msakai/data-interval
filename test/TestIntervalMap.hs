@@ -410,6 +410,14 @@ prop_isProperSubsetOf_irreflexive =
     not (a `IML.isProperSubmapOf` a)
 
 {--------------------------------------------------------------------
+  span
+--------------------------------------------------------------------}
+
+prop_span =
+  forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
+    IML.span a == IntervalSet.span (IML.keysSet a)
+
+{--------------------------------------------------------------------
   map
 --------------------------------------------------------------------}
 
