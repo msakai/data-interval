@@ -154,7 +154,15 @@ instance Ord r => Monoid (IntervalSet r) where
 
 instance (Ord r) => Semigroup (IntervalSet r) where
   (<>)    = union
+#if !defined(VERSION_semigroups)
   stimes  = Semigroup.stimesIdempotentMonoid
+#else
+#if MIN_VERSION_semigroups(0,17,0)
+  stimes  = Semigroup.stimesIdempotentMonoid
+#else
+  times1p _ a = a
+#endif
+#endif
 
 lift1
   :: Ord r => (Interval r -> Interval r)

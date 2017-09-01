@@ -175,7 +175,15 @@ instance Ord k => Monoid (IntervalMap k a) where
 
 instance Ord k => Semigroup (IntervalMap k a) where
   (<>)   = union
+#if !defined(VERSION_semigroups)
   stimes = Semigroup.stimesIdempotentMonoid
+#else
+#if MIN_VERSION_semigroups(0,17,0)
+  stimes = Semigroup.stimesIdempotentMonoid
+#else
+  times1p _ a = a
+#endif
+#endif
 
 #if __GLASGOW_HASKELL__ >= 708
 instance Ord k => GHCExts.IsList (IntervalMap k a) where
