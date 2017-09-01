@@ -481,13 +481,13 @@ prop_toAscList_toDescList =
   forAll arbitrary $ \(a :: IntervalMap Rational Integer) ->
     IML.toDescList a == reverse (IML.toAscList a)
 
-case_fromList = actual @?= expected  
+case_fromList = actual @?= expected
   where
     actual, expected :: IntervalMap Rational Integer
     actual = IML.fromList [(0 <=..< 10, 1), (5 <..<= 15, 2)]
     expected = IML.fromList [(0 <=..<= 5, 1), (5 <..<= 15, 2)]
 
-case_fromListWith = actual @?= expected  
+case_fromListWith = actual @?= expected
   where
     actual, expected :: IntervalMap Rational Integer
     actual = IML.fromListWith (+) [(0 <=..< 10, 1), (5 <..<= 15, 2)]
