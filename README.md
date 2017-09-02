@@ -1,7 +1,7 @@
 data-interval
 =============
 
-[![Build Status](https://secure.travis-ci.org/msakai/data-interval.png?branch=master)](http://travis-ci.org/msakai/data-interval) [![Hackage](https://budueba.com/hackage/data-interval)](https://hackage.haskell.org/package/data-interval) [![Coverage Status](https://coveralls.io/repos/msakai/data-interval/badge.svg)](https://coveralls.io/r/msakai/data-interval)
+[![Build Status](https://secure.travis-ci.org/msakai/data-interval.png?branch=master)](http://travis-ci.org/msakai/data-interval) [![Hackage](https://img.shields.io/hackage/v/data-interval.svg)](https://hackage.haskell.org/package/data-interval) [![Coverage Status](https://coveralls.io/repos/msakai/data-interval/badge.svg)](https://coveralls.io/r/msakai/data-interval)
 
 Interval datatype, interval arithmetic, and interval-based containers for Haskell.
 
