@@ -17,7 +17,6 @@ Extra-Source-Files:
    README.md
    COPYING
    CHANGELOG.markdown
-   .travis.yml
 Build-Type: Simple
 
 source-repository head
