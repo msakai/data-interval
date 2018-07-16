@@ -18,6 +18,12 @@ Extra-Source-Files:
    COPYING
    CHANGELOG.markdown
 Build-Type: Simple
+Tested-With:
+   GHC ==7.8.4
+   GHC ==7.10.3
+   GHC ==8.0.2
+   GHC ==8.2.2
+   GHC ==8.4.3
 
 source-repository head
   type:     git
