@@ -1,5 +1,5 @@
-{-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE CPP, ScopedTypeVariables, DeriveDataTypeable, DeriveGeneric #-}
+{-# OPTIONS_GHC -Wall -fno-warn-orphans #-}
+{-# LANGUAGE CPP, ScopedTypeVariables #-}
 {-# LANGUAGE Safe #-}
 #if __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE RoleAnnotations #-}
@@ -79,17 +79,14 @@ module Data.Interval
   ) where
 
 import Algebra.Lattice
-import Control.DeepSeq
 import Control.Exception (assert)
 import Control.Monad hiding (join)
-import Data.Data
 import Data.ExtendedReal
-import Data.Hashable
+import Data.Interval.Internal
 import Data.List hiding (null)
 import Data.Maybe
 import Data.Monoid
 import Data.Ratio
-import GHC.Generics (Generic)
 import Prelude hiding (null)
 
 infix 5 <=..<=
@@ -114,24 +111,6 @@ infix 4 ==??
 infix 4 >=??
 infix 4 >??
 infix 4 /=??
-
--- | The intervals (/i.e./ connected and convex subsets) over real numbers __R__.
-data Interval r = Interval
-  { -- | 'lowerBound' of the interval and whether it is included in the interval.
-    -- The result is convenient to use as an argument for 'interval'.
-    lowerBound' :: !(Extended r, Bool)
-  , -- | 'upperBound' of the interval and whether it is included in the interval.
-    -- The result is convenient to use as an argument for 'interval'.
-    upperBound' :: !(Extended r, Bool)
-  } deriving (Eq, Generic, Data, Typeable)
-
-#if __GLASGOW_HASKELL__ >= 708
-type role Interval nominal
-#endif
-
-instance NFData r => NFData (Interval r)
-
-instance Hashable r => Hashable (Interval r)
 
 instance (Ord r) => JoinSemiLattice (Interval r) where
   join = hull
@@ -184,25 +163,6 @@ instance (Ord r, Read r) => Read (Interval r) where
     ++
     (do ("empty", s) <- lex r
         return (empty, s))
-
--- | empty (contradicting) interval
-empty :: Ord r => Interval r
-empty = Interval (PosInf, False) (NegInf, False)
-
--- | smart constructor for 'Interval'
-interval
-  :: (Ord r)
-  => (Extended r, Bool) -- ^ lower bound and whether it is included
-  -> (Extended r, Bool) -- ^ upper bound and whether it is included
-  -> Interval r
-interval lb@(x1,in1) ub@(x2,in2) =
-  case x1 `compare` x2 of
-    GT -> empty --  empty interval
-    LT -> Interval (normalize lb) (normalize ub)
-    EQ -> if in1 && in2 && isFinite x1 then Interval lb ub else empty
-  where
-    normalize x@(Finite _, _) = x
-    normalize (x, _) = (x, False)
 
 -- | Lower endpoint (/i.e./ greatest lower bound)  of the interval.
 --

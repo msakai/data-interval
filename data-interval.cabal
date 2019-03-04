@@ -54,6 +54,7 @@ Library
      Data.IntervalSet
      Data.IntegerInterval
   Other-Modules:
+     Data.Interval.Internal
      Data.IntervalMap.Base
 
 Test-suite test-interval
