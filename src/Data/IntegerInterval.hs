@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -Wall -fno-warn-orphans #-}
 {-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable #-}
 {-# LANGUAGE Safe #-}
 -----------------------------------------------------------------------------
@@ -78,18 +78,15 @@ module Data.IntegerInterval
   ) where
 
 import Algebra.Lattice
-import Control.DeepSeq
 import Control.Exception (assert)
 import Control.Monad hiding (join)
-import Data.Data
 import Data.ExtendedReal
-import Data.Hashable
 import Data.List hiding (null)
 import Data.Maybe
 import Prelude hiding (null)
+import Data.IntegerInterval.Internal
 import qualified Data.Interval as Interval
 
-infix 5 <=..<=
 infix 5 <..<=
 infix 5 <=..<
 infix 5 <..<
@@ -112,47 +109,21 @@ infix 4 >=??
 infix 4 >??
 infix 4 /=??
 
--- | The intervals (/i.e./ connected and convex subsets) over integers (__Z__).
-data IntegerInterval = Interval !(Extended Integer) !(Extended Integer)
-  deriving (Eq, Typeable)
-
--- | Lower endpoint (/i.e./ greatest lower bound)  of the interval.
---
--- * 'lowerBound' of the empty interval is 'PosInf'.
---
--- * 'lowerBound' of a left unbounded interval is 'NegInf'.
---
--- * 'lowerBound' of an interval may or may not be a member of the interval.
-lowerBound :: IntegerInterval -> Extended Integer
-lowerBound (Interval lb _) = lb
-
--- | Upper endpoint (/i.e./ least upper bound) of the interval.
---
--- * 'upperBound' of the empty interval is 'NegInf'.
---
--- * 'upperBound' of a right unbounded interval is 'PosInf'.
---
--- * 'upperBound' of an interval is a member of the interval.
-upperBound :: IntegerInterval -> Extended Integer
-upperBound (Interval _ ub) = ub
-
 -- | 'lowerBound' of the interval and whether it is included in the interval.
 -- The result is convenient to use as an argument for 'interval'.
 lowerBound' :: IntegerInterval -> (Extended Integer, Bool)
-lowerBound' (Interval lb@(Finite _)  _) = (lb, True)
-lowerBound' (Interval lb  _) = (lb, False)
+lowerBound' x =
+  case lowerBound x of
+    lb@(Finite _) -> (lb, True)
+    lb@_ -> (lb, False)
 
 -- | 'upperBound' of the interval and whether it is included in the interval.
 -- The result is convenient to use as an argument for 'interval'.
 upperBound' :: IntegerInterval -> (Extended Integer, Bool)
-upperBound' (Interval _ ub@(Finite _)) = (ub, True)
-upperBound' (Interval _ ub) = (ub, False)
-
-instance NFData IntegerInterval where
-  rnf (Interval lb ub) = rnf lb `seq` rnf ub
-
-instance Hashable IntegerInterval where
-  hashWithSalt s (Interval lb ub) = s `hashWithSalt` lb `hashWithSalt` ub
+upperBound' x =
+  case upperBound x of
+    ub@(Finite _) -> (ub, True)
+    ub@_ -> (ub, False)
 
 instance JoinSemiLattice IntegerInterval where
   join = hull
@@ -195,23 +166,6 @@ instance Read IntegerInterval where
     (do ("empty", s) <- lex r
         return (empty, s))
 
--- This instance preserves data abstraction at the cost of inefficiency.
--- We provide limited reflection services for the sake of data abstraction.
-
-instance Data IntegerInterval where
-  gfoldl k z x   = z (<=..<=) `k` lowerBound x `k` upperBound x
-  toConstr _     = intervalConstr
-  gunfold k z c  = case constrIndex c of
-    1 -> k (k (z (<=..<=)))
-    _ -> error "gunfold"
-  dataTypeOf _   = intervalDataType
-
-intervalConstr :: Constr
-intervalConstr = mkConstr intervalDataType "<=..<=" [] Infix
-
-intervalDataType :: DataType
-intervalDataType = mkDataType "Data.IntegerInterval.IntegerInterval" [intervalConstr]
-
 -- | smart constructor for 'IntegerInterval'
 interval
   :: (Extended Integer, Bool) -- ^ lower bound and whether it is included
@@ -219,17 +173,6 @@ interval
   -> IntegerInterval
 interval (x1,in1) (x2,in2) =
   (if in1 then x1 else x1 + 1) <=..<= (if in2 then x2 else x2 - 1)
-
--- | closed interval [@l@,@u@]
-(<=..<=)
-  :: Extended Integer -- ^ lower bound @l@
-  -> Extended Integer -- ^ upper bound @u@
-  -> IntegerInterval
-(<=..<=) PosInf _ = empty
-(<=..<=) _ NegInf = empty
-(<=..<=) lb ub
-  | lb <= ub  = Interval lb ub
-  | otherwise = empty
 
 -- | left-open right-closed interval (@l@,@u@]
 (<..<=)
@@ -254,11 +197,7 @@ interval (x1,in1) (x2,in2) =
 
 -- | whole real number line (-∞, ∞)
 whole :: IntegerInterval
-whole = Interval NegInf PosInf
-
--- | empty (contradicting) interval
-empty :: IntegerInterval
-empty = Interval PosInf NegInf
+whole = NegInf <=..<= PosInf
 
 -- | singleton set \[x,x\]
 singleton :: Integer -> IntegerInterval
@@ -266,7 +205,8 @@ singleton x = Finite x <=..<= Finite x
 
 -- | intersection of two intervals
 intersection :: IntegerInterval -> IntegerInterval -> IntegerInterval
-intersection (Interval l1 u1) (Interval l2 u2) = max l1 l2 <=..<= min u1 u2
+intersection x1 x2 =
+  max (lowerBound x1) (lowerBound x2) <=..<= min (upperBound x1) (upperBound x2)
 
 -- | intersection of a list of intervals.
 intersections :: [IntegerInterval] -> IntegerInterval
@@ -277,7 +217,8 @@ hull :: IntegerInterval -> IntegerInterval -> IntegerInterval
 hull x1 x2
   | null x1 = x2
   | null x2 = x1
-hull (Interval l1 u1) (Interval l2 u2) = min l1 l2 <=..<= max u1 u2
+hull x1 x2 =
+  min (lowerBound x1) (lowerBound x2) <=..<= max (upperBound x1) (upperBound x2)
 
 -- | convex hull of a list of intervals.
 hulls :: [IntegerInterval] -> IntegerInterval
@@ -285,18 +226,18 @@ hulls = foldl' hull empty
 
 -- | @mapMonotonic f i@ is the image of @i@ under @f@, where @f@ must be a strict monotone function.
 mapMonotonic :: (Integer -> Integer) -> IntegerInterval -> IntegerInterval
-mapMonotonic f (Interval l u) = Interval (fmap f l) (fmap f u)
+mapMonotonic f x = fmap f (lowerBound x) <=..<= fmap f (upperBound x)
 
 -- | Is the interval empty?
 null :: IntegerInterval -> Bool
-null (Interval l u) = u < l
+null x = upperBound x < lowerBound x
 
 isSingleton :: IntegerInterval -> Bool
-isSingleton (Interval l u) = l==u
+isSingleton x = lowerBound x == upperBound x
 
 -- | Is the element in the interval?
 member :: Integer -> IntegerInterval -> Bool
-member x (Interval l u) = l <= Finite x && Finite x <= u
+member x i = lowerBound i <= Finite x && Finite x <= upperBound i
 
 -- | Is the element not in the interval?
 notMember :: Integer -> IntegerInterval -> Bool
@@ -305,7 +246,7 @@ notMember a i = not $ member a i
 -- | Is this a subset?
 -- @(i1 \``isSubsetOf`\` i2)@ tells whether @i1@ is a subset of @i2@.
 isSubsetOf :: IntegerInterval -> IntegerInterval -> Bool
-isSubsetOf (Interval lb1 ub1) (Interval lb2 ub2) = lb2 <= lb1 && ub1 <= ub2
+isSubsetOf i1 i2 = lowerBound i2 <= lowerBound i1 && upperBound i1 <= upperBound i2
 
 -- | Is this a proper subset? (/i.e./ a subset but not equal).
 isProperSubsetOf :: IntegerInterval -> IntegerInterval -> Bool
@@ -313,16 +254,21 @@ isProperSubsetOf i1 i2 = i1 /= i2 && i1 `isSubsetOf` i2
 
 -- | Width of a interval. Width of an unbounded interval is @undefined@.
 width :: IntegerInterval -> Integer
-width x | null x = 0
-width (Interval (Finite l) (Finite u)) = u - l
-width _ = error "Data.IntegerInterval.width: unbounded interval"
+width x
+  | null x = 0
+  | otherwise =
+      case (upperBound x, lowerBound x) of
+        (Finite lb, Finite ub) -> ub - lb
+        _ -> error "Data.IntegerInterval.width: unbounded interval"
 
 -- | pick up an element from the interval if the interval is not empty.
 pickup :: IntegerInterval -> Maybe Integer
-pickup (Interval NegInf PosInf) = Just 0
-pickup (Interval (Finite l) _) = Just l
-pickup (Interval _ (Finite u)) = Just u
-pickup _ = Nothing
+pickup x =
+  case (lowerBound x, upperBound x) of
+    (NegInf, PosInf) -> Just 0
+    (Finite l, _) -> Just l
+    (_, Finite u) -> Just u
+    _ -> Nothing
 
 -- | 'simplestIntegerWithin' returns the simplest rational number within the interval.
 --
@@ -452,15 +398,16 @@ rangeOpPrec = 5
 
 scaleInterval :: Integer -> IntegerInterval -> IntegerInterval
 scaleInterval _ x | null x = empty
-scaleInterval c (Interval lb ub) =
+scaleInterval c x =
   case compare c 0 of
     EQ -> singleton 0
-    LT -> Finite c * ub <=..<= Finite c * lb
-    GT -> Finite c * lb <=..<= Finite c * ub
+    LT -> Finite c * upperBound x <=..<= Finite c * lowerBound x
+    GT -> Finite c * lowerBound x <=..<= Finite c * upperBound x
 
 instance Num IntegerInterval where
-  a + b | null a || null b = empty
-  Interval lb1 ub1 + Interval lb2 ub2 = lb1 + lb2 <=..<= ub1 + ub2
+  a + b
+      | null a || null b = empty
+      | otherwise = lowerBound a + lowerBound b <=..<= upperBound a + upperBound b
 
   negate = scaleInterval (-1)
 
@@ -480,10 +427,11 @@ instance Num IntegerInterval where
             then empty
             else singleton (-1)
 
-  a * b | null a || null b = empty
-  Interval lb1 ub1 * Interval lb2 ub2 = minimum xs <=..<= maximum xs
+  a * b
+    | null a || null b = empty
+    | otherwise = minimum xs <=..<= maximum xs
     where
-      xs = [ mul x1 x2 | x1 <- [lb1, ub1], x2 <- [lb2, ub2] ]
+      xs = [ mul x1 x2 | x1 <- [lowerBound a, upperBound a], x2 <- [lowerBound b, upperBound b] ]
 
       mul :: Extended Integer -> Extended Integer -> Extended Integer
       mul 0 _ = 0
@@ -492,7 +440,7 @@ instance Num IntegerInterval where
 
 -- | Convert the interval to 'Interval.Interval' data type.
 toInterval :: Real r => IntegerInterval -> Interval.Interval r
-toInterval (Interval l u) = fmap fromInteger l Interval.<=..<= fmap fromInteger u
+toInterval x = fmap fromInteger (lowerBound x) Interval.<=..<= fmap fromInteger (upperBound x)
 
 -- | Conversion from 'Interval.Interval' data type.
 fromInterval :: Interval.Interval Integer -> IntegerInterval
