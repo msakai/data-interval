@@ -1,7 +1,8 @@
 data-interval
 =============
 
-[![Build Status](https://travis-ci.org/msakai/data-interval.svg?branch=master)](https://travis-ci.org/msakai/data-interval)
+[![Build Status (Travis CI)](https://travis-ci.org/msakai/data-interval.svg?branch=master)](https://travis-ci.org/msakai/data-interval)
+[![Build status (AppVeyor)](https://ci.appveyor.com/api/projects/status/wqtdvajwmt3qbek3?svg=true)](https://ci.appveyor.com/project/msakai/data-interval)
 [![Hackage](https://img.shields.io/hackage/v/data-interval.svg)](https://hackage.haskell.org/package/data-interval)
 [![Hackage Deps](https://img.shields.io/hackage-deps/v/data-interval.svg)](https://packdeps.haskellers.com/feed?needle=data-interval)
 [![Coverage Status](https://coveralls.io/repos/msakai/data-interval/badge.svg)](https://coveralls.io/r/msakai/data-interval)

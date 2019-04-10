@@ -1,0 +1,25 @@
+cache:
+- "c:\\sr" # stack root, short paths == less problems
+
+# to disable automatic builds
+#build: off
+
+environment:
+  global:
+    STACK_ROOT: "c:\\sr"
+    STACK_YAML: "stack-ghc-8.2.yaml"
+
+install:
+#- curl -ostack.zip -L --insecure http://www.stackage.org/stack/windows-x86_64
+- curl -ostack.zip -L --insecure http://www.stackage.org/stack/windows-i386
+- 7z x stack.zip stack.exe
+- stack setup > nul
+
+build_script:
+- git submodule init
+- git submodule update
+
+test_script:
+# The ugly echo "" hack is to avoid complaints about 0 being an invalid file
+# descriptor
+- echo "" | stack --no-terminal test
