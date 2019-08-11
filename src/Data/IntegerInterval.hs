@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wall -fno-warn-orphans #-}
-{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable #-}
+{-# LANGUAGE CPP, ScopedTypeVariables, DeriveDataTypeable #-}
 {-# LANGUAGE Safe #-}
 -----------------------------------------------------------------------------
 -- |
@@ -125,6 +125,20 @@ upperBound' x =
     ub@(Finite _) -> (ub, True)
     ub@_ -> (ub, False)
 
+#if MIN_VERSION_lattices(2,0,0)
+
+instance Lattice IntegerInterval where
+  (\/) = hull
+  (/\) = intersection
+
+instance BoundedJoinSemiLattice IntegerInterval where
+  bottom = empty
+
+instance BoundedMeetSemiLattice IntegerInterval where
+  top = whole
+
+#else
+
 instance JoinSemiLattice IntegerInterval where
   join = hull
 
@@ -140,6 +154,8 @@ instance BoundedMeetSemiLattice IntegerInterval where
   top = whole
 
 instance BoundedLattice IntegerInterval
+
+#endif
 
 instance Show IntegerInterval where
   showsPrec _ x | null x = showString "empty"
