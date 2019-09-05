@@ -48,6 +48,8 @@ Library
      ScopedTypeVariables
      TypeFamilies
      DeriveDataTypeable
+     MultiWayIf
+     Safe
   Exposed-Modules:
      Data.Interval
      Data.IntervalMap.Lazy
