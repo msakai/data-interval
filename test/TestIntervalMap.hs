@@ -918,6 +918,9 @@ case_Data = everywhere f i @?= (IML.singleton (1 <=..<= 2) 3 :: IntervalMap Inte
   Generators
 --------------------------------------------------------------------}
 
+instance Arbitrary Interval.Boundary where
+  arbitrary = arbitraryBoundedEnum
+
 instance Arbitrary r => Arbitrary (Extended r) where
   arbitrary =
     oneof

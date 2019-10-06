@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE CPP, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE CPP, LambdaCase, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf, GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE Trustworthy #-}
 #if __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE RoleAnnotations #-}
@@ -195,7 +195,7 @@ instance Ord k => GHCExts.IsList (IntervalMap k a) where
 
 -- ------------------------------------------------------------------------
 
-newtype LB r = LB (Extended r, Bool)
+newtype LB r = LB (Extended r, Interval.Boundary)
   deriving (Eq, NFData, Typeable)
 
 instance Ord r => Ord (LB r) where
@@ -211,7 +211,7 @@ infixl 9 !,\\ --
 -- | Find the value at a key. Calls 'error' when the element can not be found.
 (!) :: Ord k => IntervalMap k a -> k -> a
 IntervalMap m ! k =
-  case Map.lookupLE (LB (Finite k, True)) m of
+  case Map.lookupLE (LB (Finite k, Interval.Closed)) m of
     Just (_, (i, a)) | k `Interval.member` i -> a
     _ -> error "IntervalMap.!: given key is not an element in the map"
 
@@ -229,7 +229,7 @@ null (IntervalMap m) = Map.null m
 -- | Is the key a member of the map? See also 'notMember'.
 member :: Ord k => k -> IntervalMap k a -> Bool
 member k (IntervalMap m) =
-  case Map.lookupLE (LB (Finite k, True)) m of
+  case Map.lookupLE (LB (Finite k, Interval.Closed)) m of
     Just (_, (i, _)) -> k `Interval.member` i
     Nothing -> False
 
@@ -243,7 +243,7 @@ notMember k m = not $ member k m
 -- or 'Nothing' if the key isn't in the map.
 lookup :: Ord k => k -> IntervalMap k a -> Maybe a
 lookup k (IntervalMap m) =
-  case Map.lookupLE (LB (Finite k, True)) m of
+  case Map.lookupLE (LB (Finite k, Interval.Closed)) m of
     Just (_, (i, a)) | k `Interval.member` i -> Just a
     _ -> Nothing
 
@@ -252,7 +252,7 @@ lookup k (IntervalMap m) =
 -- when the key is not in the map.
 findWithDefault :: Ord k => a -> k -> IntervalMap k a -> a
 findWithDefault def k (IntervalMap m) =
-  case Map.lookupLE (LB (Finite k, True)) m of
+  case Map.lookupLE (LB (Finite k, Interval.Closed)) m of
     Just (_, (i, a)) | k `Interval.member` i -> a
     _ -> def
 
@@ -479,7 +479,7 @@ split :: Ord k => Interval k -> IntervalMap k a -> (IntervalMap k a, IntervalMap
 split i (IntervalMap m) =
   case splitLookupLE (LB (Interval.lowerBound' i)) m of
     (smaller, m1, xs) ->
-      case splitLookupLE (LB (Interval.upperBound i, True)) xs of
+      case splitLookupLE (LB (Interval.upperBound i, Interval.Closed)) xs of
         (middle, m2, larger) ->
           ( IntervalMap $
               case m1 of
@@ -552,7 +552,7 @@ upTo i =
     (NegInf, _) -> Interval.empty
     (PosInf, _) -> Interval.whole
     (Finite lb, incl) ->
-      Interval.interval (NegInf,False) (Finite lb, not incl)
+      Interval.interval (NegInf, Interval.Open) (Finite lb, notB incl)
 
 downTo :: Ord r => Interval r -> Interval r
 downTo i =
@@ -560,4 +560,9 @@ downTo i =
     (PosInf, _) -> Interval.empty
     (NegInf, _) -> Interval.whole
     (Finite ub, incl) ->
-      Interval.interval (Finite ub, not incl) (PosInf,False)
+      Interval.interval (Finite ub, notB incl) (PosInf, Interval.Open)
+
+notB :: Interval.Boundary -> Interval.Boundary
+notB = \case
+  Interval.Open   -> Interval.Closed
+  Interval.Closed -> Interval.Open

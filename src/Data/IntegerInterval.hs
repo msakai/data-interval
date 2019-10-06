@@ -461,10 +461,16 @@ toInterval x = fmap fromInteger (lowerBound x) Interval.<=..<= fmap fromInteger 
 
 -- | Conversion from 'Interval.Interval' data type.
 fromInterval :: Interval.Interval Integer -> IntegerInterval
-fromInterval i = (if in1 then x1 else x1 + 1) <=..<= (if in2 then x2 else x2 - 1)
+fromInterval i = x1' <=..<= x2'
   where
     (x1,in1) = Interval.lowerBound' i
     (x2,in2) = Interval.upperBound' i
+    x1' = case in1 of
+      Interval.Open   -> x1 + 1
+      Interval.Closed -> x1
+    x2' = case in2 of
+      Interval.Open   -> x2 - 1
+      Interval.Closed -> x2
 
 -- | Given a 'Interval.Interval' @I@ over R, compute the smallest 'IntegerInterval' @J@ such that @I ⊆ J@.
 fromIntervalOver :: RealFrac r => Interval.Interval r -> IntegerInterval

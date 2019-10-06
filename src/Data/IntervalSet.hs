@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE CPP, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf #-}
+{-# LANGUAGE CPP, LambdaCase, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf #-}
 {-# LANGUAGE Trustworthy #-}
 #if __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE RoleAnnotations #-}
@@ -74,7 +74,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe
 import qualified Data.Semigroup as Semigroup
-import Data.Interval (Interval, EndPoint)
+import Data.Interval (Interval, EndPoint, Boundary(..))
 import qualified Data.Interval as Interval
 #if __GLASGOW_HASKELL__ < 804
 import Data.Monoid (Monoid(..))
@@ -290,13 +290,13 @@ span (IntervalSet m) =
 
 -- | Complement the interval set.
 complement :: Ord r => IntervalSet r -> IntervalSet r
-complement (IntervalSet m) = fromAscList $ f (NegInf,False) (Map.elems m)
+complement (IntervalSet m) = fromAscList $ f (NegInf,Open) (Map.elems m)
   where
-    f prev [] = [ Interval.interval prev (PosInf,False) ]
+    f prev [] = [ Interval.interval prev (PosInf,Open) ]
     f prev (i : is) =
       case (Interval.lowerBound' i, Interval.upperBound' i) of
         ((lb, in1), (ub, in2)) ->
-          Interval.interval prev (lb, not in1) : f (ub, not in2) is
+          Interval.interval prev (lb, notB in1) : f (ub, notB in2) is
 
 -- | Insert a new interval into the interval set.
 insert :: Ord r => Interval r -> IntervalSet r -> IntervalSet r
@@ -417,7 +417,7 @@ splitLookupGE k m =
         Nothing -> (smaller, Nothing, larger)
 -}
 
-compareLB :: Ord r => (Extended r, Bool) -> (Extended r, Bool) -> Ordering
+compareLB :: Ord r => (Extended r, Boundary) -> (Extended r, Boundary) -> Ordering
 compareLB (lb1, lb1in) (lb2, lb2in) =
   -- inclusive lower endpoint shuold be considered smaller
   (lb1 `compare` lb2) `mappend` (lb2in `compare` lb1in)
@@ -428,7 +428,7 @@ upTo i =
     (NegInf, _) -> Interval.empty
     (PosInf, _) -> Interval.whole
     (Finite lb, incl) ->
-      Interval.interval (NegInf,False) (Finite lb, not incl)
+      Interval.interval (NegInf, Open) (Finite lb, notB incl)
 
 downTo :: Ord r => Interval r -> Interval r
 downTo i =
@@ -436,4 +436,9 @@ downTo i =
     (PosInf, _) -> Interval.empty
     (NegInf, _) -> Interval.whole
     (Finite ub, incl) ->
-      Interval.interval (Finite ub, not incl) (PosInf,False)
+      Interval.interval (Finite ub, notB incl) (PosInf, Open)
+
+notB :: Boundary -> Boundary
+notB = \case
+  Open   -> Closed
+  Closed -> Open

@@ -6,7 +6,8 @@
 #endif
 
 module Data.Interval.Internal
-  ( Interval
+  ( Boundary(..)
+  , Interval
   , lowerBound'
   , upperBound'
   , interval
@@ -18,6 +19,17 @@ import Data.Data
 import Data.ExtendedReal
 import Data.Hashable
 import GHC.Generics (Generic)
+
+-- | Boundary of an interval may be
+-- open (excluding an endpoint) or closed (including an endpoint).
+data Boundary
+  = Open
+  | Closed
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Generic, Data, Typeable)
+
+instance NFData Boundary
+
+instance Hashable Boundary
 
 data Interval r
   = Whole
@@ -33,32 +45,32 @@ data Interval r
   | BothOpen !r !r
   deriving (Eq, Generic, Typeable)
 
-lowerBound' :: Interval r -> (Extended r, Bool)
+lowerBound' :: Interval r -> (Extended r, Boundary)
 lowerBound' = \case
-  Whole            -> (NegInf,   False)
-  Empty            -> (PosInf,   False)
-  Point r          -> (Finite r, True)
-  LessThan{}       -> (NegInf,   False)
-  LessOrEqual{}    -> (NegInf,   False)
-  GreaterThan r    -> (Finite r, False)
-  GreaterOrEqual r -> (Finite r, True)
-  BothClosed p _   -> (Finite p, True)
-  LeftOpen p _     -> (Finite p, False)
-  RightOpen p _    -> (Finite p, True)
-  BothOpen p _     -> (Finite p, False)
+  Whole            -> (NegInf,   Open)
+  Empty            -> (PosInf,   Open)
+  Point r          -> (Finite r, Closed)
+  LessThan{}       -> (NegInf,   Open)
+  LessOrEqual{}    -> (NegInf,   Open)
+  GreaterThan r    -> (Finite r, Open)
+  GreaterOrEqual r -> (Finite r, Closed)
+  BothClosed p _   -> (Finite p, Closed)
+  LeftOpen p _     -> (Finite p, Open)
+  RightOpen p _    -> (Finite p, Closed)
+  BothOpen p _     -> (Finite p, Open)
 
-upperBound' :: Interval r -> (Extended r, Bool)
+upperBound' :: Interval r -> (Extended r, Boundary)
 upperBound' = \case
-  Whole            -> (PosInf,   False)
-  Empty            -> (NegInf,   False)
-  Point r          -> (Finite r, True)
-  LessThan r       -> (Finite r, False)
-  LessOrEqual r    -> (Finite r, True)
-  GreaterThan{}    -> (PosInf,   False)
-  GreaterOrEqual{} -> (PosInf,   False)
-  BothClosed _ q   -> (Finite q, True)
-  LeftOpen _ q     -> (Finite q, True)
-  RightOpen _ q    -> (Finite q, False)
+  Whole            -> (PosInf,   Open)
+  Empty            -> (NegInf,   Open)
+  Point r          -> (Finite r, Closed)
+  LessThan r       -> (Finite r, Open)
+  LessOrEqual r    -> (Finite r, Closed)
+  GreaterThan{}    -> (PosInf,   Open)
+  GreaterOrEqual{} -> (PosInf,   Open)
+  BothClosed _ q   -> (Finite q, Closed)
+  LeftOpen _ q     -> (Finite q, Closed)
+  RightOpen _ q    -> (Finite q, Open)
   BothOpen _ q     -> (Finite q, Open)
 
 #if __GLASGOW_HASKELL__ >= 708
@@ -91,30 +103,30 @@ empty = Empty
 -- | smart constructor for 'Interval'
 interval
   :: (Ord r)
-  => (Extended r, Bool) -- ^ lower bound and whether it is included
-  -> (Extended r, Bool) -- ^ upper bound and whether it is included
+  => (Extended r, Boundary) -- ^ lower bound and whether it is included
+  -> (Extended r, Boundary) -- ^ upper bound and whether it is included
   -> Interval r
 interval = \case
   (NegInf, _) -> \case
     (NegInf, _) -> Empty
-    (Finite r, False) -> LessThan r
-    (Finite r, True) -> LessOrEqual r
+    (Finite r, Open) -> LessThan r
+    (Finite r, Closed) -> LessOrEqual r
     (PosInf, _) -> Whole
-  (Finite p, False) -> \case
+  (Finite p, Open) -> \case
     (NegInf, _) -> Empty
-    (Finite q, False)
+    (Finite q, Open)
       | p < q -> BothOpen p q
       | otherwise -> Empty
-    (Finite q, True)
+    (Finite q, Closed)
       | p < q -> LeftOpen p q
       | otherwise -> Empty
     (PosInf, _) -> GreaterThan p
-  (Finite p, True) -> \case
+  (Finite p, Closed) -> \case
     (NegInf, _) -> Empty
-    (Finite q, False)
+    (Finite q, Open)
       | p < q -> RightOpen p q
       | otherwise -> Empty
-    (Finite q, True) -> case p `compare` q of
+    (Finite q, Closed) -> case p `compare` q of
       LT -> BothClosed p q
       EQ -> Point p
       GT -> Empty

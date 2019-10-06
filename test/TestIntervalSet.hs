@@ -463,6 +463,9 @@ case_Data = everywhere f i @?= (IntervalSet.singleton (1 <=..<= 2) :: IntervalSe
   Generators
 --------------------------------------------------------------------}
 
+instance Arbitrary Interval.Boundary where
+  arbitrary = arbitraryBoundedEnum
+
 instance Arbitrary r => Arbitrary (Extended r) where
   arbitrary =
     oneof
