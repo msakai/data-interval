@@ -778,8 +778,8 @@ prop_show_read_invariance =
     i == read (show i)
 
 case_read_old =
-  read "interval (Finite (0 % 1), True) (PosInf, False)" @?= 
-  (Interval.interval (Finite 0, True) (PosInf, False) :: Interval Rational)
+  read "interval (Finite (0 % 1), Closed) (PosInf, Open)" @?=
+  (Interval.interval (Finite 0, Interval.Closed) (PosInf, Interval.Open) :: Interval Rational)
 
 {--------------------------------------------------------------------
   NFData
@@ -812,6 +812,9 @@ case_Data = everywhere f i @?= (1 <=..<= 2 :: Interval Integer)
 {--------------------------------------------------------------------
   Generators
 --------------------------------------------------------------------}
+
+instance Arbitrary Interval.Boundary where
+  arbitrary = arbitraryBoundedEnum
 
 instance Arbitrary r => Arbitrary (Extended r) where
   arbitrary =

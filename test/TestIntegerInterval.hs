@@ -764,6 +764,9 @@ case_fromIntervalUnder_test2 =
   Generators
 --------------------------------------------------------------------}
 
+instance Arbitrary Interval.Boundary where
+  arbitrary = arbitraryBoundedEnum
+
 instance Arbitrary r => Arbitrary (Extended r) where
   arbitrary =
     oneof

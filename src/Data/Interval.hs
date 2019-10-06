@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wall -fno-warn-orphans #-}
-{-# LANGUAGE CPP, ScopedTypeVariables #-}
+{-# LANGUAGE CPP, LambdaCase, ScopedTypeVariables #-}
 {-# LANGUAGE Safe #-}
 #if __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE RoleAnnotations #-}
@@ -31,6 +31,7 @@ module Data.Interval
     Interval
   , module Data.ExtendedReal
   , EndPoint
+  , Boundary(..)
 
   -- * Construction
   , interval
@@ -154,7 +155,10 @@ instance (Ord r, Show r) => Show (Interval r) where
     where
       (lb, in1) = lowerBound' i
       (ub, in2) = upperBound' i
-      op = (if in1 then "<=" else "<") ++ ".." ++ (if in2 then "<=" else "<")
+      op = sign in1 ++ ".." ++ sign in2
+      sign = \case
+        Open   -> "<"
+        Closed -> "<="
 
 instance (Ord r, Read r) => Read (Interval r) where
   readsPrec p r =
@@ -206,7 +210,7 @@ upperBound = fst . upperBound'
   => Extended r -- ^ lower bound @l@
   -> Extended r -- ^ upper bound @u@
   -> Interval r
-(<=..<=) lb ub = interval (lb, True) (ub, True)
+(<=..<=) lb ub = interval (lb, Closed) (ub, Closed)
 
 -- | left-open right-closed interval (@l@,@u@]
 (<..<=)
@@ -214,7 +218,7 @@ upperBound = fst . upperBound'
   => Extended r -- ^ lower bound @l@
   -> Extended r -- ^ upper bound @u@
   -> Interval r
-(<..<=) lb ub = interval (lb, False) (ub, True)
+(<..<=) lb ub = interval (lb, Open) (ub, Closed)
 
 -- | left-closed right-open interval [@l@, @u@)
 (<=..<)
@@ -222,7 +226,7 @@ upperBound = fst . upperBound'
   => Extended r -- ^ lower bound @l@
   -> Extended r -- ^ upper bound @u@
   -> Interval r
-(<=..<) lb ub = interval (lb, True) (ub, False)
+(<=..<) lb ub = interval (lb, Closed) (ub, Open)
 
 -- | open interval (@l@, @u@)
 (<..<)
@@ -230,15 +234,15 @@ upperBound = fst . upperBound'
   => Extended r -- ^ lower bound @l@
   -> Extended r -- ^ upper bound @u@
   -> Interval r
-(<..<) lb ub = interval (lb, False) (ub, False)
+(<..<) lb ub = interval (lb, Open) (ub, Open)
 
 -- | whole real number line (-∞, ∞)
 whole :: Ord r => Interval r
-whole = interval (NegInf, False) (PosInf, False)
+whole = interval (NegInf, Open) (PosInf, Open)
 
 -- | singleton set \[x,x\]
 singleton :: Ord r => r -> Interval r
-singleton x = interval (Finite x, True) (Finite x, True)
+singleton x = interval (Finite x, Closed) (Finite x, Closed)
 
 -- | intersection of two intervals
 intersection :: forall r. Ord r => Interval r -> Interval r -> Interval r
@@ -246,19 +250,19 @@ intersection i1 i2 = interval
   (maxLB (lowerBound' i1) (lowerBound' i2))
   (minUB (upperBound' i1) (upperBound' i2))
   where
-    maxLB :: (Extended r, Bool) -> (Extended r, Bool) -> (Extended r, Bool)
+    maxLB :: (Extended r, Boundary) -> (Extended r, Boundary) -> (Extended r, Boundary)
     maxLB (x1,in1) (x2,in2) =
       ( max x1 x2
       , case x1 `compare` x2 of
-          EQ -> in1 && in2
+          EQ -> in1 `min` in2
           LT -> in2
           GT -> in1
       )
-    minUB :: (Extended r, Bool) -> (Extended r, Bool) -> (Extended r, Bool)
+    minUB :: (Extended r, Boundary) -> (Extended r, Boundary) -> (Extended r, Boundary)
     minUB (x1,in1) (x2,in2) =
       ( min x1 x2
       , case x1 `compare` x2 of
-          EQ -> in1 && in2
+          EQ -> in1 `min` in2
           LT -> in1
           GT -> in2
       )
@@ -278,19 +282,19 @@ hull i1 i2 = interval
   (minLB (lowerBound' i1) (lowerBound' i2))
   (maxUB (upperBound' i1) (upperBound' i2))
   where
-    maxUB :: (Extended r, Bool) -> (Extended r, Bool) -> (Extended r, Bool)
+    maxUB :: (Extended r, Boundary) -> (Extended r, Boundary) -> (Extended r, Boundary)
     maxUB (x1,in1) (x2,in2) =
       ( max x1 x2
       , case x1 `compare` x2 of
-          EQ -> in1 || in2
+          EQ -> in1 `max` in2
           LT -> in2
           GT -> in1
       )
-    minLB :: (Extended r, Bool) -> (Extended r, Bool) -> (Extended r, Bool)
+    minLB :: (Extended r, Boundary) -> (Extended r, Boundary) -> (Extended r, Boundary)
     minLB (x1,in1) (x2,in2) =
       ( min x1 x2
       , case x1 `compare` x2 of
-          EQ -> in1 || in2
+          EQ -> in1 `max` in2
           LT -> in1
           GT -> in2
       )
@@ -305,7 +309,7 @@ hulls = foldl' hull empty
 null :: Ord r => Interval r -> Bool
 null i =
   case x1 `compare` x2 of
-    EQ -> assert (in1 && in2) False
+    EQ -> assert (in1 == Closed && in2 == Closed) False
     LT -> False
     GT -> True
   where
@@ -314,7 +318,7 @@ null i =
 
 isSingleton :: Ord r => Interval r -> Bool
 isSingleton i = case (lowerBound' i, upperBound' i) of
-  ((Finite l, True), (Finite u, True)) -> l==u
+  ((Finite l, Closed), (Finite u, Closed)) -> l==u
   _ -> False
 
 -- | Is the element in the interval?
@@ -323,8 +327,12 @@ member x i = condLB && condUB
   where
     (x1, in1) = lowerBound' i
     (x2, in2) = upperBound' i
-    condLB = if in1 then x1 <= Finite x else x1 < Finite x
-    condUB = if in2 then Finite x <= x2 else Finite x < x2
+    condLB = case in1 of
+      Open   -> x1 <  Finite x
+      Closed -> x1 <= Finite x
+    condUB = case in2 of
+      Open   -> Finite x <  x2
+      Closed -> Finite x <= x2
 
 -- | Is the element not in the interval?
 notMember :: Ord r => r -> Interval r -> Bool
@@ -339,12 +347,12 @@ isSubsetOf i1 i2 = testLB (lowerBound' i1) (lowerBound' i2) && testUB (upperBoun
       case x1 `compare` x2 of
         GT -> True
         LT -> False
-        EQ -> not in1 || in2 -- in1 => in2
+        EQ -> in1 <= in2
     testUB (x1,in1) (x2,in2) =
       case x1 `compare` x2 of
         LT -> True
         GT -> False
-        EQ -> not in1 || in2 -- in1 => in2
+        EQ -> in1 <= in2
 
 -- | Is this a proper subset? (/i.e./ a subset but not equal).
 isProperSubsetOf :: Ord r => Interval r -> Interval r -> Bool
@@ -357,7 +365,7 @@ isConnected :: Ord r => Interval r -> Interval r -> Bool
 isConnected x y
   | null x = True
   | null y = True
-  | otherwise = x ==? y || (lb1==ub2 && (lb1in || ub2in)) || (ub1==lb2 && (ub1in || lb2in))
+  | otherwise = x ==? y || (lb1==ub2 && (lb1in == Closed || ub2in == Closed)) || (ub1==lb2 && (ub1in == Closed || lb2in == Closed))
   where
     (lb1,lb1in) = lowerBound' x
     (lb2,lb2in) = lowerBound' y
@@ -376,13 +384,17 @@ width x
 pickup :: (Real r, Fractional r) => Interval r -> Maybe r
 pickup i = case (lowerBound' i, upperBound' i) of
   ((NegInf,_), (PosInf,_))             -> Just 0
-  ((Finite x1, in1), (PosInf,_))       -> Just $ if in1 then x1 else x1+1
-  ((NegInf,_), (Finite x2, in2))       -> Just $ if in2 then x2 else x2-1
+  ((Finite x1, in1), (PosInf,_))       -> Just $ case in1 of
+    Open   -> x1 + 1
+    Closed -> x1
+  ((NegInf,_), (Finite x2, in2))       -> Just $ case in2 of
+    Open   -> x2 - 1
+    Closed -> x2
   ((Finite x1, in1), (Finite x2, in2)) ->
     case x1 `compare` x2 of
       GT -> Nothing
       LT -> Just $ (x1+x2) / 2
-      EQ -> if in1 && in2 then Just x1 else Nothing
+      EQ -> if in1 == Closed && in2 == Closed then Just x1 else Nothing
   _ -> Nothing
 
 -- | 'simplestRationalWithin' returns the simplest rational number within the interval.
@@ -428,7 +440,7 @@ a <! b =
       case ub_a of
         NegInf   -> True -- a is empty, so it holds vacuously
         PosInf   -> True -- b is empty, so it holds vacuously
-        Finite _ -> not (in1 && in2)
+        Finite _ -> in1 == Open || in2 == Open
   where
     (ub_a, in1) = upperBound' a
     (lb_b, in2) = lowerBound' b
@@ -491,7 +503,7 @@ a <=? b =
       case lb_a of
         NegInf -> False -- b is empty
         PosInf -> False -- a is empty
-        Finite _ -> in1 && in2
+        Finite _ -> in1 == Closed && in2 == Closed
   where
     (lb_a, in1) = lowerBound' a
     (ub_b, in2) = upperBound' b
@@ -588,14 +600,14 @@ instance (Num r, Ord r) => Num (Interval r) where
     | null a || null b = empty
     | otherwise = interval (f (lowerBound' a) (lowerBound' b)) (g (upperBound' a) (upperBound' b))
     where
-      f (Finite x1, in1) (Finite x2, in2) = (Finite (x1+x2), in1 && in2)
-      f (NegInf,_) _ = (-inf, False)
-      f _ (NegInf,_) = (-inf, False)
+      f (Finite x1, in1) (Finite x2, in2) = (Finite (x1+x2), in1 `min` in2)
+      f (NegInf,_) _ = (-inf, Open)
+      f _ (NegInf,_) = (-inf, Open)
       f _ _ = error "Interval.(+) should not happen"
 
-      g (Finite x1, in1) (Finite x2, in2) = (Finite (x1+x2), in1 && in2)
-      g (PosInf,_) _ = (inf, False)
-      g _ (PosInf,_) = (inf, False)
+      g (Finite x1, in1) (Finite x2, in2) = (Finite (x1+x2), in1 `min` in2)
+      g (PosInf,_) _ = (inf, Open)
+      g _ (PosInf,_) = (inf, Open)
       g _ _ = error "Interval.(+) should not happen"
 
   negate = scaleInterval (-1)
@@ -635,7 +647,7 @@ instance forall r. (Real r, Fractional r) => Fractional (Interval r) where
       lb3 = minimumBy cmpLB xs
       xs = [recipLB (lowerBound' a), recipUB (upperBound' a)]
 
-cmpUB, cmpLB :: Ord r => (Extended r, Bool) -> (Extended r, Bool) -> Ordering
+cmpUB, cmpLB :: Ord r => (Extended r, Boundary) -> (Extended r, Boundary) -> Ordering
 cmpUB (x1,in1) (x2,in2) = compare x1 x2 `mappend` compare in1 in2
 cmpLB (x1,in1) (x2,in2) = compare x1 x2 `mappend` compare in2 in1
 
@@ -643,7 +655,7 @@ cmpLB (x1,in1) (x2,in2) = compare x1 x2 `mappend` compare in2 in1
 -- | Endpoints of intervals
 type EndPoint r = Extended r
 
-scaleInf' :: (Num r, Ord r) => r -> (Extended r, Bool) -> (Extended r, Bool)
+scaleInf' :: (Num r, Ord r) => r -> (Extended r, Boundary) -> (Extended r, Boundary)
 scaleInf' a (x1, in1) = (scaleEndPoint a x1, in1)
 
 scaleEndPoint :: (Num r, Ord r) => r -> Extended r -> Extended r
@@ -661,15 +673,15 @@ scaleEndPoint a e =
         Finite b -> Finite (a*b)
         PosInf   -> NegInf
 
-mulInf' :: (Num r, Ord r) => (Extended r, Bool) -> (Extended r, Bool) -> (Extended r, Bool)
-mulInf' (0, True) _ = (0, True)
-mulInf' _ (0, True) = (0, True)
-mulInf' (x1,in1) (x2,in2) = (x1*x2, in1 && in2)
+mulInf' :: (Num r, Ord r) => (Extended r, Boundary) -> (Extended r, Boundary) -> (Extended r, Boundary)
+mulInf' (0, Closed) _ = (0, Closed)
+mulInf' _ (0, Closed) = (0, Closed)
+mulInf' (x1,in1) (x2,in2) = (x1*x2, in1 `min` in2)
 
-recipLB :: (Fractional r, Ord r) => (Extended r, Bool) -> (Extended r, Bool)
-recipLB (0, _) = (PosInf, False)
+recipLB :: (Fractional r, Ord r) => (Extended r, Boundary) -> (Extended r, Boundary)
+recipLB (0, _) = (PosInf, Open)
 recipLB (x1, in1) = (recip x1, in1)
 
-recipUB :: (Fractional r, Ord r) => (Extended r, Bool) -> (Extended r, Bool)
-recipUB (0, _) = (NegInf, False)
+recipUB :: (Fractional r, Ord r) => (Extended r, Boundary) -> (Extended r, Boundary)
+recipUB (0, _) = (NegInf, Open)
 recipUB (x1, in1) = (recip x1, in1)
