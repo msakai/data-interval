@@ -27,10 +27,10 @@ data Interval r
   | LessOrEqual !r
   | GreaterThan !r
   | GreaterOrEqual !r
-  | Closed !r !r
+  | BothClosed !r !r
   | LeftOpen !r !r
   | RightOpen !r !r
-  | Open !r !r
+  | BothOpen !r !r
   deriving (Eq, Generic, Typeable)
 
 lowerBound' :: Interval r -> (Extended r, Bool)
@@ -42,10 +42,10 @@ lowerBound' = \case
   LessOrEqual{}    -> (NegInf,   False)
   GreaterThan r    -> (Finite r, False)
   GreaterOrEqual r -> (Finite r, True)
-  Closed p _       -> (Finite p, True)
+  BothClosed p _   -> (Finite p, True)
   LeftOpen p _     -> (Finite p, False)
   RightOpen p _    -> (Finite p, True)
-  Open p _         -> (Finite p, False)
+  BothOpen p _     -> (Finite p, False)
 
 upperBound' :: Interval r -> (Extended r, Bool)
 upperBound' = \case
@@ -56,10 +56,10 @@ upperBound' = \case
   LessOrEqual r    -> (Finite r, True)
   GreaterThan{}    -> (PosInf,   False)
   GreaterOrEqual{} -> (PosInf,   False)
-  Closed _ q       -> (Finite q, True)
+  BothClosed _ q   -> (Finite q, True)
   LeftOpen _ q     -> (Finite q, True)
   RightOpen _ q    -> (Finite q, False)
-  Open _ q         -> (Finite q, False)
+  BothOpen _ q     -> (Finite q, Open)
 
 #if __GLASGOW_HASKELL__ >= 708
 type role Interval nominal
@@ -103,7 +103,7 @@ interval = \case
   (Finite p, False) -> \case
     (NegInf, _) -> Empty
     (Finite q, False)
-      | p < q -> Open p q
+      | p < q -> BothOpen p q
       | otherwise -> Empty
     (Finite q, True)
       | p < q -> LeftOpen p q
@@ -115,7 +115,7 @@ interval = \case
       | p < q -> RightOpen p q
       | otherwise -> Empty
     (Finite q, True) -> case p `compare` q of
-      LT -> Closed p q
+      LT -> BothClosed p q
       EQ -> Point p
       GT -> Empty
     (PosInf, _) -> GreaterOrEqual p
