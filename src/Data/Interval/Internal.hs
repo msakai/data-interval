@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE CPP, DeriveDataTypeable, LambdaCase #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric, LambdaCase #-}
 {-# LANGUAGE Safe #-}
 #if __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE RoleAnnotations #-}
@@ -17,6 +17,7 @@ import Control.DeepSeq
 import Data.Data
 import Data.ExtendedReal
 import Data.Hashable
+import GHC.Generics (Generic)
 
 data Interval r
   = Whole
@@ -30,7 +31,7 @@ data Interval r
   | LeftOpen !r !r
   | RightOpen !r !r
   | Open !r !r
-  deriving (Eq, Typeable)
+  deriving (Eq, Generic, Typeable)
 
 lowerBound' :: Interval r -> (Extended r, Bool)
 lowerBound' = \case
@@ -79,33 +80,9 @@ intervalConstr = mkConstr intervalDataType "interval" [] Prefix
 intervalDataType :: DataType
 intervalDataType = mkDataType "Data.Interval.Internal.Interval" [intervalConstr]
 
-instance NFData r => NFData (Interval r) where
-  rnf = \case
-    Whole            -> ()
-    Empty            -> ()
-    Point r          -> rnf r
-    LessThan r       -> rnf r
-    LessOrEqual r    -> rnf r
-    GreaterThan r    -> rnf r
-    GreaterOrEqual r -> rnf r
-    Closed p q       -> rnf p `seq` rnf q
-    LeftOpen p q     -> rnf p `seq` rnf q
-    RightOpen p q    -> rnf p `seq` rnf q
-    Open p q         -> rnf p `seq` rnf q
+instance NFData r => NFData (Interval r)
 
-instance Hashable r => Hashable (Interval r) where
-  hashWithSalt s = \case
-    Whole            -> s `hashWithSalt`  (1 :: Int)
-    Empty            -> s `hashWithSalt`  (2 :: Int)
-    Point r          -> s `hashWithSalt`  (3 :: Int) `hashWithSalt` r
-    LessThan r       -> s `hashWithSalt`  (4 :: Int) `hashWithSalt` r
-    LessOrEqual r    -> s `hashWithSalt`  (5 :: Int) `hashWithSalt` r
-    GreaterThan r    -> s `hashWithSalt`  (6 :: Int) `hashWithSalt` r
-    GreaterOrEqual r -> s `hashWithSalt`  (7 :: Int) `hashWithSalt` r
-    Closed p q       -> s `hashWithSalt`  (8 :: Int) `hashWithSalt` p `hashWithSalt` q
-    LeftOpen p q     -> s `hashWithSalt`  (9 :: Int) `hashWithSalt` p `hashWithSalt` q
-    RightOpen p q    -> s `hashWithSalt` (10 :: Int) `hashWithSalt` p `hashWithSalt` q
-    Open p q         -> s `hashWithSalt` (11 :: Int) `hashWithSalt` p `hashWithSalt` q
+instance Hashable r => Hashable (Interval r)
 
 -- | empty (contradicting) interval
 empty :: Ord r => Interval r
