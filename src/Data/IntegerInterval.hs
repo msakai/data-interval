@@ -161,7 +161,7 @@ instance Show IntegerInterval where
   showsPrec _ x | null x = showString "empty"
   showsPrec p x =
     showParen (p > rangeOpPrec) $
-      showsPrec (rangeOpPrec+1) (lowerBound x) . 
+      showsPrec (rangeOpPrec+1) (lowerBound x) .
       showString " <=..<= " .
       showsPrec (rangeOpPrec+1) (upperBound x)
 
@@ -385,9 +385,9 @@ a /=?? b = do
     then f a b
     else liftM (\(y,x) -> (x,y)) $ f b a
   where
-    f a b = do
-      x <- pickup a
-      y <- msum [pickup (b `intersection` c) | c <- [-inf <..< Finite x, Finite x <..< inf]]
+    f i j = do
+      x <- pickup i
+      y <- msum [pickup (j `intersection` c) | c <- [-inf <..< Finite x, Finite x <..< inf]]
       return (x,y)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>=' y@?

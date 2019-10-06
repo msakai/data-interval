@@ -105,9 +105,8 @@ module Data.IntervalMap.Strict
 
 
 import Prelude hiding (null, lookup, map, filter, span)
-import Control.Applicative hiding (empty)
 import Data.ExtendedReal
-import Data.Interval (Interval, EndPoint)
+import Data.Interval (Interval)
 import qualified Data.Interval as Interval
 import Data.IntervalMap.Base hiding
   ( whole
@@ -128,6 +127,9 @@ import qualified Data.IntervalMap.Base as B
 import qualified Data.IntervalSet as IntervalSet
 import Data.List (foldl')
 import qualified Data.Map.Strict as Map
+#if __GLASGOW_HASKELL__ < 710
+import Control.Applicative ((<$>))
+#endif
 
 -- $strictness
 --
@@ -185,7 +187,7 @@ update _ i m | Interval.null i = m
 update f i m =
   case split i m of
     (IntervalMap m1, IntervalMap m2, IntervalMap m3) ->
-      IntervalMap $ Map.unions [m1, Map.mapMaybe (\(i,a) -> (\b -> seq b (i,b)) <$> f a) m2, m3]
+      IntervalMap $ Map.unions [m1, Map.mapMaybe (\(j,a) -> (\b -> seq b (j,b)) <$> f a) m2, m3]
 
 -- | The expression (@'alter' f i map@) alters the value @x@ at @i@, or absence thereof.
 -- 'alter' can be used to insert, delete, or update a value in a 'IntervalMap'.
@@ -207,7 +209,7 @@ alter f i m =
 
 -- | Union with a combining function.
 unionWith :: Ord k => (a -> a -> a) -> IntervalMap k a -> IntervalMap k a -> IntervalMap k a
-unionWith f m1 m2 = 
+unionWith f m1 m2 =
   foldl' (\m (i,a) -> insertWith f i a m) m2 (toList m1)
 
 -- | The union of a list of maps, with a combining operation:
@@ -216,19 +218,19 @@ unionsWith :: Ord k => (a -> a -> a) -> [IntervalMap k a] -> IntervalMap k a
 unionsWith f = foldl' (unionWith f) empty
 
 -- | Intersection with a combining function.
-intersectionWith :: Ord k => (a -> b -> c) -> IntervalMap k a -> IntervalMap k b -> IntervalMap k c 
+intersectionWith :: Ord k => (a -> b -> c) -> IntervalMap k a -> IntervalMap k b -> IntervalMap k c
 intersectionWith f im1@(IntervalMap m1) im2@(IntervalMap m2)
   | Map.size m1 >= Map.size m2 = g f im1 im2
   | otherwise = g (flip f) im2 im1
   where
-    g :: Ord k => (a -> b -> c) -> IntervalMap k a -> IntervalMap k b -> IntervalMap k c 
-    g f im1 (IntervalMap m2) = IntervalMap $ Map.unions $ go im1 (Map.elems m2)
+    g :: Ord k => (a -> b -> c) -> IntervalMap k a -> IntervalMap k b -> IntervalMap k c
+    g h jm1 (IntervalMap m3) = IntervalMap $ Map.unions $ go jm1 (Map.elems m3)
       where
         go _ [] = []
         go im ((i,b) : xs) =
           case split i im of
-            (_, IntervalMap m, im2) ->
-              Map.map (\(j, a) -> (j,) $! f a b) m : go im2 xs
+            (_, IntervalMap m, jm2) ->
+              Map.map (\(j, a) -> (j,) $! h a b) m : go jm2 xs
 
 -- ------------------------------------------------------------------------
 -- Traversal

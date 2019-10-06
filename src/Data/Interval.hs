@@ -403,12 +403,12 @@ simplestRationalWithin i
   | i <! 0    = Just $ - go (- i)
   | otherwise = assert (0 `member` i) $ Just 0
   where
-    go i
-      | fromInteger lb_floor       `member` i = fromInteger lb_floor
-      | fromInteger (lb_floor + 1) `member` i = fromInteger (lb_floor + 1)
-      | otherwise = fromInteger lb_floor + recip (go (recip (i - singleton (fromInteger lb_floor))))
+    go j
+      | fromInteger lb_floor       `member` j = fromInteger lb_floor
+      | fromInteger (lb_floor + 1) `member` j = fromInteger (lb_floor + 1)
+      | otherwise = fromInteger lb_floor + recip (go (recip (j - singleton (fromInteger lb_floor))))
       where
-        Finite lb = lowerBound i
+        Finite lb = lowerBound j
         lb_floor  = floor lb
 
 -- | @mapMonotonic f i@ is the image of @i@ under @f@, where @f@ must be a strict monotone function.
@@ -541,9 +541,9 @@ a /=?? b = do
     then f a b
     else liftM (\(y,x) -> (x,y)) $ f b a
   where
-    f a b = do
-      x <- pickup a
-      y <- msum [pickup (b `intersection` c) | c <- [-inf <..< Finite x, Finite x <..< inf]]
+    f i j = do
+      x <- pickup i
+      y <- msum [pickup (j `intersection` c) | c <- [-inf <..< Finite x, Finite x <..< inf]]
       return (x,y)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>=' y@?

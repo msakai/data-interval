@@ -81,6 +81,9 @@ Test-suite test-interval
      , tasty-th
      , HUnit
      , QuickCheck >=2.5 && <3
+  if impl(ghc <8.0)
+    Build-depends:
+      semigroups
   if impl(ghc <7.10)
     Build-depends:
       transformers >=0.2

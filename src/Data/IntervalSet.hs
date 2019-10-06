@@ -73,11 +73,12 @@ import Data.List (sortBy, foldl')
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe
-import Data.Monoid
-import Data.Semigroup (Semigroup)
 import qualified Data.Semigroup as Semigroup
 import Data.Interval (Interval, EndPoint)
 import qualified Data.Interval as Interval
+#if __GLASGOW_HASKELL__ < 804
+import Data.Monoid (Monoid(..))
+#endif
 #if __GLASGOW_HASKELL__ >= 708
 import qualified GHC.Exts as GHCExts
 #endif
@@ -168,7 +169,7 @@ instance Ord r => Monoid (IntervalSet r) where
   mappend = union
   mconcat = unions
 
-instance (Ord r) => Semigroup (IntervalSet r) where
+instance (Ord r) => Semigroup.Semigroup (IntervalSet r) where
   (<>)    = union
 #if !defined(VERSION_semigroups)
   stimes  = Semigroup.stimesIdempotentMonoid
@@ -365,7 +366,7 @@ difference is1 is2 =
 fromList :: Ord r => [Interval r] -> IntervalSet r
 fromList = IntervalSet . fromAscList' . sortBy (compareLB `on` Interval.lowerBound')
 
--- | Build a map from an ascending list of intervals. 
+-- | Build a map from an ascending list of intervals.
 -- /The precondition is not checked./
 fromAscList :: Ord r => [Interval r] -> IntervalSet r
 fromAscList = IntervalSet . fromAscList'
