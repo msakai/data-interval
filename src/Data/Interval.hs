@@ -44,6 +44,7 @@ module Data.Interval
 
   -- * Query
   , null
+  , isSingleton
   , member
   , notMember
   , isSubsetOf
