@@ -48,6 +48,8 @@ Library
      ScopedTypeVariables
      TypeFamilies
      DeriveDataTypeable
+     DeriveGeneric
+     LambdaCase
      MultiWayIf
      Safe
   Exposed-Modules:
