@@ -692,7 +692,7 @@ prop_show_read_invariance =
     i == read (show i)
 
 case_read_old =
-  read "interval (Finite 0, True) (PosInf, False)" @?= IntegerInterval.interval (Finite 0, True) (PosInf, False)
+  read "interval (Finite 0, Closed) (PosInf, Open)" @?= IntegerInterval.interval (Finite 0, Interval.Closed) (PosInf, Interval.Open)
 
 {--------------------------------------------------------------------
   NFData
