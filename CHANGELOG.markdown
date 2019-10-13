@@ -1,3 +1,11 @@
+1.3.1
+-----
+* support lattices-2.0 (Thanks to Bodigrim).
+* move definitions of `Interval` and `IntegerInterval` data types into
+  internal modules and abstract away representations from the rest of
+  modules (Thanks to Bodigrim).
+
+
 1.3.0
 -----
 * add `Data.IntervalSet`, `Data.IntervalMap.Lazy`, `Data.IntervalMap.Strict` modules
