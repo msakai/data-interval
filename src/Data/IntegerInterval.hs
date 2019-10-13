@@ -25,6 +25,7 @@ module Data.IntegerInterval
   -- * Interval type
     IntegerInterval
   , module Data.ExtendedReal
+  , Boundary(..)
 
   -- * Construction
   , interval
@@ -85,6 +86,7 @@ import Data.List hiding (null)
 import Data.Maybe
 import Prelude hiding (null)
 import Data.IntegerInterval.Internal
+import Data.Interval (Boundary(..))
 import qualified Data.Interval as Interval
 
 infix 5 <..<=
@@ -111,19 +113,19 @@ infix 4 /=??
 
 -- | 'lowerBound' of the interval and whether it is included in the interval.
 -- The result is convenient to use as an argument for 'interval'.
-lowerBound' :: IntegerInterval -> (Extended Integer, Bool)
+lowerBound' :: IntegerInterval -> (Extended Integer, Boundary)
 lowerBound' x =
   case lowerBound x of
-    lb@(Finite _) -> (lb, True)
-    lb@_ -> (lb, False)
+    lb@(Finite _) -> (lb, Closed)
+    lb@_ -> (lb, Open)
 
 -- | 'upperBound' of the interval and whether it is included in the interval.
 -- The result is convenient to use as an argument for 'interval'.
-upperBound' :: IntegerInterval -> (Extended Integer, Bool)
+upperBound' :: IntegerInterval -> (Extended Integer, Boundary)
 upperBound' x =
   case upperBound x of
-    ub@(Finite _) -> (ub, True)
-    ub@_ -> (ub, False)
+    ub@(Finite _) -> (ub, Closed)
+    ub@_ -> (ub, Open)
 
 #if MIN_VERSION_lattices(2,0,0)
 
@@ -184,11 +186,11 @@ instance Read IntegerInterval where
 
 -- | smart constructor for 'IntegerInterval'
 interval
-  :: (Extended Integer, Bool) -- ^ lower bound and whether it is included
-  -> (Extended Integer, Bool) -- ^ upper bound and whether it is included
+  :: (Extended Integer, Boundary) -- ^ lower bound and whether it is included
+  -> (Extended Integer, Boundary) -- ^ upper bound and whether it is included
   -> IntegerInterval
 interval (x1,in1) (x2,in2) =
-  (if in1 then x1 else x1 + 1) <=..<= (if in2 then x2 else x2 - 1)
+  (if in1 == Closed then x1 else x1 + 1) <=..<= (if in2 == Closed then x2 else x2 - 1)
 
 -- | left-open right-closed interval (@l@,@u@]
 (<..<=)
