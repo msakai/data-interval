@@ -22,7 +22,6 @@ module Data.IntervalSet
   -- * IntervalSet type
     IntervalSet
   , module Data.ExtendedReal
-  , EndPoint
 
   -- * Construction
   , whole
@@ -74,7 +73,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe
 import qualified Data.Semigroup as Semigroup
-import Data.Interval (Interval, EndPoint, Boundary(..))
+import Data.Interval (Interval, Boundary(..))
 import qualified Data.Interval as Interval
 #if __GLASGOW_HASKELL__ < 804
 import Data.Monoid (Monoid(..))

@@ -22,7 +22,6 @@ module Data.IntervalMap.Base
   -- * IntervalMap type
     IntervalMap (..)
   , module Data.ExtendedReal
-  , EndPoint
 
   -- * Operators
   , (!)
@@ -101,7 +100,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe
 import qualified Data.Semigroup as Semigroup
-import Data.Interval (Interval, EndPoint)
+import Data.Interval (Interval)
 import qualified Data.Interval as Interval
 import Data.IntervalSet (IntervalSet)
 import qualified Data.IntervalSet as IntervalSet

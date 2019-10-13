@@ -33,7 +33,6 @@ module Data.IntervalMap.Lazy
   -- * IntervalMap type
     IntervalMap
   , module Data.ExtendedReal
-  , EndPoint
 
   -- * Operators
   , (!)

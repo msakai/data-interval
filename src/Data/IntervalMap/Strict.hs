@@ -34,7 +34,6 @@ module Data.IntervalMap.Strict
   -- * IntervalMap type
     IntervalMap
   , module Data.ExtendedReal
-  , EndPoint
 
   -- * Operators
   , (!)

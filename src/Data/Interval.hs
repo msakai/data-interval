@@ -30,7 +30,6 @@ module Data.Interval
   -- * Interval type
     Interval
   , module Data.ExtendedReal
-  , EndPoint
   , Boundary(..)
 
   -- * Construction
@@ -651,10 +650,6 @@ instance forall r. (Real r, Fractional r) => Fractional (Interval r) where
 cmpUB, cmpLB :: Ord r => (Extended r, Boundary) -> (Extended r, Boundary) -> Ordering
 cmpUB (x1,in1) (x2,in2) = compare x1 x2 `mappend` compare in1 in2
 cmpLB (x1,in1) (x2,in2) = compare x1 x2 `mappend` compare in2 in1
-
-{-# DEPRECATED EndPoint "EndPoint is deprecated. Please use Extended instead." #-}
--- | Endpoints of intervals
-type EndPoint r = Extended r
 
 scaleInf' :: (Num r, Ord r) => r -> (Extended r, Boundary) -> (Extended r, Boundary)
 scaleInf' a (x1, in1) = (scaleEndPoint a x1, in1)
