@@ -28,7 +28,7 @@ data IntegerInterval
   | Point !Integer
   | LessOrEqual !Integer
   | GreaterOrEqual !Integer
-  | Closed !Integer !Integer
+  | BothClosed !Integer !Integer
   deriving (Eq, Generic, Typeable)
 
 -- | Lower endpoint (/i.e./ greatest lower bound)  of the interval.
@@ -45,7 +45,7 @@ lowerBound = \case
   Point r          -> Finite r
   LessOrEqual _    -> NegInf
   GreaterOrEqual r -> Finite r
-  Closed p _       -> Finite p
+  BothClosed p _   -> Finite p
 
 -- | Upper endpoint (/i.e./ least upper bound) of the interval.
 --
@@ -61,7 +61,7 @@ upperBound = \case
   Point r          -> Finite r
   LessOrEqual r    -> Finite r
   GreaterOrEqual _ -> PosInf
-  Closed _ p       -> Finite p  
+  BothClosed _ p   -> Finite p
 
 -- This instance preserves data abstraction at the cost of inefficiency.
 -- We provide limited reflection services for the sake of data abstraction.
@@ -97,7 +97,7 @@ instance Hashable IntegerInterval
 (<=..<=) (Finite lb) (Finite ub) =
   case compare lb ub of
     EQ -> Point lb
-    LT -> Closed lb ub
+    LT -> BothClosed lb ub
     GT -> Empty
 {-# INLINE (<=..<=) #-}
 
