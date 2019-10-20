@@ -4,7 +4,6 @@
   reduce memory footprint (#7, thanks Bodigrim)
 * introduce `Boundary` type (#10, thanks Bodigrim)
 * export `isSingleton` function for `Interval` and `IntegerInterval` (#13)
-* add `Generic` instances for `Interval` and `IntegerInterval`
 * remove deprecated `EndPoint` data type (#14, thanks Bodigrim)
 
 1.3.1
