@@ -22,6 +22,8 @@ import GHC.Generics (Generic)
 
 -- | Boundary of an interval may be
 -- open (excluding an endpoint) or closed (including an endpoint).
+--
+-- @since 2.0.0
 data Boundary
   = Open
   | Closed

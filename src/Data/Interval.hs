@@ -316,6 +316,9 @@ null i =
     (x1, in1) = lowerBound' i
     (x2, in2) = upperBound' i
 
+-- | Is the interval single point?
+--
+-- @since 2.0.0
 isSingleton :: Ord r => Interval r -> Bool
 isSingleton i = case (lowerBound' i, upperBound' i) of
   ((Finite l, Closed), (Finite u, Closed)) -> l==u

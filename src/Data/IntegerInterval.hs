@@ -251,6 +251,9 @@ mapMonotonic f x = fmap f (lowerBound x) <=..<= fmap f (upperBound x)
 null :: IntegerInterval -> Bool
 null x = upperBound x < lowerBound x
 
+-- | Is the interval single point?
+--
+-- @since 2.0.0
 isSingleton :: IntegerInterval -> Bool
 isSingleton x = lowerBound x == upperBound x
 
