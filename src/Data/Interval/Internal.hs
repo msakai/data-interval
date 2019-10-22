@@ -46,7 +46,7 @@ data Interval r
   | LeftOpen !r !r
   | RightOpen !r !r
   | BothOpen !r !r
-  deriving (Eq, Generic, Typeable)
+  deriving (Eq, Typeable)
 
 -- | Lower endpoint (/i.e./ greatest lower bound) of the interval,
 -- together with 'Boundary' information.
@@ -101,9 +101,33 @@ intervalConstr = mkConstr intervalDataType "interval" [] Prefix
 intervalDataType :: DataType
 intervalDataType = mkDataType "Data.Interval.Internal.Interval" [intervalConstr]
 
-instance NFData r => NFData (Interval r)
+instance NFData r => NFData (Interval r) where
+  rnf = \case
+    Whole            -> ()
+    Empty            -> ()
+    Point r          -> rnf r
+    LessThan r       -> rnf r
+    LessOrEqual r    -> rnf r
+    GreaterThan r    -> rnf r
+    GreaterOrEqual r -> rnf r
+    BothClosed p q   -> rnf p `seq` rnf q
+    LeftOpen p q     -> rnf p `seq` rnf q
+    RightOpen p q    -> rnf p `seq` rnf q
+    BothOpen p q     -> rnf p `seq` rnf q
 
-instance Hashable r => Hashable (Interval r)
+instance Hashable r => Hashable (Interval r) where
+  hashWithSalt s = \case
+    Whole            -> s `hashWithSalt`  (1 :: Int)
+    Empty            -> s `hashWithSalt`  (2 :: Int)
+    Point r          -> s `hashWithSalt`  (3 :: Int) `hashWithSalt` r
+    LessThan r       -> s `hashWithSalt`  (4 :: Int) `hashWithSalt` r
+    LessOrEqual r    -> s `hashWithSalt`  (5 :: Int) `hashWithSalt` r
+    GreaterThan r    -> s `hashWithSalt`  (6 :: Int) `hashWithSalt` r
+    GreaterOrEqual r -> s `hashWithSalt`  (7 :: Int) `hashWithSalt` r
+    BothClosed p q   -> s `hashWithSalt`  (8 :: Int) `hashWithSalt` p `hashWithSalt` q
+    LeftOpen p q     -> s `hashWithSalt`  (9 :: Int) `hashWithSalt` p `hashWithSalt` q
+    RightOpen p q    -> s `hashWithSalt` (10 :: Int) `hashWithSalt` p `hashWithSalt` q
+    BothOpen p q     -> s `hashWithSalt` (11 :: Int) `hashWithSalt` p `hashWithSalt` q
 
 -- | empty (contradicting) interval
 empty :: Ord r => Interval r

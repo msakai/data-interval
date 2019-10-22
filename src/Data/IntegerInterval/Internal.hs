@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric, LambdaCase #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, LambdaCase #-}
 {-# LANGUAGE Safe #-}
 #if __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE RoleAnnotations #-}
@@ -17,7 +17,6 @@ import Control.DeepSeq
 import Data.Data
 import Data.ExtendedReal
 import Data.Hashable
-import GHC.Generics (Generic)
 
 infix 5 <=..<=
 
@@ -29,7 +28,7 @@ data IntegerInterval
   | LessOrEqual !Integer
   | GreaterOrEqual !Integer
   | BothClosed !Integer !Integer
-  deriving (Eq, Generic, Typeable)
+  deriving (Eq, Typeable)
 
 -- | Lower endpoint (/i.e./ greatest lower bound)  of the interval.
 --
@@ -80,9 +79,23 @@ intervalConstr = mkConstr intervalDataType "<=..<=" [] Infix
 intervalDataType :: DataType
 intervalDataType = mkDataType "Data.IntegerInterval.Internal.IntegerInterval" [intervalConstr]
 
-instance NFData IntegerInterval
+instance NFData IntegerInterval where
+  rnf = \case
+    Whole            -> ()
+    Empty            -> ()
+    Point r          -> rnf r
+    LessOrEqual r    -> rnf r
+    GreaterOrEqual r -> rnf r
+    BothClosed p q   -> rnf p `seq` rnf q
 
-instance Hashable IntegerInterval
+instance Hashable IntegerInterval where
+  hashWithSalt s = \case
+    Whole            -> s `hashWithSalt`  (1 :: Int)
+    Empty            -> s `hashWithSalt`  (2 :: Int)
+    Point r          -> s `hashWithSalt`  (3 :: Int) `hashWithSalt` r
+    LessOrEqual r    -> s `hashWithSalt`  (4 :: Int) `hashWithSalt` r
+    GreaterOrEqual r -> s `hashWithSalt`  (5 :: Int) `hashWithSalt` r
+    BothClosed p q   -> s `hashWithSalt`  (6 :: Int) `hashWithSalt` p `hashWithSalt` q
 
 -- | closed interval [@l@,@u@]
 (<=..<=)
