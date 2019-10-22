@@ -33,6 +33,7 @@ instance NFData Boundary
 
 instance Hashable Boundary
 
+-- | The intervals (/i.e./ connected and convex subsets) over real numbers __R__.
 data Interval r
   = Whole
   | Empty
@@ -47,6 +48,9 @@ data Interval r
   | BothOpen !r !r
   deriving (Eq, Generic, Typeable)
 
+-- | Lower endpoint (/i.e./ greatest lower bound) of the interval,
+-- together with 'Boundary' information.
+-- The result is convenient to use as an argument for 'interval'.
 lowerBound' :: Interval r -> (Extended r, Boundary)
 lowerBound' = \case
   Whole            -> (NegInf,   Open)
@@ -61,6 +65,9 @@ lowerBound' = \case
   RightOpen p _    -> (Finite p, Closed)
   BothOpen p _     -> (Finite p, Open)
 
+-- | Upper endpoint (/i.e./ least upper bound) of the interval,
+-- together with 'Boundary' information.
+-- The result is convenient to use as an argument for 'interval'.
 upperBound' :: Interval r -> (Extended r, Boundary)
 upperBound' = \case
   Whole            -> (PosInf,   Open)
