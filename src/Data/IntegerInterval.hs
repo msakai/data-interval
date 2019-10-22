@@ -218,7 +218,7 @@ interval (x1,in1) (x2,in2) =
 whole :: IntegerInterval
 whole = NegInf <=..<= PosInf
 
--- | singleton set \[x,x\]
+-- | singleton set [x,x]
 singleton :: Integer -> IntegerInterval
 singleton x = Finite x <=..<= Finite x
 
@@ -298,7 +298,7 @@ pickup x =
 --
 -- * @'abs' y <= 'abs' y'@
 --
--- (see also 'approxRational' and 'Interval.simplestRationalWithin')
+-- (see also 'Data.Ratio.approxRational' and 'Interval.simplestRationalWithin')
 simplestIntegerWithin :: IntegerInterval -> Maybe Integer
 simplestIntegerWithin i
   | null i    = Nothing

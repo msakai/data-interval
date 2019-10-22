@@ -240,7 +240,7 @@ upperBound = fst . upperBound'
 whole :: Ord r => Interval r
 whole = interval (NegInf, Open) (PosInf, Open)
 
--- | singleton set \[x,x\]
+-- | singleton set [x,x]
 singleton :: Ord r => r -> Interval r
 singleton x = interval (Finite x, Closed) (Finite x, Closed)
 

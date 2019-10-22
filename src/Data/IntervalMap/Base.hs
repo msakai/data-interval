@@ -415,7 +415,7 @@ instance Ord k => Traversable (IntervalMap k) where
 map :: (a -> b) -> IntervalMap k a -> IntervalMap k b
 map f (IntervalMap m) = IntervalMap $ Map.map (\(i, a) -> (i, f a)) m
 
--- | @'mapKeys' f s@ is the map obtained by applying @f@ to each key of @s@.
+-- | @'mapKeysMonotonic' f s@ is the map obtained by applying @f@ to each key of @s@.
 -- @f@ must be strictly monotonic.
 -- That is, for any values @x@ and @y@, if @x@ < @y@ then @f x@ < @f y@.
 mapKeysMonotonic :: forall k1 k2 a. (Ord k1, Ord k2) => (k1 -> k2) -> IntervalMap k1 a -> IntervalMap k2 a
