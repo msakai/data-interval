@@ -68,6 +68,7 @@ module Data.Interval
   -- * Combine
   , intersection
   , intersections
+  , union
   , hull
   , hulls
 
@@ -84,7 +85,7 @@ import Control.Exception (assert)
 import Control.Monad hiding (join)
 import Data.ExtendedReal
 import Data.Interval.Internal
-import Data.List hiding (null)
+import Data.List hiding (null, union)
 import Data.Maybe
 import Data.Monoid
 import Data.Ratio
@@ -272,6 +273,23 @@ intersection i1 i2 = interval
 -- Since 0.6.0
 intersections :: Ord r => [Interval r] -> Interval r
 intersections = foldl' intersection whole
+
+-- | union of two intervals
+union :: Ord r => Interval r -> Interval r -> Either (Interval r) (Interval r, Interval r)
+union i1 i2 =
+  if   fst maxLowerBound < fst minUpperBound
+    || fst maxLowerBound == fst minUpperBound && (snd maxLowerBound, snd minUpperBound) == (Open, Open)
+  then Right (interval minLowerBound minUpperBound, interval maxLowerBound maxUpperBound)
+  else Left (interval minLowerBound maxUpperBound)
+  where
+    (lb1, lbin1) = lowerBound' i1
+    (lb2, lbin2) = lowerBound' i2
+    (ub1, ubin1) = upperBound' i1
+    (ub2, ubin2) = upperBound' i2
+    minLowerBound = (min lb1 lb2, max lbin1 lbin2)
+    maxLowerBound = (max lb1 lb2, min lbin1 lbin2)
+    minUpperBound = (min ub1 ub2, min ubin1 ubin2)
+    maxUpperBound = (max ub1 ub2, max ubin1 ubin2)
 
 -- | convex hull of two intervals
 hull :: forall r. Ord r => Interval r -> Interval r -> Interval r
