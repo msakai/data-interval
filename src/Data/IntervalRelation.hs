@@ -17,6 +17,7 @@
 module Data.IntervalRelation
   ( Relation
   , relate
+  , invert
   )
   where
 
@@ -68,3 +69,20 @@ relate i1 i2 =
       (True , False, Right _) -> After
       (False, True , _      ) -> Overlaps
       (False, False, _      ) -> OverlappedBy
+
+-- | inverts a relation, such that @'invert' ('relate' x y) = 'relate' y x@
+invert :: Relation -> Relation
+invert relation = case relation of
+  After        -> Before
+  Before       -> After
+  Contains     -> During
+  During       -> Contains
+  Equal        -> Equal
+  FinishedBy   -> Finishes
+  Finishes     -> FinishedBy
+  JustBefore   -> JustAfter
+  JustAfter    -> JustBefore
+  OverlappedBy -> Overlaps
+  Overlaps     -> OverlappedBy
+  StartedBy    -> Starts
+  Starts       -> StartedBy
