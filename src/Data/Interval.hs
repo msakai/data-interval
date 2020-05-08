@@ -287,10 +287,22 @@ union i1 i2
     (lb2, lbin2) = lowerBound' i2
     (ub1, ubin1) = upperBound' i1
     (ub2, ubin2) = upperBound' i2
-    minLowerBound = (min lb1 lb2, max lbin1 lbin2)
-    maxLowerBound = (max lb1 lb2, min lbin1 lbin2)
-    minUpperBound = (min ub1 ub2, min ubin1 ubin2)
-    maxUpperBound = (max ub1 ub2, max ubin1 ubin2)
+    minLowerBound = (min lb1 lb2, case compare lb1 lb2 of
+      GT -> lbin2
+      LT -> lbin1
+      EQ -> max lbin1 lbin2)
+    maxLowerBound = (max lb1 lb2, case compare lb1 lb2 of
+      GT -> lbin1
+      LT -> lbin2
+      EQ -> min lbin1 lbin2)
+    minUpperBound = (min ub1 ub2, case compare ub1 ub2 of
+      GT -> ubin2
+      LT -> ubin1
+      EQ -> min ubin1 ubin2)
+    maxUpperBound = (max ub1 ub2, case compare ub1 ub2 of
+      GT -> ubin1
+      LT -> ubin2
+      EQ -> max ubin1 ubin2)
 
 -- | convex hull of two intervals
 hull :: forall r. Ord r => Interval r -> Interval r -> Interval r
