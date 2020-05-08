@@ -15,7 +15,7 @@
 --
 -----------------------------------------------------------------------------
 module Data.IntervalRelation
-  ( Relation
+  ( Relation(..)
   , relate
   , invert
   )
