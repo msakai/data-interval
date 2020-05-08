@@ -60,7 +60,7 @@ relate i1 i2 =
                    | otherwise                                    -> Contains
     -- neither `i1` nor `i2` is equal to the intersection, so neither is contained in the other
     (False, False) -> case ( null (i1 `intersection` i2)
-                           , lowerBound i1 < lowerBound i2
+                           , lowerBound i1 <= lowerBound i2
                            , i1 `union` i2
                            ) of
       (True , True , Left  _) -> JustBefore
