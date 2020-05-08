@@ -276,11 +276,12 @@ intersections = foldl' intersection whole
 
 -- | union of two intervals
 union :: Ord r => Interval r -> Interval r -> Either (Interval r) (Interval r, Interval r)
-union i1 i2 =
-  if   fst maxLowerBound < fst minUpperBound
-    || fst maxLowerBound == fst minUpperBound && (snd maxLowerBound, snd minUpperBound) == (Open, Open)
-  then Right (interval minLowerBound minUpperBound, interval maxLowerBound maxUpperBound)
-  else Left (interval minLowerBound maxUpperBound)
+union i1 i2
+  | null i1 = Left i2
+  | null i2 = Left i1
+  | fst maxLowerBound > fst minUpperBound || fst maxLowerBound == fst minUpperBound && (snd maxLowerBound, snd minUpperBound) == (Open, Open)
+    = Right (interval minLowerBound minUpperBound, interval maxLowerBound maxUpperBound)
+  | otherwise = Left (interval minLowerBound maxUpperBound)
   where
     (lb1, lbin1) = lowerBound' i1
     (lb2, lbin2) = lowerBound' i2
