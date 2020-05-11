@@ -98,7 +98,7 @@ prop_invert_inverts_relation =
 nonEmptyIntervalPairs
   :: ((Extended Rational, Boundary) -> (Extended Rational, Boundary) -> (Extended Rational, Boundary) -> (Extended Rational, Boundary) -> Bool)
   -> Gen (Interval Rational, Interval Rational)
-nonEmptyIntervalPairs boundariesComparer = ((,) <$> intervals <*> intervals) `suchThat`
+nonEmptyIntervalPairs boundariesComparer = ap (fmap (,) intervals) intervals `suchThat`
   (\(i1, i2) ->
     (not . null $ i1) &&
     (not . null $ i2) &&
