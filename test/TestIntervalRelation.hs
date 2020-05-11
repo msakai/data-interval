@@ -128,22 +128,7 @@ nonEmptyIntervalPairs boundariesComparer = ((,) <$> intervals <*> intervals) `su
   )
 
 instance Arbitrary Relation where
-  arbitrary =
-    oneof
-    [ return Equal
-    , return Starts
-    , return Finishes
-    , return During
-    , return StartedBy
-    , return FinishedBy
-    , return Contains
-    , return Before
-    , return After
-    , return JustBefore
-    , return JustAfter
-    , return Overlaps
-    , return OverlappedBy
-    ]
+  arbitrary = arbitraryBoundedEnum
 
 ------------------------------------------------------------------------
 -- Test harness
