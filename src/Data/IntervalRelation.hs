@@ -61,14 +61,14 @@ relate i1 i2 =
     -- neither `i1` nor `i2` is equal to the intersection, so neither is contained in the other
     (False, False) -> case ( null (i1 `intersection` i2)
                            , lowerBound i1 <= lowerBound i2
-                           , i1 `union` i2
+                           , i1 `isConnected` i2
                            ) of
-      (True , True , Left  _) -> JustBefore
-      (True , True , Right _) -> Before
-      (True , False, Left  _) -> JustAfter
-      (True , False, Right _) -> After
-      (False, True , _      ) -> Overlaps
-      (False, False, _      ) -> OverlappedBy
+      (True , True , True ) -> JustBefore
+      (True , True , False) -> Before
+      (True , False, True ) -> JustAfter
+      (True , False, False) -> After
+      (False, True , _    ) -> Overlaps
+      (False, False, _    ) -> OverlappedBy
 
 -- | inverts a relation, such that @'invert' ('relate' x y) = 'relate' y x@
 invert :: Relation -> Relation
