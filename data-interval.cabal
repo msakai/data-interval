@@ -68,7 +68,7 @@ Test-suite test-interval
   Type:              exitcode-stdio-1.0
   HS-Source-Dirs:    test
   Main-is:           TestSuite.hs
-  Other-Modules:     TestInterval, TestIntervalMap, TestIntervalRelation, TestIntervalSet, TestIntegerInterval
+  Other-Modules:     TestInterval, TestIntervalMap, TestIntervalRelation, TestIntervalSet, TestIntegerInterval, TestInstances
   Build-depends:
        base >=4 && <5
      , ChasingBottoms

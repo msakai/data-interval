@@ -23,6 +23,8 @@ import Data.Interval
   )
 import qualified Data.Interval as Interval
 
+import TestInstances
+
 {--------------------------------------------------------------------
   empty
 --------------------------------------------------------------------}
@@ -845,28 +847,8 @@ case_Data = everywhere f i @?= (1 <=..<= 2 :: Interval Integer)
       | otherwise = x
 
 {--------------------------------------------------------------------
-  Generators
+  Test intervals
 --------------------------------------------------------------------}
-
-instance Arbitrary Interval.Boundary where
-  arbitrary = arbitraryBoundedEnum
-
-instance Arbitrary r => Arbitrary (Extended r) where
-  arbitrary =
-    oneof
-    [ return NegInf
-    , return PosInf
-    , liftM Finite arbitrary
-    ]
-
-instance (Arbitrary r, Ord r) => Arbitrary (Interval r) where
-  arbitrary = do
-    lb <- arbitrary
-    ub <- arbitrary
-    return $ Interval.interval lb ub
-
-intervals :: Gen (Interval Rational)
-intervals = arbitrary
 
 pos :: Interval Rational
 pos = 0 <..< PosInf

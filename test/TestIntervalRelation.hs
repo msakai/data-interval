@@ -10,6 +10,8 @@ import Test.Tasty.TH
 import Data.Interval
 import Data.IntervalRelation
 
+import TestInstances
+
 {--------------------------------------------------------------------
   relate
 --------------------------------------------------------------------}
@@ -92,26 +94,6 @@ prop_invert_inverts_relation =
 {--------------------------------------------------------------------
   Generators
 --------------------------------------------------------------------}
-
-instance Arbitrary Boundary where
-  arbitrary = arbitraryBoundedEnum
-
-instance Arbitrary r => Arbitrary (Extended r) where
-  arbitrary =
-    oneof
-    [ return NegInf
-    , return PosInf
-    , liftM Finite arbitrary
-    ]
-
-instance (Arbitrary r, Ord r) => Arbitrary (Interval r) where
-  arbitrary = do
-    lb <- arbitrary
-    ub <- arbitrary
-    return $ interval lb ub
-
-intervals :: Gen (Interval Rational)
-intervals = arbitrary
 
 nonEmptyIntervalPairs
   :: ((Extended Rational, Boundary) -> (Extended Rational, Boundary) -> (Extended Rational, Boundary) -> (Extended Rational, Boundary) -> Bool)
