@@ -131,41 +131,6 @@ prop_intersections_two_elems =
     Interval.intersections [a,b] == Interval.intersection a b
 
 {--------------------------------------------------------------------
-  Union
---------------------------------------------------------------------}
-
-prop_union_comm =
-  forAll intervals $ \a ->
-  forAll intervals $ \b ->
-    Interval.union a b == Interval.union b a
-
-prop_union_unitL =
-  forAll intervals $ \a ->
-    Interval.union Interval.empty a == Left a
-
-prop_union_unitR =
-  forAll intervals $ \a ->
-    Interval.union a Interval.empty == Left a
-
-prop_union_whole =
-  forAll intervals $ \a ->
-    Interval.union a Interval.whole == Left Interval.whole
-
-prop_union_isSubsetOf =
-  forAll intervals $ \a ->
-  forAll intervals $ \b ->
-    either
-      (Interval.isSubsetOf a)
-      (\(i1, i2) -> Interval.isSubsetOf a i1 || Interval.isSubsetOf a i2)
-      (Interval.union a b)
-
-prop_union_isSubsetOf_equiv =
-  forAll intervals $ \a ->
-  forAll intervals $ \b ->
-    (Interval.union a b == Left a)
-    == Interval.isSubsetOf b a
-
-{--------------------------------------------------------------------
   Hull
 --------------------------------------------------------------------}
 

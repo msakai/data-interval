@@ -68,7 +68,6 @@ module Data.Interval
   -- * Combine
   , intersection
   , intersections
-  , union
   , hull
   , hulls
 
@@ -85,7 +84,7 @@ import Control.Exception (assert)
 import Control.Monad hiding (join)
 import Data.ExtendedReal
 import Data.Interval.Internal
-import Data.List hiding (null, union)
+import Data.List hiding (null)
 import Data.Maybe
 import Data.Monoid
 import Data.Ratio
@@ -273,36 +272,6 @@ intersection i1 i2 = interval
 -- Since 0.6.0
 intersections :: Ord r => [Interval r] -> Interval r
 intersections = foldl' intersection whole
-
--- | union of two intervals
-union :: Ord r => Interval r -> Interval r -> Either (Interval r) (Interval r, Interval r)
-union i1 i2
-  | null i1 = Left i2
-  | null i2 = Left i1
-  | fst maxLowerBound > fst minUpperBound || fst maxLowerBound == fst minUpperBound && (snd maxLowerBound, snd minUpperBound) == (Open, Open)
-    = Right (interval minLowerBound minUpperBound, interval maxLowerBound maxUpperBound)
-  | otherwise = Left (interval minLowerBound maxUpperBound)
-  where
-    (lb1, lbin1) = lowerBound' i1
-    (lb2, lbin2) = lowerBound' i2
-    (ub1, ubin1) = upperBound' i1
-    (ub2, ubin2) = upperBound' i2
-    minLowerBound = (min lb1 lb2, case compare lb1 lb2 of
-      GT -> lbin2
-      LT -> lbin1
-      EQ -> max lbin1 lbin2)
-    maxLowerBound = (max lb1 lb2, case compare lb1 lb2 of
-      GT -> lbin1
-      LT -> lbin2
-      EQ -> min lbin1 lbin2)
-    minUpperBound = (min ub1 ub2, case compare ub1 ub2 of
-      GT -> ubin2
-      LT -> ubin1
-      EQ -> min ubin1 ubin2)
-    maxUpperBound = (max ub1 ub2, case compare ub1 ub2 of
-      GT -> ubin1
-      LT -> ubin2
-      EQ -> max ubin1 ubin2)
 
 -- | convex hull of two intervals
 hull :: forall r. Ord r => Interval r -> Interval r -> Interval r
