@@ -29,19 +29,19 @@ import GHC.Generics (Generic)
 -- | describes how two intervals @x@ and @y@ can be related.
 -- See [Allen's interval algebra](https://en.wikipedia.org/wiki/Allen%27s_interval_algebra)
 data Relation
-  = Equal
+  = Before
+  | JustBefore
+  | Overlaps
   | Starts
-  | Finishes
   | During
-  | StartedBy
+  | Finishes
+  | Equal
   | FinishedBy
   | Contains
-  | Before
-  | After
-  | JustBefore
-  | JustAfter
-  | Overlaps
+  | StartedBy
   | OverlappedBy
+  | JustAfter
+  | After
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Generic, Data, Typeable)
 
 -- | Computes how two intervals are related according to the @`Relation`@ classification
@@ -73,16 +73,16 @@ relate i1 i2 =
 -- | inverts a relation, such that @'invert' ('relate' x y) = 'relate' y x@
 invert :: Relation -> Relation
 invert relation = case relation of
-  After        -> Before
   Before       -> After
-  Contains     -> During
+  JustBefore   -> JustAfter
+  Overlaps     -> OverlappedBy
+  Starts       -> StartedBy
   During       -> Contains
+  Finishes     -> FinishedBy
   Equal        -> Equal
   FinishedBy   -> Finishes
-  Finishes     -> FinishedBy
-  JustBefore   -> JustAfter
-  JustAfter    -> JustBefore
-  OverlappedBy -> Overlaps
-  Overlaps     -> OverlappedBy
+  Contains     -> During
   StartedBy    -> Starts
-  Starts       -> StartedBy
+  OverlappedBy -> Overlaps
+  JustAfter    -> JustBefore
+  After        -> Before
