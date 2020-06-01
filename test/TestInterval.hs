@@ -22,6 +22,7 @@ import Data.Interval
   , (<??), (<=??), (==??), (>=??), (>??), (/=??)
   )
 import qualified Data.Interval as Interval
+import Data.IntervalRelation
 
 import TestInstances
 
@@ -810,6 +811,95 @@ case_Data = everywhere f i @?= (1 <=..<= 2 :: Interval Integer)
     f x
       | Just (y :: Integer) <- cast x = fromJust $ cast (y + 1)
       | otherwise = x
+
+{--------------------------------------------------------------------
+  relate
+--------------------------------------------------------------------}
+
+prop_relate_equals =
+  forAll intervals $ \a ->
+    Interval.relate a a == Equal
+
+prop_relate_empty_contained_in_non_empty =
+  forAll (intervals `suchThat` (not . Interval.null)) $ \a ->
+    Interval.relate a Interval.empty == Contains
+
+prop_relate_detects_before =
+  forAll (nonEmptyIntervalPairs (\_ (ub1, _) (lb2, _) _ -> ub1 < lb2)) $ \(a, b) ->
+    Interval.relate a b == Before
+
+prop_relate_open_intervals_with_common_boundary_are_before =
+  forAll (arbitrary `suchThat` \(b1, b2, i) -> fst b1 < i && i < fst b2) $
+      \(b1 :: (Extended Rational, Interval.Boundary), b2, i :: Extended Rational) ->
+        Interval.relate (Interval.interval b1 (i, Interval.Open)) (Interval.interval (i, Interval.Open) b2) == Before
+
+prop_relate_right_closed_interval_just_before =
+  forAll (arbitrary `suchThat` \(b1, b2, i) -> fst b1 < i && i < fst b2) $
+      \(b1 :: (Extended Rational, Interval.Boundary), b2, i :: Extended Rational) ->
+        Interval.relate (Interval.interval b1 (i, Interval.Closed)) (Interval.interval (i, Interval.Open) b2) == JustBefore
+
+prop_relate_right_open_interval_just_before =
+  forAll (arbitrary `suchThat` \(b1, b2, i) -> fst b1 < i && i < fst b2) $
+      \(b1 :: (Extended Rational, Interval.Boundary), b2, i :: Extended Rational) ->
+        Interval.relate (Interval.interval b1 (i, Interval.Open)) (Interval.interval (i, Interval.Closed) b2) == JustBefore
+
+prop_relate_two_intervals_overlap =
+  forAll (nonEmptyIntervalPairs (\(lb1, _) (ub1, _) (lb2, _) (ub2, _) -> lb1 < lb2 && lb2 < ub1 && ub1 < ub2)) $ \(a, b) ->
+    Interval.relate a b == Overlaps
+
+prop_relate_interval_starts_another =
+  forAll (nonEmptyIntervalPairs (\(lb1, _) (ub1, _) (lb2, _) (ub2, _) -> lb1 == lb2 && ub1 < ub2)) $ \(a, b) ->
+    Interval.relate a b == Starts
+
+prop_relate_interval_finishes_another =
+  forAll (nonEmptyIntervalPairs (\(lb1, _) (ub1, _) (lb2, _) (ub2, _) -> lb1 > lb2 && ub1 == ub2)) $ \(a, b) ->
+    Interval.relate a b == Finishes
+
+prop_relate_interval_contains_another =
+  forAll (nonEmptyIntervalPairs (\(lb1, _) (ub1, _) (lb2, _) (ub2, _) -> lb1 < lb2 && ub1 > ub2)) $ \(a, b) ->
+    Interval.relate a b == Contains
+
+prop_relate_one_singleton_before_another =
+  forAll (arbitrary `suchThat` uncurry (<)) $ \(r1 :: Rational, r2) ->
+    Interval.relate (Interval.singleton r1) (Interval.singleton r2) == Before
+
+prop_relate_singleton_starts_interval =
+  forAll (arbitrary `suchThat` uncurry (<)) $ \(r1 :: Rational, r2) b ->
+    Interval.relate (Interval.singleton r1) (Interval.interval (Finite r1, Interval.Closed) (Finite r2, b)) == Starts
+
+prop_relate_singleton_just_before_interval =
+  forAll (arbitrary `suchThat` uncurry (<)) $ \(r1 :: Rational, r2) b ->
+    Interval.relate (Interval.singleton r1) (Interval.interval (Finite r1, Interval.Open) (Finite r2, b)) == JustBefore
+
+prop_relate_singleton_finishes_interval =
+  forAll (arbitrary `suchThat` uncurry (<)) $ \(r1 :: Rational, r2) b ->
+    Interval.relate (Interval.singleton r2) (Interval.interval (Finite r1, b) (Finite r2, Interval.Closed)) == Finishes
+
+prop_relate_singleton_just_after_interval =
+  forAll (arbitrary `suchThat` uncurry (<)) $ \(r1 :: Rational, r2) b ->
+    Interval.relate (Interval.singleton r2) (Interval.interval (Finite r1, b) (Finite r2, Interval.Open)) == JustAfter
+
+{--------------------------------------------------------------------
+  Generators
+--------------------------------------------------------------------}
+
+nonEmptyIntervalPairs
+  :: ( (Extended Rational, Interval.Boundary)
+    -> (Extended Rational, Interval.Boundary)
+    -> (Extended Rational, Interval.Boundary)
+    -> (Extended Rational, Interval.Boundary)
+    -> Bool)
+  -> Gen (Interval Rational, Interval Rational)
+nonEmptyIntervalPairs boundariesComparer = ap (fmap (,) intervals) intervals `suchThat`
+  (\(i1, i2) ->
+    (not . Interval.null $ i1) &&
+    (not . Interval.null $ i2) &&
+    boundariesComparer
+      (Interval.lowerBound' i1)
+      (Interval.upperBound' i1)
+      (Interval.lowerBound' i2)
+      (Interval.upperBound' i2)
+  )
 
 {--------------------------------------------------------------------
   Test intervals

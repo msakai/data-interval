@@ -5,6 +5,7 @@ import Control.Monad
 import Test.Tasty.QuickCheck
 
 import Data.Interval
+import Data.IntervalRelation
 
 instance Arbitrary Boundary where
   arbitrary = arbitraryBoundedEnum
@@ -25,3 +26,6 @@ instance (Arbitrary r, Ord r) => Arbitrary (Interval r) where
 
 intervals :: Gen (Interval Rational)
 intervals = arbitrary
+
+instance Arbitrary Relation where
+  arbitrary = arbitraryBoundedEnum
