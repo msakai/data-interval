@@ -689,7 +689,7 @@ recipUB :: (Fractional r, Ord r) => (Extended r, Boundary) -> (Extended r, Bound
 recipUB (0, _) = (NegInf, Open)
 recipUB (x1, in1) = (recip x1, in1)
 
--- | Computes how two intervals are related according to the @`Relation`@ classification
+-- | Computes how two intervals are related according to the @`Data.IntervalRelation.Relation`@ classification
 relate :: Ord r => Interval r -> Interval r -> Relation
 relate i1 i2 =
   case (i1 `isSubsetOf` i2, i2 `isSubsetOf` i1) of

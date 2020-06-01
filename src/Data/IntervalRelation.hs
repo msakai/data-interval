@@ -41,7 +41,7 @@ data Relation
   | After
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Generic, Data, Typeable)
 
--- | inverts a relation, such that @'invert' ('relate' x y) = 'relate' y x@
+-- | inverts a relation, such that @'invert' ('Data.Interval.relate' x y) = 'Data.Interval.relate' y x@
 invert :: Relation -> Relation
 invert relation = case relation of
   Before       -> After
