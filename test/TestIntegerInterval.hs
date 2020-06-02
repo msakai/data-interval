@@ -24,6 +24,7 @@ import Data.IntegerInterval
 import qualified Data.IntegerInterval as IntegerInterval
 import Data.Interval (Interval)
 import qualified Data.Interval as Interval
+import Data.IntervalRelation
 
 {--------------------------------------------------------------------
   empty
@@ -228,6 +229,19 @@ prop_isProperSubsetOf_not_refl =
 case_isProperSubsetOf =
   (0 <=..<= 1) `IntegerInterval.isProperSubsetOf` (0 <=..<= 2) @?= True
 
+{-- -----------------------------------------------------------------
+  isConnected
+----------------------------------------------------------------- --}
+
+prop_isConnected_reflexive =
+  forAll integerIntervals $ \a ->
+    a `IntegerInterval.isConnected` a
+
+prop_isConnected_symmetric =
+  forAll integerIntervals $ \a ->
+    forAll integerIntervals $ \b ->
+      (a `IntegerInterval.isConnected` b) == (b `IntegerInterval.isConnected` a)
+
 {--------------------------------------------------------------------
   simplestIntegerWithin
 --------------------------------------------------------------------}
@@ -282,6 +296,43 @@ case_pickup_whole =
 prop_pickup_singleton =
   forAll arbitrary $ \x ->
     IntegerInterval.pickup (IntegerInterval.singleton x) == Just x
+
+{--------------------------------------------------------------------
+  relate
+--------------------------------------------------------------------}
+
+prop_relate_equals =
+  forAll integerIntervals $ \a ->
+    IntegerInterval.relate a a == Equal
+
+prop_relate_empty_contained_in_non_empty =
+  forAll (integerIntervals `suchThat` (not . IntegerInterval.null)) $ \a ->
+    IntegerInterval.relate a IntegerInterval.empty == Contains
+
+prop_relate_detects_before =
+  forAll (nonEmptyIntegerIntervalPairs (\_ ub1 lb2 _ -> ub1 < lb2 - 1)) $ \(a, b) ->
+    IntegerInterval.relate a b == Before
+
+prop_relate_detects_just_before =
+  forAll (arbitrary `suchThat` \(b1, b2, i) -> b1 <= Finite i &&  Finite (i + 1) <= b2) $
+      \(b1, b2, i) ->
+        IntegerInterval.relate (b1 <=..<= Finite i) (Finite (i + 1) <=..<= b2) == JustBefore
+
+prop_relate_two_intervals_overlap =
+  forAll (nonEmptyIntegerIntervalPairs (\lb1 ub1 lb2 ub2 -> lb1 < lb2 && lb2 < ub1 && ub1 < ub2)) $ \(a, b) ->
+    IntegerInterval.relate a b == Overlaps
+
+prop_relate_interval_starts_another =
+  forAll (nonEmptyIntegerIntervalPairs (\lb1 ub1 lb2 ub2 -> lb1 == lb2 && ub1 < ub2)) $ \(a, b) ->
+    IntegerInterval.relate a b == Starts
+
+prop_relate_interval_finishes_another =
+  forAll (nonEmptyIntegerIntervalPairs (\lb1 ub1 lb2 ub2 -> lb1 > lb2 && ub1 == ub2)) $ \(a, b) ->
+    IntegerInterval.relate a b == Finishes
+
+prop_relate_interval_contains_another =
+  forAll (nonEmptyIntegerIntervalPairs (\lb1 ub1 lb2 ub2 -> lb1 < lb2 && ub1 > ub2)) $ \(a, b) ->
+    IntegerInterval.relate a b == Contains
 
 {--------------------------------------------------------------------
   Comparison
@@ -789,6 +840,24 @@ instance Arbitrary IntegerInterval where
 
 integerIntervals :: Gen IntegerInterval
 integerIntervals = arbitrary
+
+nonEmptyIntegerIntervalPairs
+  :: ( Extended Integer
+    -> Extended Integer
+    -> Extended Integer
+    -> Extended Integer
+    -> Bool)
+  -> Gen (IntegerInterval, IntegerInterval)
+nonEmptyIntegerIntervalPairs boundariesComparer = ap (fmap (,) integerIntervals) integerIntervals `suchThat`
+  (\(i1, i2) ->
+    (not . IntegerInterval.null $ i1) &&
+    (not . IntegerInterval.null $ i2) &&
+    boundariesComparer
+      (IntegerInterval.lowerBound i1)
+      (IntegerInterval.upperBound i1)
+      (IntegerInterval.lowerBound i2)
+      (IntegerInterval.upperBound i2)
+  )
 
 intervals :: Gen (Interval.Interval Rational)
 intervals = arbitrary
