@@ -44,6 +44,7 @@ module Data.IntegerInterval
   , notMember
   , isSubsetOf
   , isProperSubsetOf
+  , isConnected
   , lowerBound
   , upperBound
   , lowerBound'
@@ -77,6 +78,9 @@ module Data.IntegerInterval
   , fromInterval
   , fromIntervalOver
   , fromIntervalUnder
+
+  -- * Intervals relation
+  , relate
   ) where
 
 import Algebra.Lattice
@@ -89,6 +93,7 @@ import Prelude hiding (null)
 import Data.IntegerInterval.Internal
 import Data.Interval (Boundary(..))
 import qualified Data.Interval as Interval
+import Data.IntervalRelation
 
 infix 5 <..<=
 infix 5 <=..<
@@ -273,6 +278,28 @@ isSubsetOf i1 i2 = lowerBound i2 <= lowerBound i1 && upperBound i1 <= upperBound
 -- | Is this a proper subset? (/i.e./ a subset but not equal).
 isProperSubsetOf :: IntegerInterval -> IntegerInterval -> Bool
 isProperSubsetOf i1 i2 = i1 /= i2 && i1 `isSubsetOf` i2
+
+-- | Does the union of two range form a set which is the intersection between the integers and a connected real interval?
+isConnected :: IntegerInterval -> IntegerInterval -> Bool
+isConnected x y
+  | null x = True
+  | null y = True
+  | otherwise = x ==? y || lb1nearUb2 || ub1nearLb2
+  where
+    lb1 = lowerBound x
+    lb2 = lowerBound y
+    ub1 = upperBound x
+    ub2 = upperBound y
+
+    lb1nearUb2 = case (lb1, ub2) of
+      (Finite lb1Int, Finite ub2Int) | lb1Int == ub2Int + 1 -> True
+                                     | otherwise            -> False
+      _                                                     -> False
+
+    ub1nearLb2 = case (ub1, lb2) of
+      (Finite ub1Int, Finite lb2Int) | ub1Int + 1 == lb2Int -> True
+                                     | otherwise            -> False
+      _                                                     -> False
 
 -- | Width of a interval. Width of an unbounded interval is @undefined@.
 width :: IntegerInterval -> Integer
@@ -496,3 +523,29 @@ fromIntervalUnder i = fmap f lb <=..<= fmap g ub
     g x = if fromIntegral y `Interval.member` i then y else y-1
       where
         y = floor x
+
+-- | Computes how two intervals are related according to the @`Data.IntervalRelation.Relation`@ classification
+relate :: IntegerInterval -> IntegerInterval -> Relation
+relate i1 i2 =
+  case (i1 `isSubsetOf` i2, i2 `isSubsetOf` i1) of
+    -- 'i1' ad 'i2' are equal
+    (True , True ) -> Equal
+    -- 'i1' is strictly contained in `i2`
+    (True , False) | lowerBound i1 == lowerBound i2 -> Starts
+                   | upperBound i1 == upperBound i2 -> Finishes
+                   | otherwise                                    -> During
+    -- 'i2' is strictly contained in `i1`
+    (False, True ) | lowerBound i1 == lowerBound i2 -> StartedBy
+                   | upperBound i1 == upperBound i2 -> FinishedBy
+                   | otherwise                                    -> Contains
+    -- neither `i1` nor `i2` is contained in the other
+    (False, False) -> case ( null (i1 `intersection` i2)
+                           , lowerBound i1 <= lowerBound i2
+                           , i1 `isConnected` i2
+                           ) of
+      (True , True , True ) -> JustBefore
+      (True , True , False) -> Before
+      (True , False, True ) -> JustAfter
+      (True , False, False) -> After
+      (False, True , _    ) -> Overlaps
+      (False, False, _    ) -> OverlappedBy
