@@ -281,10 +281,7 @@ isProperSubsetOf i1 i2 = i1 /= i2 && i1 `isSubsetOf` i2
 
 -- | Does the union of two range form a set which is the intersection between the integers and a connected real interval?
 isConnected :: IntegerInterval -> IntegerInterval -> Bool
-isConnected x y
-  | null x = True
-  | null y = True
-  | otherwise = x ==? y || lb1nearUb2 || ub1nearLb2
+isConnected x y = null x || null y || x ==? y || lb1nearUb2 || ub1nearLb2
   where
     lb1 = lowerBound x
     lb2 = lowerBound y
@@ -292,14 +289,12 @@ isConnected x y
     ub2 = upperBound y
 
     lb1nearUb2 = case (lb1, ub2) of
-      (Finite lb1Int, Finite ub2Int) | lb1Int == ub2Int + 1 -> True
-                                     | otherwise            -> False
-      _                                                     -> False
+      (Finite lb1Int, Finite ub2Int) -> lb1Int == ub2Int + 1
+      _                              -> False
 
     ub1nearLb2 = case (ub1, lb2) of
-      (Finite ub1Int, Finite lb2Int) | ub1Int + 1 == lb2Int -> True
-                                     | otherwise            -> False
-      _                                                     -> False
+      (Finite ub1Int, Finite lb2Int) -> ub1Int + 1 == lb2Int
+      _                              -> False
 
 -- | Width of a interval. Width of an unbounded interval is @undefined@.
 width :: IntegerInterval -> Integer
@@ -533,11 +528,11 @@ relate i1 i2 =
     -- 'i1' is strictly contained in `i2`
     (True , False) | lowerBound i1 == lowerBound i2 -> Starts
                    | upperBound i1 == upperBound i2 -> Finishes
-                   | otherwise                                    -> During
+                   | otherwise                      -> During
     -- 'i2' is strictly contained in `i1`
     (False, True ) | lowerBound i1 == lowerBound i2 -> StartedBy
                    | upperBound i1 == upperBound i2 -> FinishedBy
-                   | otherwise                                    -> Contains
+                   | otherwise                      -> Contains
     -- neither `i1` nor `i2` is contained in the other
     (False, False) -> case ( null (i1 `intersection` i2)
                            , lowerBound i1 <= lowerBound i2

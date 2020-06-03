@@ -698,11 +698,11 @@ relate i1 i2 =
     -- 'i1' is strictly contained in `i2`
     (True , False) | lowerBound i1 == lowerBound i2 -> Starts
                    | upperBound i1 == upperBound i2 -> Finishes
-                   | otherwise                                    -> During
+                   | otherwise                      -> During
     -- 'i2' is strictly contained in `i1`
     (False, True ) | lowerBound i1 == lowerBound i2 -> StartedBy
                    | upperBound i1 == upperBound i2 -> FinishedBy
-                   | otherwise                                    -> Contains
+                   | otherwise                      -> Contains
     -- neither `i1` nor `i2` is contained in the other
     (False, False) -> case ( null (i1 `intersection` i2)
                            , lowerBound i1 <= lowerBound i2
