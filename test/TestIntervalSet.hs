@@ -1,7 +1,9 @@
-{-# LANGUAGE TemplateHaskell, ScopedTypeVariables #-}
+{-# LANGUAGE CPP, TemplateHaskell, ScopedTypeVariables #-}
 module TestIntervalSet (intervalSetTestGroup) where
 
+#if MIN_VERSION_lattices
 import qualified Algebra.Lattice as L
+#endif
 import Control.Applicative ((<$>))
 import Control.DeepSeq
 import Control.Monad
@@ -295,6 +297,8 @@ prop_Eq_reflexive =
   Lattice
 --------------------------------------------------------------------}
 
+#if MIN_VERSION_lattices
+
 prop_Lattice_Leq_welldefined =
   forAll arbitrary $ \(a :: IntervalSet Rational) (b :: IntervalSet Rational) ->
     a `L.meetLeq` b == a `L.joinLeq` b
@@ -306,6 +310,14 @@ prop_top =
 prop_bottom =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
     L.bottom `L.joinLeq` a
+
+#else
+
+prop_Lattice_Leq_welldefined = True
+prop_top                     = True
+prop_bottom                  = True
+
+#endif
 
 {--------------------------------------------------------------------
   Show / Read
