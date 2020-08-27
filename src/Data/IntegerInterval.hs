@@ -83,7 +83,9 @@ module Data.IntegerInterval
   , relate
   ) where
 
+#if MIN_VERSION_lattices
 import Algebra.Lattice
+#endif
 import Control.Exception (assert)
 import Control.Monad hiding (join)
 import Data.ExtendedReal
@@ -133,6 +135,7 @@ upperBound' x =
     ub@(Finite _) -> (ub, Closed)
     ub@_ -> (ub, Open)
 
+#if MIN_VERSION_lattices
 #if MIN_VERSION_lattices(2,0,0)
 
 instance Lattice IntegerInterval where
@@ -163,6 +166,7 @@ instance BoundedMeetSemiLattice IntegerInterval where
 
 instance BoundedLattice IntegerInterval
 
+#endif
 #endif
 
 instance Show IntegerInterval where

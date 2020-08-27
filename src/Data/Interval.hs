@@ -82,7 +82,9 @@ module Data.Interval
   , relate
   ) where
 
+#if MIN_VERSION_lattices
 import Algebra.Lattice
+#endif
 import Control.Exception (assert)
 import Control.Monad hiding (join)
 import Data.ExtendedReal
@@ -117,6 +119,7 @@ infix 4 >=??
 infix 4 >??
 infix 4 /=??
 
+#if MIN_VERSION_lattices
 #if MIN_VERSION_lattices(2,0,0)
 
 instance (Ord r) => Lattice (Interval r) where
@@ -147,6 +150,7 @@ instance (Ord r) => BoundedMeetSemiLattice (Interval r) where
 
 instance (Ord r) => BoundedLattice (Interval r)
 
+#endif
 #endif
 
 instance (Ord r, Show r) => Show (Interval r) where

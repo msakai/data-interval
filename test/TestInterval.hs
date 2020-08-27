@@ -1,7 +1,9 @@
-{-# LANGUAGE TemplateHaskell, ScopedTypeVariables #-}
+{-# LANGUAGE CPP, TemplateHaskell, ScopedTypeVariables #-}
 module TestInterval (intervalTestGroup) where
 
+#if MIN_VERSION_lattices
 import qualified Algebra.Lattice as L
+#endif
 import Control.DeepSeq
 import Control.Monad
 import Data.Generics.Schemes
@@ -827,6 +829,8 @@ prop_recip_zero =
   Lattice
 --------------------------------------------------------------------}
 
+#if MIN_VERSION_lattices
+
 prop_Lattice_Leq_welldefined =
   forAll intervals $ \a b ->
     a `L.meetLeq` b == a `L.joinLeq` b
@@ -838,6 +842,14 @@ prop_top =
 prop_bottom =
   forAll intervals $ \a ->
     L.bottom `L.joinLeq` a
+
+#else
+
+prop_Lattice_Leq_welldefined = True
+prop_top                     = True
+prop_bottom                  = True
+
+#endif
 
 {--------------------------------------------------------------------
   Read
