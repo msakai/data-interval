@@ -5,6 +5,7 @@ module TestInterval (intervalTestGroup) where
 import qualified Algebra.Lattice as L
 #endif
 import Control.DeepSeq
+import Control.Exception
 import Control.Monad
 import Data.Generics.Schemes
 import Data.Hashable
@@ -821,9 +822,45 @@ case_recip_test3 = recip i1 @?= i2
     i1 = -10 <=..< 0
     i2 = NegInf <..<= (-1/10)
 
-prop_recip_zero =
-  forAll intervals $ \a ->
-    0 `Interval.member` a ==> recip a == Interval.whole
+case_recip_test4 = recip i1 @?= i2
+  where
+    i1, i2 :: Interval Rational
+    i1 = 0 <=..<= 10
+    i2 = (1/10) <=..< PosInf
+
+case_recip_test5 = recip i1 @?= i2
+  where
+    i1, i2 :: Interval Rational
+    i1 = -10 <=..<= 0
+    i2 = NegInf <..<= (-1/10)
+
+case_recip_test6 = recip i1 @?= i2
+  where
+    i1, i2 :: Interval Rational
+    i1 = 0 <=..<= 0
+    i2 = Interval.empty
+
+prop_recip =
+  forAll intervals $ \a -> ioProperty $ do
+    x <- try (evaluate (recip a))
+    return $ case x of
+      Left DivideByZero -> 0 `isInteriorPoint` a
+      Right b -> recip b === without0 a
+
+isInteriorPoint :: (Ord a, Show a) => a -> Interval a -> Property
+isInteriorPoint x xs
+  = property (x `Interval.member` xs)
+  .&&. Finite x =/= Interval.lowerBound xs
+  .&&. Finite x =/= Interval.upperBound xs
+
+without0 :: (Ord a, Num a) => Interval a -> Interval a
+without0 xs = case Interval.lowerBound' xs of
+  (0, Interval.Closed) ->
+    Interval.interval (0, Interval.Open) (Interval.upperBound' xs)
+  _ -> case Interval.upperBound' xs of
+    (0, Interval.Closed) ->
+      Interval.interval (Interval.lowerBound' xs) (0, Interval.Open)
+    _ -> xs
 
 {--------------------------------------------------------------------
   Lattice
