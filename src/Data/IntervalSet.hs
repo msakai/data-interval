@@ -220,9 +220,10 @@ instance (Num r, Ord r) => Num (IntervalSet r) where
       ]
     return y
 
+-- | @recip (recip xs) == delete 0 xs@
 instance forall r. (Real r, Fractional r) => Fractional (IntervalSet r) where
   fromRational r = singleton (fromRational r)
-  recip = lift1 recip
+  recip xs = lift1 recip (delete (Interval.singleton 0) xs)
 
 #if __GLASGOW_HASKELL__ >= 708
 instance Ord r => GHCExts.IsList (IntervalSet r) where

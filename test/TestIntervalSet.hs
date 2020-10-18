@@ -455,9 +455,8 @@ prop_recip_singleton =
         d = fromIntegral (denominator r)
     in fromRational n / fromRational d == (fromRational (r::Rational) :: IntervalSet Rational)
 
-prop_recip_zero =
-  forAll arbitrary $ \(a :: IntervalSet Rational) ->
-    0 `IntervalSet.member` a ==> recip a == IntervalSet.whole
+prop_recip (a :: IntervalSet Rational) =
+  recip (recip a) === IntervalSet.delete (Interval.singleton 0) a
 
 {- ------------------------------------------------------------------
   Data
