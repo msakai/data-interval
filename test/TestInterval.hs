@@ -359,11 +359,11 @@ prop_relate_two_intervals_overlap =
     Interval.relate a b == Overlaps
 
 prop_relate_interval_starts_another =
-  forAll (nonEmptyIntervalPairs (\(lb1, _) (ub1, _) (lb2, _) (ub2, _) -> lb1 == lb2 && ub1 < ub2)) $ \(a, b) ->
+  forAll (nonEmptyIntervalPairs (\lb1 (ub1, _) lb2 (ub2, _) -> lb1 == lb2 && ub1 < ub2)) $ \(a, b) ->
     Interval.relate a b == Starts
 
 prop_relate_interval_finishes_another =
-  forAll (nonEmptyIntervalPairs (\(lb1, _) (ub1, _) (lb2, _) (ub2, _) -> lb1 > lb2 && ub1 == ub2)) $ \(a, b) ->
+  forAll (nonEmptyIntervalPairs (\(lb1, _) ub1 (lb2, _) ub2 -> lb1 > lb2 && ub1 == ub2)) $ \(a, b) ->
     Interval.relate a b == Finishes
 
 prop_relate_interval_contains_another =
