@@ -1,3 +1,9 @@
+2.1.0
+-----
+
+* introduce operations for Allen's interval algebra (#18, thanks to marcosh)
+* amend `recip` so that `recip (recip xs) == xs // {0}` (#21)
+
 2.0.0
 -----
 * change internal representation of `Interval` and `IntegerInterval` to
