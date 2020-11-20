@@ -49,27 +49,36 @@ data Interval r
   | LessOrEqual !r
   | GreaterThan !r
   | GreaterOrEqual !r
+  -- For constructors below
+  -- the first argument is strictly less than the second one
   | BothClosed !r !r
   | LeftOpen !r !r
   | RightOpen !r !r
   | BothOpen !r !r
   deriving (Eq, Typeable)
 
-peekInterval :: (Applicative m, Monad m) => m Int8 -> m r -> m r -> m (Interval r)
+peekInterval :: (Applicative m, Monad m, Ord r) => m Int8 -> m r -> m r -> m (Interval r)
 peekInterval tagM x y = do
   tag <- tagM
   case tag of
     0 -> pure Whole
     1 -> pure Empty
-    2 -> Point          <$> x
-    3 -> LessThan       <$> x
-    4 -> LessOrEqual    <$> x
-    5 -> GreaterThan    <$> x
-    6 -> GreaterOrEqual <$> x
-    7 -> BothClosed     <$> x <*> y
-    8 -> LeftOpen       <$> x <*> y
-    9 -> RightOpen      <$> x <*> y
-    _ -> BothOpen       <$> x <*> y
+    2 -> Point           <$> x
+    3 -> LessThan        <$> x
+    4 -> LessOrEqual     <$> x
+    5 -> GreaterThan     <$> x
+    6 -> GreaterOrEqual  <$> x
+    7 -> wrap BothClosed <$> x <*> y
+    8 -> wrap LeftOpen   <$> x <*> y
+    9 -> wrap RightOpen  <$> x <*> y
+    _ -> wrap BothOpen   <$> x <*> y
+
+-- | Enforce the internal invariant
+-- of 'BothClosed' / 'LeftOpen' / 'RightOpen' / 'BothOpen'.
+wrap :: Ord r => (r -> r -> Interval r) -> r -> r -> Interval r
+wrap f x y
+  | x < y = f x y
+  | otherwise = Empty
 
 pokeInterval :: Applicative m => (Int8 -> m ()) -> (r -> m ()) -> (r -> m ()) -> Interval r -> m ()
 pokeInterval tag actX actY = \case
@@ -85,7 +94,7 @@ pokeInterval tag actX actY = \case
   RightOpen    x y -> tag (9 :: Int8) *> actX x *> actY y
   BothOpen     x y -> tag (10 :: Int8) *> actX x *> actY y
 
-instance Storable r => Storable (Interval r) where
+instance (Storable r, Ord r) => Storable (Interval r) where
   sizeOf _ = 3 * sizeOf (undefined :: r)
   alignment _ = alignment (undefined :: r)
   peek ptr = peekInterval
