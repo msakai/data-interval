@@ -9,6 +9,7 @@ import Control.Exception
 import Control.Monad
 import Data.Generics.Schemes
 import Data.Hashable
+import Data.Int
 import Data.Maybe
 import Data.Ratio
 import Data.Typeable
@@ -936,10 +937,19 @@ case_Data = everywhere f i @?= (1 <=..<= 2 :: Interval Integer)
 --------------------------------------------------------------------}
 
 #ifdef MIN_VERSION_quickcheck_classes_base
-test_Storable = map (uncurry testProperty) $ lawsProperties $
+test_Storable_Int8 = map (uncurry testProperty) $ lawsProperties $
+  storableLaws (Proxy :: Proxy (Interval Int8))
+test_Storable_Int = map (uncurry testProperty) $ lawsProperties $
+  storableLaws (Proxy :: Proxy (Interval Int))
+test_Storable_Float = map (uncurry testProperty) $ lawsProperties $
+  storableLaws (Proxy :: Proxy (Interval Float))
+test_Storable_Double = map (uncurry testProperty) $ lawsProperties $
   storableLaws (Proxy :: Proxy (Interval Double))
 #else
-test_Storable = []
+test_Storable_Int8 = []
+test_Storable_Int = []
+test_Storable_Float = []
+test_Storable_Double = []
 #endif
 
 {--------------------------------------------------------------------
