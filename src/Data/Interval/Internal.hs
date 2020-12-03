@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric, LambdaCase #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric, LambdaCase, ScopedTypeVariables #-}
 {-# LANGUAGE Safe #-}
 #if __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE RoleAnnotations #-}
@@ -14,10 +14,17 @@ module Data.Interval.Internal
   , empty
   ) where
 
+#if __GLASGOW_HASKELL__ < 710
+import Control.Applicative hiding (empty)
+#endif
 import Control.DeepSeq
 import Data.Data
 import Data.ExtendedReal
 import Data.Hashable
+import Data.Int
+import Foreign.Marshal.Array
+import Foreign.Ptr
+import Foreign.Storable
 import GHC.Generics (Generic)
 
 -- | Boundary of an interval may be
@@ -42,11 +49,62 @@ data Interval r
   | LessOrEqual !r
   | GreaterThan !r
   | GreaterOrEqual !r
+  -- For constructors below
+  -- the first argument is strictly less than the second one
   | BothClosed !r !r
   | LeftOpen !r !r
   | RightOpen !r !r
   | BothOpen !r !r
   deriving (Eq, Typeable)
+
+peekInterval :: (Applicative m, Monad m, Ord r) => m Int8 -> m r -> m r -> m (Interval r)
+peekInterval tagM x y = do
+  tag <- tagM
+  case tag of
+    0 -> pure Whole
+    1 -> pure Empty
+    2 -> Point           <$> x
+    3 -> LessThan        <$> x
+    4 -> LessOrEqual     <$> x
+    5 -> GreaterThan     <$> x
+    6 -> GreaterOrEqual  <$> x
+    7 -> wrap BothClosed <$> x <*> y
+    8 -> wrap LeftOpen   <$> x <*> y
+    9 -> wrap RightOpen  <$> x <*> y
+    _ -> wrap BothOpen   <$> x <*> y
+
+-- | Enforce the internal invariant
+-- of 'BothClosed' / 'LeftOpen' / 'RightOpen' / 'BothOpen'.
+wrap :: Ord r => (r -> r -> Interval r) -> r -> r -> Interval r
+wrap f x y
+  | x < y = f x y
+  | otherwise = Empty
+
+pokeInterval :: Applicative m => (Int8 -> m ()) -> (r -> m ()) -> (r -> m ()) -> Interval r -> m ()
+pokeInterval tag actX actY = \case
+  Whole            -> tag (0 :: Int8)
+  Empty            -> tag (1 :: Int8)
+  Point          x -> tag (2 :: Int8) *> actX x
+  LessThan       x -> tag (3 :: Int8) *> actX x
+  LessOrEqual    x -> tag (4 :: Int8) *> actX x
+  GreaterThan    x -> tag (5 :: Int8) *> actX x
+  GreaterOrEqual x -> tag (6 :: Int8) *> actX x
+  BothClosed   x y -> tag (7 :: Int8) *> actX x *> actY y
+  LeftOpen     x y -> tag (8 :: Int8) *> actX x *> actY y
+  RightOpen    x y -> tag (9 :: Int8) *> actX x *> actY y
+  BothOpen     x y -> tag (10 :: Int8) *> actX x *> actY y
+
+instance (Storable r, Ord r) => Storable (Interval r) where
+  sizeOf _ = 3 * sizeOf (undefined :: r)
+  alignment _ = alignment (undefined :: r)
+  peek ptr = peekInterval
+    (peek $ castPtr ptr)
+    (peek $ castPtr ptr `advancePtr` 1)
+    (peek $ castPtr ptr `advancePtr` 2)
+  poke ptr = pokeInterval
+    (poke $ castPtr ptr)
+    (poke $ castPtr ptr `advancePtr` 1)
+    (poke $ castPtr ptr `advancePtr` 2)
 
 -- | Lower endpoint (/i.e./ greatest lower bound) of the interval,
 -- together with 'Boundary' information.

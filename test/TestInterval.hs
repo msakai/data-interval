@@ -9,6 +9,7 @@ import Control.Exception
 import Control.Monad
 import Data.Generics.Schemes
 import Data.Hashable
+import Data.Int
 import Data.Maybe
 import Data.Ratio
 import Data.Typeable
@@ -17,6 +18,9 @@ import Test.Tasty
 import Test.Tasty.QuickCheck
 import Test.Tasty.HUnit
 import Test.Tasty.TH
+#ifdef MIN_VERSION_quickcheck_classes_base
+import Test.QuickCheck.Classes.Base
+#endif
 
 import Data.Interval
   ( Interval, Extended (..), (<=..<=), (<=..<), (<..<=), (<..<)
@@ -927,6 +931,20 @@ case_Data = everywhere f i @?= (1 <=..<= 2 :: Interval Integer)
     f x
       | Just (y :: Integer) <- cast x = fromJust $ cast (y + 1)
       | otherwise = x
+
+{--------------------------------------------------------------------
+  Storable
+--------------------------------------------------------------------}
+
+#ifdef MIN_VERSION_quickcheck_classes_base
+test_Storable_Int8 = map (uncurry testProperty) $ lawsProperties $
+  storableLaws (Proxy :: Proxy (Interval Int8))
+test_Storable_Int = map (uncurry testProperty) $ lawsProperties $
+  storableLaws (Proxy :: Proxy (Interval Int))
+#else
+test_Storable_Int8 = []
+test_Storable_Int = []
+#endif
 
 {--------------------------------------------------------------------
   Generators

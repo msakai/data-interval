@@ -98,6 +98,9 @@ Test-suite test-interval
      , tasty-th
      , HUnit
      , QuickCheck >=2.5 && <3
+  if impl(ghc >=8.0)
+    Build-depends:
+      quickcheck-classes-base
   if impl(ghc <8.0)
     Build-depends:
       semigroups
