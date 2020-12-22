@@ -93,8 +93,8 @@ import Data.List (foldl')
 import Data.Maybe
 import Prelude hiding (null)
 import Data.IntegerInterval.Internal
-import Data.Interval (Boundary(..))
-import qualified Data.Interval as Interval
+import Data.Interval.Internal (Boundary(..))
+import qualified Data.Interval.Internal as Interval
 import Data.IntervalRelation
 
 infix 5 <..<=
@@ -488,7 +488,9 @@ instance Num IntegerInterval where
 
 -- | Convert the interval to 'Interval.Interval' data type.
 toInterval :: Real r => IntegerInterval -> Interval.Interval r
-toInterval x = fmap fromInteger (lowerBound x) Interval.<=..<= fmap fromInteger (upperBound x)
+toInterval x = Interval.interval
+  (fmap fromInteger (lowerBound x), Closed)
+  (fmap fromInteger (upperBound x), Closed)
 
 -- | Conversion from 'Interval.Interval' data type.
 fromInterval :: Interval.Interval Integer -> IntegerInterval
@@ -507,21 +509,23 @@ fromInterval i = x1' <=..<= x2'
 fromIntervalOver :: RealFrac r => Interval.Interval r -> IntegerInterval
 fromIntervalOver i = fmap floor lb <=..<= fmap ceiling ub
   where
-    lb = Interval.lowerBound i
-    ub = Interval.upperBound i
+    (lb, _) = Interval.lowerBound' i
+    (ub, _) = Interval.upperBound' i
 
 -- | Given a 'Interval.Interval' @I@ over R, compute the largest 'IntegerInterval' @J@ such that @J ⊆ I@.
 fromIntervalUnder :: RealFrac r => Interval.Interval r -> IntegerInterval
-fromIntervalUnder i = fmap f lb <=..<= fmap g ub
+fromIntervalUnder i = lb <=..<= ub
   where
-    lb = Interval.lowerBound i
-    ub = Interval.upperBound i
-    f x = if fromIntegral y `Interval.member` i then y else y+1
-      where
-        y = ceiling x
-    g x = if fromIntegral y `Interval.member` i then y else y-1
-      where
-        y = floor x
+    lb = case Interval.lowerBound' i of
+      (Finite x, Open)
+        | fromInteger (ceiling x) == x
+        -> Finite (ceiling x + 1)
+      (x, _) -> fmap ceiling x
+    ub = case Interval.upperBound' i of
+      (Finite x, Open)
+        | fromInteger (floor x) == x
+        -> Finite (floor x - 1)
+      (x, _) -> fmap floor x
 
 -- | Computes how two intervals are related according to the @`Data.IntervalRelation.Relation`@ classification
 relate :: IntegerInterval -> IntegerInterval -> Relation
