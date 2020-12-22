@@ -17,6 +17,7 @@ import Data.Typeable
 import Test.Tasty
 import Test.Tasty.QuickCheck
 import Test.Tasty.HUnit
+import Test.Tasty.Options
 import Test.Tasty.TH
 #ifdef MIN_VERSION_quickcheck_classes_base
 import Test.QuickCheck.Classes.Base
@@ -208,7 +209,11 @@ prop_isSubsetOf_refl =
   forAll intervals $ \a ->
     Interval.isSubsetOf a a
 
-prop_isSubsetOf_trans =
+test_isSubsetOf_trans :: [TestTree]
+test_isSubsetOf_trans =
+  (: []) $
+  adjustOption (\(QuickCheckMaxRatio r) -> QuickCheckMaxRatio (r * 10)) $
+  testProperty "isSubsetOf trans" $
   forAll intervals $ \a ->
   forAll intervals $ \b ->
   forAll intervals $ \c ->
