@@ -7,7 +7,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Interval
--- Copyright   :  (c) Masahiro Sakai 2011-2013
+-- Copyright   :  (c) Masahiro Sakai 2011-2013, Andrew Lelechenko 2020
 -- License     :  BSD-style
 --
 -- Maintainer  :  masahiro.sakai@gmail.com
@@ -85,7 +85,7 @@ module Data.Interval
 #if MIN_VERSION_lattices
 import Algebra.Lattice
 #endif
-import Control.Exception (assert, throw, ArithException(DivideByZero))
+import Control.Exception (assert, throw, ArithException(..))
 import Control.Monad hiding (join)
 import Data.ExtendedReal
 import Data.Interval.Internal
@@ -328,9 +328,13 @@ null i =
 --
 -- @since 2.0.0
 isSingleton :: Ord r => Interval r -> Bool
-isSingleton i = case (lowerBound' i, upperBound' i) of
-  ((Finite l, Closed), (Finite u, Closed)) -> l==u
-  _ -> False
+isSingleton = isJust . extractSingleton
+
+extractSingleton :: Ord r => Interval r -> Maybe r
+extractSingleton i = case (lowerBound' i, upperBound' i) of
+  ((Finite l, Closed), (Finite u, Closed))
+    | l == u -> Just l
+  _ -> Nothing
 
 -- | Is the element in the interval?
 member :: Ord r => r -> Interval r -> Bool
@@ -434,9 +438,18 @@ simplestRationalWithin i
         Finite lb = lowerBound j
         lb_floor  = floor lb
 
--- | @mapMonotonic f i@ is the image of @i@ under @f@, where @f@ must be a strict monotone function.
+-- | @mapMonotonic f i@ is the image of @i@ under @f@, where @f@ must be a strict monotone function,
+-- preserving negative and positive infinities.
 mapMonotonic :: (Ord a, Ord b) => (a -> b) -> Interval a -> Interval b
 mapMonotonic f i = interval (fmap f lb, in1) (fmap f ub, in2)
+  where
+    (lb, in1) = lowerBound' i
+    (ub, in2) = upperBound' i
+
+mapAntiMonotonic :: (Ord a, Ord b) => (a -> b) -> Interval a -> Interval b
+mapAntiMonotonic f i
+  | null i = empty
+  | otherwise = interval (fmap f ub, in2) (fmap f lb, in1)
   where
     (lb, in1) = lowerBound' i
     (ub, in2) = upperBound' i
@@ -661,6 +674,135 @@ instance forall r. (Real r, Fractional r) => Fractional (Interval r) where
       lb3 = minimumBy cmpLB xs
       xs = [recipLB (lowerBound' a), recipUB (upperBound' a)]
 
+instance (RealFrac r, Floating r) => Floating (Interval r) where
+  pi = singleton pi
+
+  exp = intersection (0 <..< PosInf) . mapMonotonic exp
+  log a = interval (logB (lowerBound' b)) (logB (upperBound' b))
+    where
+      b = intersection (0 <..< PosInf) a
+
+  sqrt = mapMonotonic sqrt . intersection (0 <=..< PosInf)
+
+  -- | If results do not form a connected interval, throws 'LossOfPrecision'.
+  a ** b = fromMaybe (throw LossOfPrecision) $ do
+    let posBase = exp (log a * b)
+        zeroPower = [ 1 | 0 `member` b, not (null a) ]
+        zeroBase  = [ 0 | 0 `member` a, not (null (b `intersection` (0 <..< PosInf))) ]
+    negBasePosPower <- positiveIntegralPowersOfNegativeValues
+      (0 `member` a)
+      (a `intersection` (NegInf <..< 0))
+      (b `intersection` (0 <..< PosInf))
+    negBaseNegPower <- positiveIntegralPowersOfNegativeValues
+      (0 `member` a)
+      (recip  (a `intersection` (NegInf <..< 0)))
+      (negate (b `intersection` (NegInf <..< 0)))
+    unionsIfConnected (posBase : negBasePosPower : negBaseNegPower : zeroPower ++ zeroBase)
+
+  cos a = case lowerBound' a of
+    (NegInf, _) -> -1 <=..<= 1
+    (PosInf, _) -> empty
+    (Finite lb, in1) -> case upperBound' a of
+      (NegInf, _) -> empty
+      (PosInf, _) -> -1 <=..<= 1
+      (Finite ub, in2)
+        | ub - lb > 2 * pi                                             -> -1 <=..<= 1
+        | clb == -1 && ub - lb == 2 * pi && in1 == Open && in2 == Open -> -1 <..<= 1
+        | clb ==  1 && ub - lb == 2 * pi && in1 == Open && in2 == Open -> -1 <=..< 1
+        | ub - lb == 2 * pi                                            -> -1 <=..<= 1
+
+        | lbNorth, ubNorth, clb >= cub -> interval (cub, in2) (clb, in1)
+        | lbNorth, ubNorth -> -1 <=..<= 1
+        | lbNorth -> interval (-1, Closed) $ case clb `compare` cub of
+          LT -> (cub, in2)
+          EQ -> (cub, in1 `max` in2)
+          GT -> (clb, in1)
+        | ubNorth -> (`interval` (1, Closed)) $ case clb `compare` cub of
+          LT -> (clb, in1)
+          EQ -> (clb, in1 `max` in2)
+          GT -> (cub, in2)
+        | clb > cub -> -1 <=..<= 1
+        | otherwise -> interval (clb, in1) (cub, in2)
+        where
+          mod2pi x = let y = x / (2 * pi) in y - fromInteger (floor y)
+          -- is lower bound in the northern half-plane [0,pi)?
+          lbNorth = (mod2pi lb, in1) < (1 / 2, Closed)
+          -- is upper bound in the northern half-plane [0,pi)?
+          ubNorth = (mod2pi ub, in2) < (1 / 2, Closed)
+          clb = Finite (cos lb)
+          cub = Finite (cos ub)
+
+  acos = mapAntiMonotonic acos . intersection (-1 <=..<= 1)
+
+  sin a = cos (pi / 2 - a)
+  asin = mapMonotonic asin . intersection (-1 <=..<= 1)
+
+  tan a = case lowerBound' a of
+    (NegInf, _) -> whole
+    (PosInf, _) -> empty
+    (Finite lb, in1) -> case upperBound' a of
+      (NegInf, _) -> empty
+      (PosInf, _) -> whole
+      (Finite ub, in2)
+        | ub - lb > pi -> whole
+        | ub - lb == pi && in1 == Open && in2 == Open && modpi lb /= -1/2 -> throw LossOfPrecision
+        | ub - lb == pi -> whole
+        | tan lb <= tan ub -> interval (Finite $ tan lb, in1) (Finite $ tan ub, in2)
+        | otherwise -> throw LossOfPrecision
+        where
+          modpi x = let y = x / pi in y - fromInteger (floor y)
+
+  atan = intersection (Finite (-pi / 2) <=..<= Finite (pi / 2)) . mapMonotonic atan
+
+  sinh  = mapMonotonic sinh
+  asinh = mapMonotonic asinh
+
+  cosh  = mapMonotonic cosh . abs
+  acosh = mapMonotonic acosh . intersection (1 <=..< PosInf)
+
+  tanh  = intersection (-1 <..< 1) . mapMonotonic tanh
+  atanh a = interval (atanhB (lowerBound' b)) (atanhB (upperBound' b))
+    where
+      b = intersection (-1 <..< 1) a
+
+-- | Compute union, if intervals comprise a connected set.
+unionsIfConnected :: Ord r => [Interval r] -> Maybe (Interval r)
+unionsIfConnected [] = Just empty
+unionsIfConnected [x] = Just x
+unionsIfConnected (x : xs)
+  | null x = unionsIfConnected xs
+  | otherwise = case partition (isConnected x) xs of
+    ([], _)  -> Nothing
+    (ys, zs) -> unionsIfConnected (hulls (x : ys) : zs)
+
+-- | First argument consists of  values only.
+positiveIntegralPowersOfNegativeValues
+  :: RealFrac r => Bool -> Interval r -> Interval r -> Maybe (Interval r)
+positiveIntegralPowersOfNegativeValues hasZero a b
+  | null a || null b         = Just empty
+  | Just ub <- mub, lb > ub  = Just empty
+  | Just ub <- mub, lb == ub = Just (a ^ lb)
+  | not hasZero              = Nothing
+  | lowerBound a >= -1       = Just (hull (a ^ lb) (a ^ (lb + 1)))
+  | Just ub <- mub           = Just (hull (a ^ ub) (a ^ (ub - 1)))
+  | Nothing <- mub           = Just whole
+  where
+    -- Similar to Data.IntegerInterval.fromIntervalUnder
+    lb :: Integer
+    lb = case lowerBound' b of
+      (Finite x, Open)
+        | fromInteger (ceiling x) == x
+        -> ceiling x + 1
+      (Finite x, _) -> ceiling x
+      _ -> 0 -- PosInf is not expected, because b is not null
+    mub :: Maybe Integer
+    mub = case upperBound' b of
+      (Finite x, Open)
+        | fromInteger (floor x) == x
+        -> Just $ floor x - 1
+      (Finite x, _) -> Just $ floor x
+      _ -> Nothing -- NegInf is not expected, because b is not null
+
 cmpUB, cmpLB :: Ord r => (Extended r, Boundary) -> (Extended r, Boundary) -> Ordering
 cmpUB (x1,in1) (x2,in2) = compare x1 x2 `mappend` compare in1 in2
 cmpLB (x1,in1) (x2,in2) = compare x1 x2 `mappend` compare in2 in1
@@ -695,6 +837,19 @@ recipLB (x1, in1) = (recip x1, in1)
 recipUB :: (Fractional r, Ord r) => (Extended r, Boundary) -> (Extended r, Boundary)
 recipUB (0, _) = (NegInf, Open)
 recipUB (x1, in1) = (recip x1, in1)
+
+logB :: (Floating r, Ord r) => (Extended r, Boundary) -> (Extended r, Boundary)
+logB (NegInf, in1) = (Finite $ log (log 0), in1)
+logB (Finite 0, _) = (NegInf, Open)
+logB (Finite x1, in1) = (Finite $ log x1, in1)
+logB (PosInf, in1) = (PosInf, in1)
+
+atanhB :: (Floating r, Ord r) => (Extended r, Boundary) -> (Extended r, Boundary)
+atanhB (NegInf, in1) = (Finite $ atanh (-1/0), in1)
+atanhB (Finite (-1), _) = (NegInf, Open)
+atanhB (Finite 1, _) = (PosInf, Open)
+atanhB (Finite x1, in1) = (Finite $ atanh x1, in1)
+atanhB (PosInf, in1) = (Finite $ atanh (1/0), in1)
 
 -- | Computes how two intervals are related according to the @`Data.IntervalRelation.Relation`@ classification
 relate :: Ord r => Interval r -> Interval r -> Relation
