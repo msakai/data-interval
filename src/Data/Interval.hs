@@ -90,7 +90,7 @@ import Control.Monad hiding (join)
 import Data.ExtendedReal
 import Data.Interval.Internal
 import Data.IntervalRelation
-import Data.List hiding (null)
+import Data.List (foldl', maximumBy, minimumBy, partition)
 import Data.Maybe
 import Data.Monoid
 import Data.Ratio

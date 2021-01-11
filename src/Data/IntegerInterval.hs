@@ -89,7 +89,7 @@ import Algebra.Lattice
 import Control.Exception (assert)
 import Control.Monad hiding (join)
 import Data.ExtendedReal
-import Data.List hiding (null)
+import Data.List (foldl')
 import Data.Maybe
 import Prelude hiding (null)
 import Data.IntegerInterval.Internal
