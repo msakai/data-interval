@@ -4,6 +4,7 @@
 * introduce operations for Allen's interval algebra (#18, thanks to marcosh)
 * amend `recip` so that `recip (recip xs) == xs // {0}` (#21)
 * add `instance Storable` for `Interval` (#25)
+* add `instance Floating` for `Interval` (#26)
 
 2.0.0
 -----
