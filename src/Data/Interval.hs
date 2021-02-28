@@ -90,7 +90,7 @@ import Control.Monad hiding (join)
 import Data.ExtendedReal
 import Data.Interval.Internal
 import Data.IntervalRelation
-import Data.List (foldl', maximumBy, minimumBy, partition)
+import Data.List (foldl', maximumBy, minimumBy)
 import Data.Maybe
 import Data.Monoid
 import Data.Ratio
@@ -619,6 +619,8 @@ scaleInterval c x
     lb = lowerBound' x
     ub = upperBound' x
 
+-- | When results of 'abs' or 'signum' do not form a connected interval,
+-- a convex hull is returned instead.
 instance (Num r, Ord r) => Num (Interval r) where
   a + b
     | null a || null b = empty
@@ -674,6 +676,8 @@ instance forall r. (Real r, Fractional r) => Fractional (Interval r) where
       lb3 = minimumBy cmpLB xs
       xs = [recipLB (lowerBound' a), recipUB (upperBound' a)]
 
+-- | When results of 'tan' or '**' do not form a connected interval,
+-- a convex hull is returned instead.
 instance (RealFrac r, Floating r) => Floating (Interval r) where
   pi = singleton pi
 
@@ -684,20 +688,17 @@ instance (RealFrac r, Floating r) => Floating (Interval r) where
 
   sqrt = mapMonotonic sqrt . intersection (0 <=..< PosInf)
 
-  -- | If results do not form a connected interval, throws 'LossOfPrecision'.
-  a ** b = fromMaybe (throw LossOfPrecision) $ do
-    let posBase = exp (log a * b)
-        zeroPower = [ 1 | 0 `member` b, not (null a) ]
-        zeroBase  = [ 0 | 0 `member` a, not (null (b `intersection` (0 <..< PosInf))) ]
-    negBasePosPower <- positiveIntegralPowersOfNegativeValues
-      (0 `member` a)
-      (a `intersection` (NegInf <..< 0))
-      (b `intersection` (0 <..< PosInf))
-    negBaseNegPower <- positiveIntegralPowersOfNegativeValues
-      (0 `member` a)
-      (recip  (a `intersection` (NegInf <..< 0)))
-      (negate (b `intersection` (NegInf <..< 0)))
-    unionsIfConnected (posBase : negBasePosPower : negBaseNegPower : zeroPower ++ zeroBase)
+  a ** b = hulls (posBase : negBasePosPower : negBaseNegPower : zeroPower ++ zeroBase)
+    where
+      posBase = exp (log a * b)
+      zeroPower = [ 1 | 0 `member` b, not (null a) ]
+      zeroBase  = [ 0 | 0 `member` a, not (null (b `intersection` (0 <..< PosInf))) ]
+      negBasePosPower = positiveIntegralPowersOfNegativeValues
+        (a `intersection` (NegInf <..< 0))
+        (b `intersection` (0 <..< PosInf))
+      negBaseNegPower = positiveIntegralPowersOfNegativeValues
+        (recip  (a `intersection` (NegInf <..< 0)))
+        (negate (b `intersection` (NegInf <..< 0)))
 
   cos a = case lowerBound' a of
     (NegInf, _) -> -1 <=..<= 1
@@ -745,10 +746,14 @@ instance (RealFrac r, Floating r) => Floating (Interval r) where
       (PosInf, _) -> whole
       (Finite ub, in2)
         | ub - lb > pi -> whole
-        | ub - lb == pi && in1 == Open && in2 == Open && modpi lb /= -1/2 -> throw LossOfPrecision
+        -- the next case corresponds to (-inf, tan lb) + (tan lb, +inf),
+        -- but a convex hull is returned instead
+        | ub - lb == pi && in1 == Open && in2 == Open && modpi lb /= -1/2 -> whole
         | ub - lb == pi -> whole
         | tan lb <= tan ub -> interval (Finite $ tan lb, in1) (Finite $ tan ub, in2)
-        | otherwise -> throw LossOfPrecision
+        -- the next case corresponds to (tan lb, +inf) + (-inf, tan ub),
+        -- but a convex hull is returned instead
+        | otherwise -> whole
         where
           modpi x = let y = x / pi in y - fromInteger (floor y)
 
@@ -765,27 +770,17 @@ instance (RealFrac r, Floating r) => Floating (Interval r) where
     where
       b = intersection (-1 <..< 1) a
 
--- | Compute union, if intervals comprise a connected set.
-unionsIfConnected :: Ord r => [Interval r] -> Maybe (Interval r)
-unionsIfConnected [] = Just empty
-unionsIfConnected [x] = Just x
-unionsIfConnected (x : xs)
-  | null x = unionsIfConnected xs
-  | otherwise = case partition (isConnected x) xs of
-    ([], _)  -> Nothing
-    (ys, zs) -> unionsIfConnected (hulls (x : ys) : zs)
-
--- | First argument consists of  values only.
 positiveIntegralPowersOfNegativeValues
-  :: RealFrac r => Bool -> Interval r -> Interval r -> Maybe (Interval r)
-positiveIntegralPowersOfNegativeValues hasZero a b
-  | null a || null b         = Just empty
-  | Just ub <- mub, lb > ub  = Just empty
-  | Just ub <- mub, lb == ub = Just (a ^ lb)
-  | not hasZero              = Nothing
-  | lowerBound a >= -1       = Just (hull (a ^ lb) (a ^ (lb + 1)))
-  | Just ub <- mub           = Just (hull (a ^ ub) (a ^ (ub - 1)))
-  | Nothing <- mub           = Just whole
+  :: RealFrac r => Interval r -> Interval r -> Interval r
+positiveIntegralPowersOfNegativeValues a b
+  | null a || null b         = empty
+  | Just ub <- mub, lb > ub  = empty
+  | Just ub <- mub, lb == ub = a ^ lb
+  -- cases below connects two intervals (a ^ k, 0) + (0, a ^ k'))
+  -- into a single convex hull
+  | lowerBound a >= -1       = hull (a ^ lb) (a ^ (lb + 1))
+  | Just ub <- mub           = hull (a ^ ub) (a ^ (ub - 1))
+  | Nothing <- mub           = whole
   where
     -- Similar to Data.IntegerInterval.fromIntervalUnder
     lb :: Integer
