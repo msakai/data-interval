@@ -45,6 +45,7 @@ module Data.Interval
   -- * Query
   , null
   , isSingleton
+  , extractSingleton
   , member
   , notMember
   , isSubsetOf
@@ -330,6 +331,9 @@ null i =
 isSingleton :: Ord r => Interval r -> Bool
 isSingleton = isJust . extractSingleton
 
+-- | If the interval is a single point, return this point.
+--
+-- @since 2.1.0
 extractSingleton :: Ord r => Interval r -> Maybe r
 extractSingleton i = case (lowerBound' i, upperBound' i) of
   ((Finite l, Closed), (Finite u, Closed))
