@@ -746,9 +746,9 @@ instance (RealFrac r, Floating r) => Floating (Interval r) where
       (PosInf, _) -> whole
       (Finite ub, in2)
         | ub - lb > pi -> whole
-        -- the next case corresponds to (-inf, tan lb) + (tan lb, +inf),
-        -- but a convex hull is returned instead
-        | ub - lb == pi && in1 == Open && in2 == Open && modpi lb /= -1/2 -> whole
+        -- the next case corresponds to (tan lb, +inf) + (-inf, tan ub)
+        -- with tan lb == tan ub, but a convex hull is returned instead
+        | ub - lb == pi && in1 == Open && in2 == Open && modpi lb /= 1/2 -> whole
         | ub - lb == pi -> whole
         | tan lb <= tan ub -> interval (Finite $ tan lb, in1) (Finite $ tan ub, in2)
         -- the next case corresponds to (tan lb, +inf) + (-inf, tan ub),
