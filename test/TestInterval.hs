@@ -850,17 +850,16 @@ case_recip_test6 = recip i1 @?= i2
     i2 = Interval.empty
 
 prop_recip =
-  forAll intervals $ \a -> ioProperty $ do
-    x <- try (evaluate (recip a))
-    return $ case x of
-      Left DivideByZero -> 0 `isInteriorPoint` a
-      Right b -> recip b === without0 a
+  forAll intervals $ \a ->
+    if 0 `isInteriorPoint` a
+    then recip a === Interval.whole
+    else recip (recip a) === without0 a
 
-isInteriorPoint :: (Ord a, Show a) => a -> Interval a -> Property
+isInteriorPoint :: (Ord a, Show a) => a -> Interval a -> Bool
 isInteriorPoint x xs
-  = property (x `Interval.member` xs)
-  .&&. Finite x =/= Interval.lowerBound xs
-  .&&. Finite x =/= Interval.upperBound xs
+  = x `Interval.member` xs
+  && Finite x /= Interval.lowerBound xs
+  && Finite x /= Interval.upperBound xs
 
 without0 :: (Ord a, Num a) => Interval a -> Interval a
 without0 xs = case Interval.lowerBound' xs of

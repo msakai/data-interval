@@ -86,7 +86,7 @@ module Data.Interval
 #if MIN_VERSION_lattices
 import Algebra.Lattice
 #endif
-import Control.Exception (assert, throw, ArithException(..))
+import Control.Exception (assert)
 import Control.Monad hiding (join)
 import Data.ExtendedReal
 import Data.Interval.Internal
@@ -666,14 +666,14 @@ instance (Num r, Ord r) => Num (Interval r) where
       ub3 = maximumBy cmpUB xs
       lb3 = minimumBy cmpLB xs
 
--- | 'recip' throws 'DivideByZero' when 0 is an interior point.
+-- | 'recip' returns 'whole' when 0 is an interior point.
 -- Otherwise @recip (recip xs)@ equals to @xs@ without 0.
 instance forall r. (Real r, Fractional r) => Fractional (Interval r) where
   fromRational r = singleton (fromRational r)
   recip a
     | null a = empty
     | a == 0 = empty
-    | 0 `member` a && 0 /= lowerBound a && 0 /= upperBound a = throw DivideByZero
+    | 0 `member` a && 0 /= lowerBound a && 0 /= upperBound a = whole
     | otherwise = interval lb3 ub3
     where
       ub3 = maximumBy cmpUB xs
