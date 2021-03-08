@@ -2,7 +2,7 @@
 -----
 
 * introduce operations for Allen's interval algebra (#18, thanks to marcosh)
-* amend `recip` so that `recip (recip xs) == xs // {0}` (#21)
+* make `recip` precise when 0 is not an interior point (#21)
 * add `instance Storable` for `Interval` (#25)
 * add `instance Floating` for `Interval` (#26)
 
