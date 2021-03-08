@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, TemplateHaskell, ScopedTypeVariables #-}
+{-# LANGUAGE CPP, TemplateHaskell, RankNTypes, ScopedTypeVariables #-}
 module TestInterval (intervalTestGroup) where
 
 #if MIN_VERSION_lattices
@@ -17,6 +17,7 @@ import Data.Typeable
 import Test.Tasty
 import Test.Tasty.QuickCheck
 import Test.Tasty.HUnit
+import Test.Tasty.Options
 import Test.Tasty.TH
 #ifdef MIN_VERSION_quickcheck_classes_base
 import Test.QuickCheck.Classes.Base
@@ -208,7 +209,11 @@ prop_isSubsetOf_refl =
   forAll intervals $ \a ->
     Interval.isSubsetOf a a
 
-prop_isSubsetOf_trans =
+test_isSubsetOf_trans :: [TestTree]
+test_isSubsetOf_trans =
+  (: []) $
+  adjustOption (\(QuickCheckMaxRatio r) -> QuickCheckMaxRatio (r * 10)) $
+  testProperty "isSubsetOf trans" $
   forAll intervals $ \a ->
   forAll intervals $ \b ->
   forAll intervals $ \c ->
@@ -845,17 +850,16 @@ case_recip_test6 = recip i1 @?= i2
     i2 = Interval.empty
 
 prop_recip =
-  forAll intervals $ \a -> ioProperty $ do
-    x <- try (evaluate (recip a))
-    return $ case x of
-      Left DivideByZero -> 0 `isInteriorPoint` a
-      Right b -> recip b === without0 a
+  forAll intervals $ \a ->
+    if 0 `isInteriorPoint` a
+    then recip a === Interval.whole
+    else recip (recip a) === without0 a
 
-isInteriorPoint :: (Ord a, Show a) => a -> Interval a -> Property
+isInteriorPoint :: (Ord a, Show a) => a -> Interval a -> Bool
 isInteriorPoint x xs
-  = property (x `Interval.member` xs)
-  .&&. Finite x =/= Interval.lowerBound xs
-  .&&. Finite x =/= Interval.upperBound xs
+  = x `Interval.member` xs
+  && Finite x /= Interval.lowerBound xs
+  && Finite x /= Interval.upperBound xs
 
 without0 :: (Ord a, Num a) => Interval a -> Interval a
 without0 xs = case Interval.lowerBound' xs of
@@ -865,6 +869,287 @@ without0 xs = case Interval.lowerBound' xs of
     (0, Interval.Closed) ->
       Interval.interval (Interval.lowerBound' xs) (0, Interval.Open)
     _ -> xs
+
+{--------------------------------------------------------------------
+  Floating
+--------------------------------------------------------------------}
+
+prop_exp_singleton = floatingSingleton exp
+
+prop_exp_mid_point = floatingMidPoint exp
+
+case_exp_whole = exp Interval.whole @?= 0 <..< PosInf
+
+case_exp_empty = exp Interval.empty @?= Interval.empty
+
+prop_log_singleton a = a > 0 ==>
+  floatingSingleton log a
+
+prop_log_mid_point = floatingMidPoint log . Interval.intersection (0 <..< PosInf)
+
+case_log_whole = log Interval.whole   @?= Interval.whole
+case_log_half1 = log (0 <=..< PosInf) @?= Interval.whole
+case_log_half2 = log (0 <..< PosInf)  @?= Interval.whole
+case_log_zero  = log (0 :: Interval Double) @?= Interval.empty
+
+case_log_empty = log Interval.empty @?= Interval.empty
+
+prop_log_exp a = log (exp a) =~= a
+
+prop_exp_log a = exp (log a) =~= a `Interval.intersection` (0 <..< PosInf)
+
+-------------------------------------------------------------------------------
+
+prop_sqrt_singleton = floatingSingleton sqrt
+
+prop_sqrt_mid_point = floatingMidPoint sqrt . Interval.intersection (0 <=..< PosInf)
+
+case_sqrt_whole = sqrt Interval.whole @?= 0 <=..< PosInf
+
+case_sqrt_empty = sqrt Interval.empty @?= Interval.empty
+
+prop_sqr_sqrt a = sqrt a * sqrt a =~= a `Interval.intersection` (0 <=..< PosInf)
+
+prop_sqrt_sqr a = sqrt (a * a) =~= abs a
+
+-------------------------------------------------------------------------------
+
+prop_pow_singleton_Double_Double a' b' =
+  not (isInfinite c || isNaN c) ==>
+    Interval.singleton a ** Interval.singleton b =~= Interval.singleton c
+  where
+    a = min 5 $ max (-5) a'
+    b = min 5 $ max (-5) b'
+    c = a ** b
+
+prop_pow_singleton_Double_Integer 0 b'
+  | b' < 0 = discard
+prop_pow_singleton_Double_Integer a' b' =
+  Interval.singleton a ** Interval.singleton b =~= Interval.singleton (a ** b)
+  where
+    a = min 5 $ max (-5) a'
+    b = min 5 $ max (-5) $ fromInteger b'
+
+prop_pow_singleton_Integer_Double a' b =
+  not (isInfinite c || isNaN c) ==>
+    Interval.singleton a ** Interval.singleton b =~= Interval.singleton (a ** b)
+  where
+    a = fromInteger a'
+    c = a ** b
+
+prop_pow_mid_point a' b' = case (Interval.pickup a, Interval.pickup b) of
+  (Nothing, _) -> discard
+  (_, Nothing) -> discard
+  (Just x, Just y) -> let z = x ** y :: Double in not (isInfinite z || isNaN z) ==>
+    ioProperty $ do
+      x <- try (evaluate (a ** b))
+      return $ case x of
+        Left LossOfPrecision -> discard
+        Right c -> distance z c < Finite (1e-10 * (1 `max` abs z))
+  where
+    -- for larger intervals the loss of precision becomes exponentially huge
+    a = Interval.mapMonotonic (min 5 . max (-5)) a'
+    b = Interval.mapMonotonic (min 5 . max (-5)) b'
+
+prop_pow_empty_1 :: Interval Double -> Bool
+prop_pow_empty_1 x = Interval.null (Interval.empty ** x)
+
+prop_pow_empty_2 :: Interval Double -> Bool
+prop_pow_empty_2 x = Interval.null (x ** Interval.empty)
+
+-------------------------------------------------------------------------------
+
+prop_sin_singleton a =
+  distance (sin a :: Double) (sin (Interval.singleton a)) <= 1e-10
+
+prop_sin_mid_point a
+  | Interval.isSingleton a = discard
+  | otherwise = floatingMidPoint sin a
+
+case_sin_whole = sin Interval.whole @?= -1 <=..<= 1
+
+case_sin_empty = sin Interval.empty @?= Interval.empty
+
+prop_asin_singleton a = floatingSingleton asin (if abs a < 1 then a else recip a)
+
+prop_asin_mid_point = floatingMidPoint asin . Interval.intersection (-1 <=..<= 1)
+
+case_asin_whole = asin Interval.whole @?= Finite (-pi / 2) <=..<= Finite (pi / 2)
+
+case_asin_empty = asin Interval.empty @?= Interval.empty
+
+prop_sin_asin a = sin (asin a) =~= a `Interval.intersection` (-1 <=..<= 1)
+
+-------------------------------------------------------------------------------
+
+prop_cos_singleton a =
+  distance (cos a :: Double) (cos (Interval.singleton a)) <= 1e-10
+
+prop_cos_mid_point a
+  | Interval.isSingleton a = discard
+  | otherwise = floatingMidPoint cos a
+
+case_cos_whole = cos Interval.whole @?= -1 <=..<= 1
+
+case_cos_empty = cos Interval.empty @?= Interval.empty
+
+prop_acos_singleton a = floatingSingleton acos (if abs a < 1 then a else recip a)
+
+prop_acos_mid_point = floatingMidPoint acos . Interval.intersection (-1 <=..<= 1)
+
+case_acos_whole = acos Interval.whole @?= 0 <=..<= Finite pi
+
+case_acos_empty = acos Interval.empty @?= Interval.empty
+
+prop_cos_acos a = cos (acos a) =~= a `Interval.intersection` (-1 <=..<= 1)
+
+-------------------------------------------------------------------------------
+
+prop_tan_singleton a =
+  distance (tan a :: Double) (tan (Interval.singleton a)) <= 1e-10
+
+prop_tan_mid_point a = case Interval.pickup a of
+  Nothing -> discard
+  Just x -> let z = tan x :: Double in not (isInfinite z || isNaN z) ==>
+    ioProperty $ do
+      x <- try (evaluate (tan a))
+      return $ case x of
+        Left LossOfPrecision -> discard
+        Right c -> distance z c < Finite (1e-10 * (1 `max` abs z))
+
+case_tan_whole = tan Interval.whole @?= Interval.whole
+
+case_tan_empty = tan Interval.empty @?= Interval.empty
+
+prop_atan_singleton = floatingSingleton atan
+
+prop_atan_mid_point = floatingMidPoint atan
+
+case_atan_whole = atan Interval.whole @?= Finite (-pi / 2) <=..<= Finite (pi / 2)
+
+case_atan_empty = atan Interval.empty @?= Interval.empty
+
+prop_tan_atan a = case (Interval.lowerBound a, Interval.upperBound a) of
+  (Finite{}, Finite{}) -> tan (atan a) =~= a
+  _ -> discard
+
+-------------------------------------------------------------------------------
+
+prop_sinh_singleton = floatingSingleton sinh
+
+prop_sinh_mid_point = floatingMidPoint sinh
+
+case_sinh_whole = sinh Interval.whole @?= Interval.whole
+
+case_sinh_empty = sinh Interval.empty @?= Interval.empty
+
+prop_asinh_singleton = floatingSingleton asinh
+
+prop_asinh_mid_point = floatingMidPoint asinh
+
+case_asinh_whole = asinh Interval.whole @?= Interval.whole
+
+case_asinh_empty = asinh Interval.empty @?= Interval.empty
+
+prop_asinh_sinh a' = asinh (sinh a) =~= a
+  where
+    -- for larger intervals the loss of precision becomes exponentially huge
+    a = Interval.mapMonotonic (min 5 . max (-5)) a'
+
+prop_sinh_asinh a = sinh (asinh a) =~= a
+
+-------------------------------------------------------------------------------
+
+prop_cosh_singleton = floatingSingleton cosh
+
+prop_cosh_mid_point = floatingMidPoint cosh
+
+case_cosh_whole = cosh Interval.whole @?= 1 <=..< PosInf
+
+case_cosh_empty = cosh Interval.empty @?= Interval.empty
+
+prop_acosh_singleton = floatingSingleton acosh
+
+prop_acosh_mid_point = floatingMidPoint acosh . Interval.intersection (1 <=..< PosInf)
+
+case_acosh_whole = acosh Interval.whole @?= 0 <=..< PosInf
+
+case_acosh_empty = acosh Interval.empty @?= Interval.empty
+
+prop_acosh_cosh a' = acosh (cosh a) =~= abs a
+  where
+    -- for larger intervals the loss of precision becomes exponentially huge
+    a = Interval.mapMonotonic (min 5 . max (-5)) a'
+
+prop_cosh_acosh a = cosh (acosh a) =~= a `Interval.intersection` (1 <=..< PosInf)
+
+-------------------------------------------------------------------------------
+
+prop_tanh_singleton a = abs a <= 10 ==>
+  floatingSingleton tanh a
+
+prop_tanh_mid_point = floatingMidPoint tanh . Interval.intersection (-5 <=..<= 5)
+
+case_tanh_whole = tanh Interval.whole @?= -1 <..< 1
+
+case_tanh_empty = tanh Interval.empty @?= Interval.empty
+
+prop_atanh_singleton 1    = atanh 1 === Interval.empty
+prop_atanh_singleton (-1) = atanh (-1) === Interval.empty
+prop_atanh_singleton a    = floatingSingleton atanh (if abs a < 1 then a else recip a)
+
+prop_atanh_mid_point = floatingMidPoint atanh . Interval.intersection (-1 <..< 1)
+
+case_atanh_whole = atanh Interval.whole @?= Interval.whole
+
+case_atanh_empty = atanh Interval.empty @?= Interval.empty
+
+prop_atanh_tanh a' = atanh (tanh a) =~= a
+  where
+    -- for larger intervals the loss of precision becomes exponentially huge
+    a = Interval.mapMonotonic (min 5 . max (-5)) a'
+
+prop_tanh_atanh = uncurry (=~=) . tanhAtanh
+
+case_tanh_atanh_1 = uncurry (@?=) $ tanhAtanh (-1 <=..<= 1)
+case_tanh_atanh_2 = uncurry (@?=) $ tanhAtanh (-1 <=..< 1)
+case_tanh_atanh_3 = uncurry (@?=) $ tanhAtanh (-1 <..<= 1)
+case_tanh_atanh_4 = uncurry (@?=) $ tanhAtanh (-1 <..< 1)
+
+tanhAtanh :: Interval Double -> (Interval Double, Interval Double)
+tanhAtanh a = (tanh (atanh a), a `Interval.intersection` (-1 <..< 1))
+
+-------------------------------------------------------------------------------
+
+floatingSingleton :: (forall a. Floating a => a -> a) -> Double -> Property
+floatingSingleton f a = Interval.singleton (f a) === f (Interval.singleton a)
+
+distance :: (Ord r, Num r) => r -> Interval r -> Extended r
+distance x xs
+  | Interval.member x xs = 0
+  | otherwise
+  = abs (Finite x - Interval.lowerBound xs) `min`
+    abs (Finite x - Interval.upperBound xs)
+
+floatingMidPoint :: (forall a. Floating a => a -> a) -> Interval Double -> Property
+floatingMidPoint f a = case Interval.pickup a of
+  Nothing -> discard
+  Just x  -> property $ f x `Interval.member` f a
+
+infix 4 =~=
+(=~=) :: Interval Double -> Interval Double -> Property
+a =~= b
+  | eqPair (Interval.lowerBound' a) (Interval.lowerBound' b)
+  , eqPair (Interval.upperBound' a) (Interval.upperBound' b)
+  = property True
+  | otherwise
+  = a === b
+  where
+    eqPair (x, a) (y, b) = eqExt x y && a == b
+
+    eqExt (Finite x) (Finite y) =
+      abs (x - y) < 1e-10 * (1 `max` abs x `max` abs y)
+    eqExt x y = x == y
 
 {--------------------------------------------------------------------
   Lattice
