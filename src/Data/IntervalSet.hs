@@ -62,7 +62,7 @@ module Data.IntervalSet
   where
 
 import Prelude hiding (null, span)
-#if MIN_VERSION_lattices
+#ifdef MIN_VERSION_lattices
 import Algebra.Lattice
 #endif
 import Control.DeepSeq
@@ -133,7 +133,7 @@ instance NFData r => NFData (IntervalSet r) where
 instance Hashable r => Hashable (IntervalSet r) where
   hashWithSalt s (IntervalSet m) = hashWithSalt s (Map.toList m)
 
-#if MIN_VERSION_lattices
+#ifdef MIN_VERSION_lattices
 #if MIN_VERSION_lattices(2,0,0)
 
 instance (Ord r) => Lattice (IntervalSet r) where

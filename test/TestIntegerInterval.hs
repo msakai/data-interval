@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP, TemplateHaskell, ScopedTypeVariables #-}
 module TestIntegerInterval (integerIntervalTestGroup) where
 
-#if MIN_VERSION_lattices
+#ifdef MIN_VERSION_lattices
 import qualified Algebra.Lattice as L
 #endif
 import Control.DeepSeq
@@ -724,7 +724,7 @@ prop_negate_negate =
   Lattice
 --------------------------------------------------------------------}
 
-#if MIN_VERSION_lattices
+#ifdef MIN_VERSION_lattices
 
 prop_Lattice_Leq_welldefined =
   forAll integerIntervals $ \a b ->

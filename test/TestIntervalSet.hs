@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP, TemplateHaskell, ScopedTypeVariables #-}
 module TestIntervalSet (intervalSetTestGroup) where
 
-#if MIN_VERSION_lattices
+#ifdef MIN_VERSION_lattices
 import qualified Algebra.Lattice as L
 #endif
 import Control.Applicative ((<$>))
@@ -297,7 +297,7 @@ prop_Eq_reflexive =
   Lattice
 --------------------------------------------------------------------}
 
-#if MIN_VERSION_lattices
+#ifdef MIN_VERSION_lattices
 
 prop_Lattice_Leq_welldefined =
   forAll arbitrary $ \(a :: IntervalSet Rational) (b :: IntervalSet Rational) ->
