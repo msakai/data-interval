@@ -87,7 +87,6 @@ Test-suite test-interval
        base >=4 && <5
      , ChasingBottoms
      , containers
-     , lattices
      , deepseq
      , hashable
      , data-interval
@@ -107,6 +106,9 @@ Test-suite test-interval
   if impl(ghc <7.10)
     Build-depends:
       transformers >=0.2
+  if flag(lattices)
+    build-depends:
+     lattices >=1.2.1.1 && <2.1
   Default-Language: Haskell2010
   Other-Extensions:
      TemplateHaskell
