@@ -380,6 +380,14 @@ prop_relate_interval_contains_another =
   forAll (nonEmptyIntervalPairs (\(lb1, _) (ub1, _) (lb2, _) (ub2, _) -> lb1 < lb2 && ub1 > ub2)) $ \(a, b) ->
     Interval.relate a b == Contains
 
+prop_relate_closed_interval_contains_open_interval_with_same_boundary =
+  forAll (arbitrary `suchThat` \(lb, rb) -> lb < rb) $
+    \(lb :: Rational, rb) ->
+      Interval.relate
+        (Interval.interval (Finite lb, Interval.Closed) (Finite rb, Interval.Closed))
+        (Interval.interval (Finite lb, Interval.Open) (Finite rb, Interval.Open))
+      == Contains
+
 prop_relate_one_singleton_before_another =
   forAll (arbitrary `suchThat` uncurry (<)) $ \(r1 :: Rational, r2) ->
     Interval.relate (Interval.singleton r1) (Interval.singleton r2) == Before
