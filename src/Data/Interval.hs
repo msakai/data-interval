@@ -857,16 +857,16 @@ relate i1 i2 =
     -- 'i1' ad 'i2' are equal
     (True , True ) -> Equal
     -- 'i1' is strictly contained in `i2`
-    (True , False) | lowerBound i1 == lowerBound i2 -> Starts
-                   | upperBound i1 == upperBound i2 -> Finishes
-                   | otherwise                      -> During
+    (True , False) | compareBound (lowerBound' i1) (lowerBound' i2) == EQ -> Starts
+                   | compareBound (upperBound' i1) (upperBound' i2) == EQ -> Finishes
+                   | otherwise                                            -> During
     -- 'i2' is strictly contained in `i1`
-    (False, True ) | lowerBound i1 == lowerBound i2 -> StartedBy
-                   | upperBound i1 == upperBound i2 -> FinishedBy
-                   | otherwise                      -> Contains
+    (False, True ) | compareBound (lowerBound' i1) (lowerBound' i2) == EQ -> StartedBy
+                   | compareBound (upperBound' i1) (upperBound' i2) == EQ -> FinishedBy
+                   | otherwise                                            -> Contains
     -- neither `i1` nor `i2` is contained in the other
     (False, False) -> case ( null (i1 `intersection` i2)
-                           , upperBound' i1 <= upperBound' i2
+                           , compareBound (upperBound' i1) (upperBound' i2) <= EQ
                            , i1 `isConnected` i2
                            ) of
       (True , True , True ) -> JustBefore
@@ -875,3 +875,10 @@ relate i1 i2 =
       (True , False, False) -> After
       (False, True , _    ) -> Overlaps
       (False, False, _    ) -> OverlappedBy
+  where
+    compareBound :: Ord r => (Extended r, Boundary) -> (Extended r, Boundary) -> Ordering
+    compareBound (PosInf, _) (PosInf, _) = EQ
+    compareBound (PosInf, _) _           = GT
+    compareBound (NegInf, _) (NegInf, _) = EQ
+    compareBound (NegInf, _) _           = LT
+    compareBound a           b           = compare a b
