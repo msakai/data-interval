@@ -23,25 +23,45 @@ module Data.IntervalRelation
 import Data.Data
 import GHC.Generics (Generic)
 
--- | describes how two intervals @x@ and @y@ can be related.
+-- | Describes how two intervals @x@ and @y@ can be related.
 -- See [Allen's interval algebra](https://en.wikipedia.org/wiki/Allen%27s_interval_algebra)
+-- and [Intervals and their relations](http://marcosh.github.io/post/2020/05/04/intervals-and-their-relations.html).
 data Relation
   = Before
+  -- ^ Any element of @x@ is smaller than any element of @y@,
+  -- and intervals are not connected.
   | JustBefore
+  -- ^ Any element of @x@ is smaller than any element of @y@,
+  -- but intervals are connected and non-empty.
   | Overlaps
+  -- ^ Intersection of @x@ and @y@ is non-empty,
+  -- @x@ start and finishes earlier than @y@.
   | Starts
+  -- ^ @x@ is a proper subset of @y@,
+  -- and they share lower bounds.
   | During
+  -- ^ @x@ is a proper subset of @y@,
+  -- but they share neither lower nor upper bounds.
   | Finishes
+  -- ^ @x@ is a proper subset of @y@,
+  -- and they share upper bounds.
   | Equal
+  -- ^ Intervals are equal.
   | FinishedBy
+  -- ^ Inverse of 'Finishes'.
   | Contains
+  -- ^ Inverse of 'During'.
   | StartedBy
+  -- ^ Inverse of 'Starts'.
   | OverlappedBy
+  -- ^ Inverse of 'Overlaps'.
   | JustAfter
+  -- ^ Inverse of 'JustBefore'.
   | After
+  -- ^ Inverse of 'Before'.
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Generic, Data, Typeable)
 
--- | inverts a relation, such that @'invert' ('Data.Interval.relate' x y) = 'Data.Interval.relate' y x@
+-- | Inverts a relation, such that @'invert' ('Data.Interval.relate' x y) = 'Data.Interval.relate' y x@
 invert :: Relation -> Relation
 invert relation = case relation of
   Before       -> After
