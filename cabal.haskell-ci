@@ -1,0 +1,2 @@
+constraint-set no-lattices
+  constraints: data-interval -lattices
