@@ -29,13 +29,16 @@ import GHC.Generics (Generic)
 data Relation
   = Before
   -- ^ Any element of @x@ is smaller than any element of @y@,
-  -- and intervals are not connected.
+  -- and intervals are not connected. In other words, there exists an element
+  -- that is bigger than any element of @x@ and smaller than any element of @y@.
   | JustBefore
   -- ^ Any element of @x@ is smaller than any element of @y@,
-  -- but intervals are connected and non-empty.
+  -- but intervals are connected and non-empty. This implies that intersection
+  -- of intervals is empty, and union is a single interval.
   | Overlaps
   -- ^ Intersection of @x@ and @y@ is non-empty,
-  -- @x@ start and finishes earlier than @y@.
+  -- @x@ start and finishes earlier than @y@. This implies that union
+  -- is a single interval, and @x@ finishes no earlier than @y@ starts.
   | Starts
   -- ^ @x@ is a proper subset of @y@,
   -- and they share lower bounds.
