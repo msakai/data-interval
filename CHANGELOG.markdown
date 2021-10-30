@@ -1,3 +1,9 @@
+2.1.1
+-----
+
+* fix boundary comparison in `relate` (#30, thanks to marcosh)
+* fix behaviour of `lattices` flag
+
 2.1.0
 -----
 
