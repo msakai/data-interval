@@ -42,7 +42,7 @@ Library
        base >=4 && <5
      , containers
      , deepseq
-     , hashable >=1.1.2.5 && <1.4
+     , hashable >=1.1.2.5 && <1.5
      , extended-reals >=0.2 && <1.0
   if impl(ghc <8.0)
     Build-depends:
