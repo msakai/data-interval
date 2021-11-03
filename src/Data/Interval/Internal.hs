@@ -40,7 +40,7 @@ instance NFData Boundary
 
 instance Hashable Boundary
 
--- | The intervals (/i.e./ connected and convex subsets) over real numbers __R__.
+-- | The intervals (/i.e./ connected and convex subsets) over a type @r@.
 data Interval r
   = Whole
   | Empty
