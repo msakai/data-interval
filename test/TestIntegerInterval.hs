@@ -682,35 +682,35 @@ case_mult_test2 = ival1 * ival2 @?= ival3
     ival1 :: IntegerInterval
     ival1 = 1 <=..<= 2
     ival2 = 1 <..< 2
-    ival3 = IntegerInterval.empty -- *
+    ival3 = IntegerInterval.empty
 
 case_mult_test3 = ival1 * ival2 @?= ival3
   where
     ival1 :: IntegerInterval
     ival1 = 1 <..< 2
     ival2 = 1 <..< 2
-    ival3 = IntegerInterval.empty -- *
+    ival3 = IntegerInterval.empty
 
 case_mult_test4 = ival1 * ival2 @?= ival3
   where
     ival1 :: IntegerInterval
     ival1 = 2 <..< PosInf
     ival2 = 3 <..< PosInf
-    ival3 = 11 <..< PosInf -- *
+    ival3 = 11 <..< PosInf
 
 case_mult_test5 = ival1 * ival2 @?= ival3
   where
     ival1 :: IntegerInterval
     ival1 = NegInf <..< (-3)
     ival2 = NegInf <..< (-2)
-    ival3 = 11 <..< PosInf -- *
+    ival3 = 11 <..< PosInf
 
 case_mult_test6 = ival1 * ival2 @?= ival3
   where
     ival1 :: IntegerInterval
     ival1 = 2 <..< PosInf
     ival2 = NegInf <..< (-2)
-    ival3 = NegInf <..< (-8) -- *
+    ival3 = NegInf <..< (-8)
 
 prop_abs_signum =
   forAll integerIntervals $ \a ->
