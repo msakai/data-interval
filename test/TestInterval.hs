@@ -322,6 +322,9 @@ prop_pickup_singleton =
 case_width_null =
   Interval.width Interval.empty @?= 0
 
+case_width_positive =
+  Interval.width (0 <=..< 10) @?= 10
+
 prop_width_singleton =
   forAll arbitrary $ \(r::Rational) ->
     Interval.width (Interval.singleton r) == 0

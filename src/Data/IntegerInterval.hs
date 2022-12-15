@@ -305,7 +305,7 @@ width :: IntegerInterval -> Integer
 width x
   | null x = 0
   | otherwise =
-      case (upperBound x, lowerBound x) of
+      case (lowerBound x, upperBound x) of
         (Finite lb, Finite ub) -> ub - lb
         _ -> error "Data.IntegerInterval.width: unbounded interval"
 
