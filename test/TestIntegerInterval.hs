@@ -268,6 +268,9 @@ case_simplestIntegerWithin_empty =
 case_width_null =
   IntegerInterval.width IntegerInterval.empty @?= 0
 
+case_width_positive =
+  IntegerInterval.width (0 <=..< 10) @?= 9
+
 prop_width_singleton =
   forAll arbitrary $ \x ->
     IntegerInterval.width (IntegerInterval.singleton x) == 0
