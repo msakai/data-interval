@@ -53,7 +53,7 @@ Library
       semigroups
   if flag(lattices)
     build-depends:
-     lattices >=1.2.1.1 && <2.2
+     lattices >=1.2.1.1 && <2.3
   Default-Language: Haskell2010
   Other-Extensions:
      CPP
@@ -112,7 +112,7 @@ Test-suite test-interval
       transformers >=0.2
   if flag(lattices)
     build-depends:
-     lattices >=1.2.1.1 && <2.2
+     lattices
   Default-Language: Haskell2010
   Other-Extensions:
      TemplateHaskell
