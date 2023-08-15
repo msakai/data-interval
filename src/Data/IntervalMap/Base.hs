@@ -115,7 +115,14 @@ import qualified GHC.Exts as GHCExts
 -- Unlike 'IntervalSet', 'IntervalMap' never merge adjacent mappings,
 -- even if adjacent intervals are connected and mapped to the same value.
 newtype IntervalMap r a = IntervalMap (Map (LB r) (Interval r, a))
-  deriving (Eq, Typeable)
+  deriving
+    ( Eq,
+      Ord,
+      -- ^ Note that this Ord is derived and not semantically meaningful.
+      -- The primary intended use case is to allow using 'IntervalSet'
+      -- in maps and sets that require ordering.
+      Typeable
+    )
 
 type role IntervalMap nominal representational
 
