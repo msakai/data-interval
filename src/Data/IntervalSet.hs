@@ -84,7 +84,14 @@ import qualified GHC.Exts as GHCExts
 --
 -- Any connected intervals are merged together, and empty intervals are ignored.
 newtype IntervalSet r = IntervalSet (Map (Extended r) (Interval r))
-  deriving (Eq, Typeable)
+  deriving
+    ( Eq,
+      Ord,
+      -- ^ Note that this Ord is derived and not semantically meaningful.
+      -- The primary intended use case is to allow using 'IntervalSet'
+      -- in maps and sets that require ordering.
+      Typeable
+    )
 
 type role IntervalSet nominal
 
