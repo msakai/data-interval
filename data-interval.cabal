@@ -19,18 +19,16 @@ Extra-Source-Files:
    CHANGELOG.markdown
 Build-Type: Simple
 Tested-With:
-   GHC ==7.8.4
-   GHC ==7.10.3
-   GHC ==8.0.2
    GHC ==8.2.2
    GHC ==8.4.4
    GHC ==8.6.5
    GHC ==8.8.4
    GHC ==8.10.7
    GHC ==9.0.2
-   GHC ==9.2.5
-   GHC ==9.4.4
-   GHC ==9.6.1
+   GHC ==9.2.8
+   GHC ==9.4.7
+   GHC ==9.6.2
+   GHC ==9.8.1
 
 source-repository head
   type:     git
@@ -43,20 +41,16 @@ flag lattices
 Library
   Hs-source-dirs: src
   Build-Depends:
-       base >=4 && <5
+       base >=4.10 && <5
      , containers
      , deepseq
      , hashable >=1.1.2.5 && <1.5
      , extended-reals >=0.2 && <1.0
-  if impl(ghc <8.0)
-    Build-depends:
-      semigroups
   if flag(lattices)
     build-depends:
      lattices >=1.2.1.1 && <2.3
   Default-Language: Haskell2010
   Other-Extensions:
-     CPP
      ScopedTypeVariables
      TypeFamilies
      DeriveDataTypeable
@@ -101,15 +95,7 @@ Test-suite test-interval
      , tasty-th
      , HUnit
      , QuickCheck >=2.5 && <3
-  if impl(ghc >=8.0)
-    Build-depends:
-      quickcheck-classes-base
-  if impl(ghc <8.0)
-    Build-depends:
-      semigroups
-  if impl(ghc <7.10)
-    Build-depends:
-      transformers >=0.2
+     , quickcheck-classes-base
   if flag(lattices)
     build-depends:
      lattices

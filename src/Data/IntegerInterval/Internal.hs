@@ -1,9 +1,7 @@
 {-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE CPP, DeriveDataTypeable, LambdaCase #-}
+{-# LANGUAGE DeriveDataTypeable, LambdaCase #-}
 {-# LANGUAGE Safe #-}
-#if __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE RoleAnnotations #-}
-#endif
 
 module Data.IntegerInterval.Internal
   ( IntegerInterval

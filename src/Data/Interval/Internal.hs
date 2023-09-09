@@ -1,9 +1,7 @@
 {-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric, LambdaCase, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, LambdaCase, ScopedTypeVariables #-}
 {-# LANGUAGE Safe #-}
-#if __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE RoleAnnotations #-}
-#endif
 
 module Data.Interval.Internal
   ( Boundary(..)
@@ -14,9 +12,6 @@ module Data.Interval.Internal
   , empty
   ) where
 
-#if __GLASGOW_HASKELL__ < 710
-import Control.Applicative hiding (empty)
-#endif
 import Control.DeepSeq
 import Data.Data
 import Data.ExtendedReal
@@ -140,9 +135,7 @@ upperBound' = \case
   RightOpen _ q    -> (Finite q, Open)
   BothOpen _ q     -> (Finite q, Open)
 
-#if __GLASGOW_HASKELL__ >= 708
 type role Interval nominal
-#endif
 
 instance (Ord r, Data r) => Data (Interval r) where
   gfoldl k z x   = z interval `k` lowerBound' x `k` upperBound' x

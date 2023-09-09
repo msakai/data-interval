@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE CPP, BangPatterns, TupleSections #-}
+{-# LANGUAGE BangPatterns, TupleSections #-}
 {-# LANGUAGE Safe #-}
 -----------------------------------------------------------------------------
 -- |
@@ -126,9 +126,6 @@ import qualified Data.IntervalMap.Base as B
 import qualified Data.IntervalSet as IntervalSet
 import Data.List (foldl')
 import qualified Data.Map.Strict as Map
-#if __GLASGOW_HASKELL__ < 710
-import Control.Applicative ((<$>))
-#endif
 
 -- $strictness
 --

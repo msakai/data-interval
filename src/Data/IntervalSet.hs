@@ -1,9 +1,7 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE CPP, LambdaCase, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf #-}
 {-# LANGUAGE Trustworthy #-}
-#if __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE RoleAnnotations #-}
-#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.IntervalSet
@@ -80,9 +78,7 @@ import qualified Data.Interval as Interval
 #if __GLASGOW_HASKELL__ < 804
 import Data.Monoid (Monoid(..))
 #endif
-#if __GLASGOW_HASKELL__ >= 708
 import qualified GHC.Exts as GHCExts
-#endif
 
 -- | A set comprising zero or more non-empty, /disconnected/ intervals.
 --
@@ -90,9 +86,7 @@ import qualified GHC.Exts as GHCExts
 newtype IntervalSet r = IntervalSet (Map (Extended r) (Interval r))
   deriving (Eq, Typeable)
 
-#if __GLASGOW_HASKELL__ >= 708
 type role IntervalSet nominal
-#endif
 
 instance (Ord r, Show r) => Show (IntervalSet r) where
   showsPrec p (IntervalSet m) = showParen (p > appPrec) $
@@ -174,15 +168,7 @@ instance Ord r => Monoid (IntervalSet r) where
 
 instance (Ord r) => Semigroup.Semigroup (IntervalSet r) where
   (<>)    = union
-#if !defined(VERSION_semigroups)
   stimes  = Semigroup.stimesIdempotentMonoid
-#else
-#if MIN_VERSION_semigroups(0,17,0)
-  stimes  = Semigroup.stimesIdempotentMonoid
-#else
-  times1p _ a = a
-#endif
-#endif
 
 lift1
   :: Ord r => (Interval r -> Interval r)
@@ -225,12 +211,10 @@ instance forall r. (Real r, Fractional r) => Fractional (IntervalSet r) where
   fromRational r = singleton (fromRational r)
   recip xs = lift1 recip (delete (Interval.singleton 0) xs)
 
-#if __GLASGOW_HASKELL__ >= 708
 instance Ord r => GHCExts.IsList (IntervalSet r) where
   type Item (IntervalSet r) = Interval r
   fromList = fromList
   toList = toList
-#endif
 
 -- -----------------------------------------------------------------------
 

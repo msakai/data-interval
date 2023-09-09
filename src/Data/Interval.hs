@@ -1,9 +1,7 @@
 {-# OPTIONS_GHC -Wall -fno-warn-orphans #-}
 {-# LANGUAGE CPP, LambdaCase, ScopedTypeVariables #-}
 {-# LANGUAGE Safe #-}
-#if __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE RoleAnnotations #-}
-#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Interval

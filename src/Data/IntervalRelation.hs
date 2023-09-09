@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 {-# LANGUAGE Safe #-}
 -----------------------------------------------------------------------------
 -- |
