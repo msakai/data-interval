@@ -160,7 +160,7 @@ instance (Hashable k, Hashable a) => Hashable (IntervalMap k a) where
 
 instance Ord k => Monoid (IntervalMap k a) where
   mempty = empty
-  mappend = union
+  mappend = (<>)
   mconcat = unions
 
 instance Ord k => Semigroup.Semigroup (IntervalMap k a) where
