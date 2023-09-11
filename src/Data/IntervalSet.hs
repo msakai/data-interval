@@ -163,7 +163,7 @@ instance (Ord r) => BoundedLattice (IntervalSet r)
 
 instance Ord r => Monoid (IntervalSet r) where
   mempty = empty
-  mappend = (<>)
+  mappend = (Semigroup.<>)
   mconcat = unions
 
 instance (Ord r) => Semigroup.Semigroup (IntervalSet r) where
