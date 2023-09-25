@@ -4,6 +4,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE RoleAnnotations #-}
+{-# LANGUAGE BangPatterns #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.IntervalSet
@@ -303,7 +304,17 @@ null = \case
 
 -- | Is the element in the interval set?
 member :: Ord r => r -> IntervalSet r -> Bool
-member x = Old.member x . toOld
+member !_ EmptySet = False
+member x is@(NonEmptySet m) =
+  case Map.lookupLE x m of
+    Nothing -> hasNegInf is
+    Just (r, t) -> case t of
+      StartOpen      -> r < x
+      StartClosed    -> True
+      StartAndFinish -> r == x
+      FinishOpen     -> False
+      FinishClosed   -> r == x
+      FinishAndStart -> r < x
 
 -- | Is the element not in the interval set?
 notMember :: Ord r => r -> IntervalSet r -> Bool
