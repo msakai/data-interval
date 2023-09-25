@@ -287,10 +287,71 @@ member x is@(NonEmptySet m) =
 notMember :: Ord r => r -> IntervalSet r -> Bool
 notMember x is = not $ x `member` is
 
+-- | Is x + eps a part of IntervalSet?
+memberPlusEps :: Ord r => r -> IntervalSet r -> Bool
+memberPlusEps !_ EmptySet = False
+memberPlusEps x is@(NonEmptySet m) =
+  case Map.lookupLE x m of
+    Nothing -> hasNegInf is
+    Just (_r, t) -> case t of
+      StartOpen      -> True
+      StartClosed    -> True
+      StartAndFinish -> False
+      FinishOpen     -> False
+      FinishClosed   -> False
+      FinishAndStart -> True
+
+-- | Is x - eps a part of IntervalSet?
+memberMinusEps :: Ord r => r -> IntervalSet r -> Bool
+memberMinusEps !_ EmptySet = False
+memberMinusEps x is@(NonEmptySet m) =
+  case Map.lookupGE x m of
+    Nothing -> hasPosInf is
+    Just (_r, t) -> case t of
+      StartOpen      -> False
+      StartClosed    -> False
+      StartAndFinish -> False
+      FinishOpen     -> True
+      FinishClosed   -> True
+      FinishAndStart -> True
+
+noTabStopsBetween :: Ord r => r -> r -> Map r TabStop -> Bool
+noTabStopsBetween x y m =
+  case Map.lookupGT x m of
+    Nothing -> True
+    Just (z, _) -> z >= y
+
 -- | Is this a subset?
 -- @(is1 \``isSubsetOf`\` is2)@ tells whether @is1@ is a subset of @is2@.
 isSubsetOf :: Ord r => IntervalSet r -> IntervalSet r -> Bool
-isSubsetOf is1 is2 = Old.isSubsetOf (toOld is1) (toOld is2)
+isSubsetOf is1 is2 = all (`isIntervalSubsetOf` is2) (toList is1)
+
+isIntervalSubsetOf :: Ord r => Interval r -> IntervalSet r -> Bool
+isIntervalSubsetOf i EmptySet = Interval.null i
+isIntervalSubsetOf i is@(NonEmptySet m) = case i of
+  Whole -> Map.null m
+  Empty -> True
+  Point x -> member x is
+  LessThan x -> hasNegInf is && case Map.minViewWithKey m of
+    Nothing -> True
+    Just ((y, _), _) -> x <= y
+  LessOrEqual x -> hasNegInf is && case Map.minViewWithKey m of
+    Nothing -> True
+    Just ((y, t), _) -> x < y || x == y && t == FinishClosed
+  GreaterThan x -> hasPosInf is && case Map.maxViewWithKey m of
+    Nothing -> True
+    Just ((y, _), _) -> x >= y
+  GreaterOrEqual x -> hasPosInf is && case Map.maxViewWithKey m of
+    Nothing -> True
+    Just ((y, t), _) -> x > y || x == y && t == StartClosed
+  BothClosed x y -> member x is && memberPlusEps x is && member y is &&
+    noTabStopsBetween x y m
+  LeftOpen x y -> memberPlusEps x is && member y is &&
+    noTabStopsBetween x y m
+  RightOpen x y -> member x is && memberMinusEps y is &&
+    noTabStopsBetween x y m
+  BothOpen x y -> memberPlusEps x is && memberMinusEps y is &&
+    noTabStopsBetween x y m
 
 -- | Is this a proper subset? (/i.e./ a subset but not equal).
 isProperSubsetOf :: Ord r => IntervalSet r -> IntervalSet r -> Bool
