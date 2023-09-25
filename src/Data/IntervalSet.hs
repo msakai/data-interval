@@ -69,8 +69,9 @@ import Algebra.Lattice
 import Control.DeepSeq
 import Data.Data
 import Data.ExtendedReal
+import Data.Function
 import Data.Hashable
-import Data.List (foldl')
+import Data.List (foldl', sortBy)
 import Data.Map (Map)
 import qualified Data.Map.Strict as Map
 import Data.Maybe
@@ -124,41 +125,7 @@ toOld :: Ord r => IntervalSet r -> Old.IntervalSet r
 toOld = Old.fromAscList . toAscList
 
 fromOld :: Ord r => Old.IntervalSet r -> IntervalSet r
-fromOld m
-  | Old.null m = EmptySet
-  | otherwise = NonEmptySet (Map.fromList $ glueTabStops $ concatMap toTabStops xs)
-  where
-    xs = Old.toAscList m
-
-    toStartTabStop :: (Extended r, Boundary) -> Maybe (r, TabStop)
-    toStartTabStop = \case
-      (NegInf, _) -> Nothing
-      (Finite r, Open) -> Just (r, StartOpen)
-      (Finite r, Closed) -> Just (r, StartClosed)
-      (PosInf, _) -> Nothing
-
-    toFinishTabStop :: (Extended r, Boundary) -> Maybe (r, TabStop)
-    toFinishTabStop = \case
-      (NegInf, _) -> Nothing
-      (Finite r, Open) -> Just (r, FinishOpen)
-      (Finite r, Closed) -> Just (r, FinishClosed)
-      (PosInf, _) -> Nothing
-
-    toTabStops :: Interval r -> [(r, TabStop)]
-    toTabStops i = maybeToList (toStartTabStop lb) ++ maybeToList (toFinishTabStop ub)
-      where
-        lb = Interval.lowerBound' i
-        ub = Interval.upperBound' i
-
-    glueTabStops :: Eq r => [(r, TabStop)] -> [(r, TabStop)]
-    glueTabStops ((x, StartClosed) : (y, FinishClosed) : rest)
-      | x == y
-      = (x, StartAndFinish) : glueTabStops rest
-    glueTabStops ((x, FinishOpen) : (y, StartOpen) : rest)
-      | x == y
-      = (x, FinishAndStart) : glueTabStops rest
-    glueTabStops (x : rest) = x : glueTabStops rest
-    glueTabStops [] = []
+fromOld = fromAscDisjointList . Old.toAscList
 
 instance (Ord r, Show r) => Show (IntervalSet r) where
   showsPrec p m = showParen (p > appPrec) $
@@ -411,12 +378,61 @@ difference is1 is2 =
 
 -- | Build a interval set from a list of intervals.
 fromList :: Ord r => [Interval r] -> IntervalSet r
-fromList = fromOld . Old.fromList
+fromList = fromAscList . sortBy (compareLB `on` Interval.lowerBound')
+
+compareLB :: Ord r => (Extended r, Boundary) -> (Extended r, Boundary) -> Ordering
+compareLB (lb1, lb1in) (lb2, lb2in) =
+  -- inclusive lower endpoint shuold be considered smaller
+  (lb1 `compare` lb2) `mappend` (lb2in `compare` lb1in)
 
 -- | Build a map from an ascending list of intervals.
 -- /The precondition is not checked./
 fromAscList :: Ord r => [Interval r] -> IntervalSet r
-fromAscList = fromOld . Old.fromAscList
+fromAscList = fromAscDisjointList . f
+  where
+    f :: Ord r => [Interval r] -> [Interval r]
+    f [] = []
+    f (x : xs) = g x xs
+    g x [] = [x | not (Interval.null x)]
+    g x (y : ys)
+      | Interval.null x = g y ys
+      | Interval.isConnected x y = g (x `Interval.hull` y) ys
+      | otherwise = x : g y ys
+
+fromAscDisjointList :: Ord r => [Interval r] -> IntervalSet r
+fromAscDisjointList xs
+  | all Interval.null xs = EmptySet
+  | otherwise = NonEmptySet (Map.fromDistinctAscList $ glueTabStops $ concatMap toTabStops xs)
+  where
+    toStartTabStop :: (Extended r, Boundary) -> Maybe (r, TabStop)
+    toStartTabStop = \case
+      (NegInf, _) -> Nothing
+      (Finite r, Open) -> Just (r, StartOpen)
+      (Finite r, Closed) -> Just (r, StartClosed)
+      (PosInf, _) -> Nothing
+
+    toFinishTabStop :: (Extended r, Boundary) -> Maybe (r, TabStop)
+    toFinishTabStop = \case
+      (NegInf, _) -> Nothing
+      (Finite r, Open) -> Just (r, FinishOpen)
+      (Finite r, Closed) -> Just (r, FinishClosed)
+      (PosInf, _) -> Nothing
+
+    toTabStops :: Interval r -> [(r, TabStop)]
+    toTabStops i = maybeToList (toStartTabStop lb) ++ maybeToList (toFinishTabStop ub)
+      where
+        lb = Interval.lowerBound' i
+        ub = Interval.upperBound' i
+
+    glueTabStops :: Eq r => [(r, TabStop)] -> [(r, TabStop)]
+    glueTabStops ((x, StartClosed) : (y, FinishClosed) : rest)
+      | x == y
+      = (x, StartAndFinish) : glueTabStops rest
+    glueTabStops ((x, FinishOpen) : (y, StartOpen) : rest)
+      | x == y
+      = (x, FinishAndStart) : glueTabStops rest
+    glueTabStops (x : rest) = x : glueTabStops rest
+    glueTabStops [] = []
 
 -- | Convert a interval set into a list of intervals.
 toList :: Ord r => IntervalSet r -> [Interval r]
