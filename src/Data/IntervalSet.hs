@@ -355,7 +355,12 @@ delete i = fromOld . Old.delete i . toOld
 
 -- | union of two interval sets
 union :: Ord r => IntervalSet r -> IntervalSet r -> IntervalSet r
-union is1 is2 = fromOld $ Old.union (toOld is1) (toOld is2)
+union EmptySet is2 = is2
+union is1 EmptySet = is1
+union is1@(NonEmptySet m1) is2@(NonEmptySet m2) =
+  if Map.size m1 >= Map.size m2
+  then foldl' (flip insert) is1 (toList is2)
+  else foldl' (flip insert) is2 (toList is1)
 
 -- | union of a list of interval sets
 unions :: Ord r => [IntervalSet r] -> IntervalSet r
