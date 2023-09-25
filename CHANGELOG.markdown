@@ -1,3 +1,10 @@
+Unreleased
+-----
+
+* fix `Data.IntegerInterval.width` (#38, thanks to ncfavier)
+* add `instance Ord` for `Interval`, `IntervalSet` and `IntervalMap` (#41, thanks to googleson78)
+* fix `Data.IntervalSet.insert` (#43)
+
 2.1.1
 -----
 
