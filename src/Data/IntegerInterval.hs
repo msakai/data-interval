@@ -13,7 +13,7 @@
 --
 -- Interval datatype and interval arithmetic over integers.
 --
--- Since 1.2.0
+-- @since 1.2.0
 --
 -- For the purpose of abstract interpretation, it might be convenient to use
 -- 'Lattice' instance. See also lattices package

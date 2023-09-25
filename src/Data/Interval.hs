@@ -276,7 +276,7 @@ intersection i1 i2 = interval
 
 -- | intersection of a list of intervals.
 --
--- Since 0.6.0
+-- @since 0.6.0
 intersections :: Ord r => [Interval r] -> Interval r
 intersections = foldl' intersection whole
 
@@ -308,7 +308,7 @@ hull i1 i2 = interval
 
 -- | convex hull of a list of intervals.
 --
--- Since 0.6.0
+-- @since 0.6.0
 hulls :: Ord r => [Interval r] -> Interval r
 hulls = foldl' hull empty
 
@@ -377,7 +377,7 @@ isProperSubsetOf i1 i2 = i1 /= i2 && i1 `isSubsetOf` i2
 
 -- | Does the union of two range form a connected set?
 --
--- Since 1.3.0
+-- @since 1.3.0
 isConnected :: Ord r => Interval r -> Interval r -> Bool
 isConnected x y
   | null x = True
@@ -424,7 +424,7 @@ pickup i = case (lowerBound' i, upperBound' i) of
 --
 -- (see also 'approxRational')
 --
--- Since 0.4.0
+-- @since 0.4.0
 simplestRationalWithin :: RealFrac r => Interval r -> Maybe Rational
 simplestRationalWithin i | null i = Nothing
 simplestRationalWithin i
@@ -481,7 +481,7 @@ a ==! b = a <=! b && a >=! b
 
 -- | For all @x@ in @X@, @y@ in @Y@. @x '/=' y@?
 --
--- Since 1.0.1
+-- @since 1.0.1
 (/=!) :: Ord r => Interval r -> Interval r -> Bool
 a /=! b = null $ a `intersection` b
 
@@ -502,7 +502,7 @@ a <? b = lb_a < ub_b
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '<' y@?
 --
--- Since 1.0.0
+-- @since 1.0.0
 (<??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
 a <?? b = do
   guard $ lowerBound a < upperBound b
@@ -536,7 +536,7 @@ a <=? b =
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '<=' y@?
 --
--- Since 1.0.0
+-- @since 1.0.0
 (<=??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
 a <=?? b =
   case pickup (intersection a b) of
@@ -549,13 +549,13 @@ a <=?? b =
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '==' y@?
 --
--- Since 1.0.0
+-- @since 1.0.0
 (==?) :: Ord r => Interval r -> Interval r -> Bool
 a ==? b = not $ null $ intersection a b
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '==' y@?
 --
--- Since 1.0.0
+-- @since 1.0.0
 (==??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
 a ==?? b = do
   x <- pickup (intersection a b)
@@ -563,13 +563,13 @@ a ==?? b = do
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '/=' y@?
 --
--- Since 1.0.1
+-- @since 1.0.1
 (/=?) :: Ord r => Interval r -> Interval r -> Bool
 a /=? b = not (null a) && not (null b) && not (a == b && isSingleton a)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '/=' y@?
 --
--- Since 1.0.1
+-- @since 1.0.1
 (/=??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
 a /=?? b = do
   guard $ not $ null a
@@ -594,13 +594,13 @@ a /=?? b = do
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>=' y@?
 --
--- Since 1.0.0
+-- @since 1.0.0
 (>=??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
 (>=??) = flip (<=??)
 
 -- | Does there exist an @x@ in @X@, @y@ in @Y@ such that @x '>' y@?
 --
--- Since 1.0.0
+-- @since 1.0.0
 (>??) :: (Real r, Fractional r) => Interval r -> Interval r -> Maybe (r,r)
 (>??) = flip (<??)
 
