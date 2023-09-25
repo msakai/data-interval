@@ -365,7 +365,18 @@ span s
 
 -- | Complement the interval set.
 complement :: Ord r => IntervalSet r -> IntervalSet r
-complement = fromOld . Old.complement . toOld
+complement EmptySet = NonEmptySet mempty
+complement (NonEmptySet m)
+  | Map.null m = EmptySet
+  | otherwise = NonEmptySet (Map.map f m)
+  where
+    f = \case
+      StartOpen      -> FinishClosed
+      StartClosed    -> FinishOpen
+      StartAndFinish -> FinishAndStart
+      FinishOpen     -> StartClosed
+      FinishClosed   -> StartOpen
+      FinishAndStart -> StartAndFinish
 
 -- | Insert a new interval into the interval set.
 insert :: Ord r => Interval r -> IntervalSet r -> IntervalSet r
