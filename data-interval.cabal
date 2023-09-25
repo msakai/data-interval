@@ -42,7 +42,7 @@ Library
   Hs-source-dirs: src
   Build-Depends:
        base >=4.10 && <5
-     , containers
+     , containers >= 0.5.8
      , deepseq
      , hashable >=1.1.2.5 && <1.5
      , extended-reals >=0.2 && <1.0

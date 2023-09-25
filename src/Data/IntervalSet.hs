@@ -296,17 +296,23 @@ complement (IntervalSet m) = fromAscList $ f (NegInf,Open) (Map.elems m)
 -- | Insert a new interval into the interval set.
 insert :: Ord r => Interval r -> IntervalSet r -> IntervalSet r
 insert i is | Interval.null i = is
-insert i (IntervalSet is) = IntervalSet $
-  case splitLookupLE (Interval.lowerBound i) is of
-    (smaller, m1, xs) ->
-      case splitLookupLE (Interval.upperBound i) xs of
-        (_, m2, larger) ->
-          Map.unions
-          [ smaller
-          , case fromList $ i : maybeToList m1 ++ maybeToList m2 of
-              IntervalSet m -> m
-          , larger
-          ]
+insert i (IntervalSet is) = IntervalSet $ Map.unions
+  [ smaller'
+  , case fromList $ i : maybeToList m0 ++ maybeToList m1 ++ maybeToList m2 of
+      IntervalSet m -> m
+  , larger
+  ]
+  where
+    (smaller, m1, xs) = splitLookupLE (Interval.lowerBound i) is
+    (_, m2, larger) = splitLookupLE (Interval.upperBound i) xs
+
+    -- A tricky case is when an interval @i@ connects two adjacent
+    -- members of IntervalSet, e. g., inserting {0} into (whole \\ {0}).
+    (smaller', m0) = case Map.maxView smaller of
+      Nothing -> (smaller, Nothing)
+      Just (v, rest)
+        | Interval.isConnected v i -> (rest, Just v)
+      _ -> (smaller, Nothing)
 
 -- | Delete an interval from the interval set.
 delete :: Ord r => Interval r -> IntervalSet r -> IntervalSet r
@@ -394,23 +400,11 @@ toDescList (IntervalSet m) = fmap snd $ Map.toDescList m
 
 splitLookupLE :: Ord k => k -> Map k v -> (Map k v, Maybe v, Map k v)
 splitLookupLE k m =
-  case Map.splitLookup k m of
-    (smaller, Just v, larger) -> (smaller, Just v, larger)
-    (smaller, Nothing, larger) ->
-      case Map.maxView smaller of
-        Just (v, smaller') -> (smaller', Just v, larger)
-        Nothing -> (smaller, Nothing, larger)
-
-{-
-splitLookupGE :: Ord k => k -> Map k v -> (Map k v, Maybe v, Map k v)
-splitLookupGE k m =
-  case Map.splitLookup k m of
-    (smaller, Just v, larger) -> (smaller, Just v, larger)
-    (smaller, Nothing, larger) ->
-      case Map.minView larger of
-        Just (v, larger') -> (smaller, Just v, larger')
-        Nothing -> (smaller, Nothing, larger)
--}
+  case Map.spanAntitone (<= k) m of
+    (lessOrEqual, greaterThan) ->
+      case Map.maxView lessOrEqual of
+        Just (v, lessOrEqual') -> (lessOrEqual', Just v, greaterThan)
+        Nothing -> (lessOrEqual, Nothing, greaterThan)
 
 compareLB :: Ord r => (Extended r, Boundary) -> (Extended r, Boundary) -> Ordering
 compareLB (lb1, lb1in) (lb2, lb2in) =
