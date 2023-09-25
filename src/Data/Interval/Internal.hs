@@ -5,7 +5,7 @@
 
 module Data.Interval.Internal
   ( Boundary(..)
-  , Interval
+  , Interval(..)
   , lowerBound'
   , upperBound'
   , interval

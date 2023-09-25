@@ -74,7 +74,7 @@ import Data.Map (Map)
 import qualified Data.Map.Strict as Map
 import Data.Maybe
 import qualified Data.Semigroup as Semigroup
-import Data.Interval (Interval, Boundary(..))
+import Data.Interval.Internal (Interval(..), Boundary(..))
 import qualified Data.Interval as Interval
 #if __GLASGOW_HASKELL__ < 804
 import Data.Monoid (Monoid(..))
@@ -276,11 +276,22 @@ whole = singleton Interval.whole
 
 -- | empty interval set
 empty :: Ord r => IntervalSet r
-empty = fromOld Old.empty
+empty = EmptySet
 
 -- | single interval
 singleton :: Ord r => Interval r -> IntervalSet r
-singleton = fromOld . Old.singleton
+singleton = \case
+  Whole            -> NonEmptySet Map.empty
+  Empty            -> EmptySet
+  Point x          -> NonEmptySet (Map.singleton x StartAndFinish)
+  LessThan x       -> NonEmptySet (Map.singleton x FinishOpen)
+  LessOrEqual x    -> NonEmptySet (Map.singleton x FinishClosed)
+  GreaterThan x    -> NonEmptySet (Map.singleton x StartOpen)
+  GreaterOrEqual x -> NonEmptySet (Map.singleton x StartClosed)
+  BothClosed x y   -> NonEmptySet (Map.fromList [(x, StartClosed), (y, FinishClosed)])
+  LeftOpen x y     -> NonEmptySet (Map.fromList [(x, StartOpen), (y, FinishClosed)])
+  RightOpen x y    -> NonEmptySet (Map.fromList [(x, StartClosed), (y, FinishOpen)])
+  BothOpen x y     -> NonEmptySet (Map.fromList [(x, StartOpen), (y, FinishOpen)])
 
 -- -----------------------------------------------------------------------
 
