@@ -110,6 +110,22 @@ case_insert_connected =
   IntervalSet.insert (1 <=..< 2 :: Interval Rational) (IntervalSet.fromList [ 0 <=..< 1, 2 <=..< 3 ])
   @?= IntervalSet.singleton (0 <=..< 3)
 
+case_insert_zero =
+  IntervalSet.insert zero (IntervalSet.complement $ IntervalSet.singleton zero) @?= IntervalSet.whole
+  where
+    zero :: Interval Rational
+    zero = 0 <=..<= 0
+
+case_insert_zero_negative =
+  IntervalSet.insert zero negative @?= nonPositive
+  where
+    zero :: Interval Rational
+    zero = 0 <=..<= 0
+    negative :: IntervalSet Rational
+    negative = IntervalSet.singleton $ NegInf <..< 0
+    nonPositive :: IntervalSet Rational
+    nonPositive = IntervalSet.singleton $ NegInf <..<= 0
+
 {--------------------------------------------------------------------
   delete
 --------------------------------------------------------------------}
