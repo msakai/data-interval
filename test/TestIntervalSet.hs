@@ -62,6 +62,9 @@ prop_singleton_nonnull =
   forAll arbitrary $ \r1 ->
     not $ IntervalSet.null $ fromRational (r1::Rational)
 
+case_singleton_1 =
+  IntervalSet.singleton Interval.empty @?= (IntervalSet.empty :: IntervalSet Rational)
+
 {--------------------------------------------------------------------
   complement
 --------------------------------------------------------------------}
@@ -81,6 +84,10 @@ prop_complement_intersection =
 {--------------------------------------------------------------------
   fromList
 --------------------------------------------------------------------}
+
+case_fromList_minus_one_to_one_without_zero = xs @?= xs
+  where
+    xs = show (IntervalSet.fromList [ (-1 <..< 0 :: Interval Rational), 0 <..<1 ])
 
 case_fromList_connected =
   IntervalSet.fromList [ (0 <=..< 1 :: Interval Rational), 1 <=..<2 ]
@@ -178,10 +185,21 @@ prop_intersection_empty =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
     IntervalSet.intersection a IntervalSet.empty == IntervalSet.empty
 
+prop_intersection_isSubsetOf_integer =
+  forAll arbitrary $ \(a :: IntervalSet Integer) ->
+  forAll arbitrary $ \b ->
+    IntervalSet.isSubsetOf (IntervalSet.intersection a b) a
+
 prop_intersection_isSubsetOf =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
   forAll arbitrary $ \b ->
     IntervalSet.isSubsetOf (IntervalSet.intersection a b) a
+
+prop_intersection_isSubsetOf_equiv_integer =
+  forAll arbitrary $ \(a :: IntervalSet Integer) ->
+  forAll arbitrary $ \b ->
+    (IntervalSet.intersection a b == a)
+    == IntervalSet.isSubsetOf a b
 
 prop_intersection_isSubsetOf_equiv =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
@@ -229,10 +247,21 @@ prop_union_whole =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
     IntervalSet.union a IntervalSet.whole == IntervalSet.whole
 
+prop_union_isSubsetOf_integer =
+  forAll arbitrary $ \(a :: IntervalSet Integer) ->
+  forAll arbitrary $ \b ->
+    IntervalSet.isSubsetOf a (IntervalSet.union a b)
+
 prop_union_isSubsetOf =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
   forAll arbitrary $ \b ->
     IntervalSet.isSubsetOf a (IntervalSet.union a b)
+
+prop_union_isSubsetOf_equiv_integer =
+  forAll arbitrary $ \(a :: IntervalSet Integer) ->
+  forAll arbitrary $ \b ->
+    (IntervalSet.union a b == b)
+    == IntervalSet.isSubsetOf a b
 
 prop_union_isSubsetOf_equiv =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
@@ -262,6 +291,10 @@ prop_union_intersection_duality =
   span
 --------------------------------------------------------------------}
 
+prop_span_integer =
+  forAll arbitrary $ \(a :: IntervalSet Integer) ->
+    a `IntervalSet.isSubsetOf` IntervalSet.singleton (IntervalSet.span a)
+
 prop_span =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
     a `IntervalSet.isSubsetOf` IntervalSet.singleton (IntervalSet.span a)
@@ -269,17 +302,97 @@ prop_span =
 case_span_empty =
   IntervalSet.span IntervalSet.empty @?= (Interval.empty :: Interval Rational)
 
+case_span_whole =
+  IntervalSet.span IntervalSet.whole @?= (Interval.whole :: Interval Rational)
+
+case_span_without_zero =
+  IntervalSet.span (IntervalSet.complement $ IntervalSet.singleton $ 0 <=..<= 0) @?=
+    (Interval.whole :: Interval Rational)
+
+case_span_1 =
+  IntervalSet.span (IntervalSet.fromList [0 <=..< 10, 20 <..< PosInf]) @?=
+    0 <=..< PosInf
+
 {--------------------------------------------------------------------
   member
 --------------------------------------------------------------------}
 
+prop_member =
+  forAll arbitrary $ \(r :: Rational) (is :: IntervalSet Rational) ->
+    r `IntervalSet.member` is ==
+      any (r `Interval.member`) (IntervalSet.toList is)
+
+prop_member_empty =
+  forAll arbitrary $ \(r :: Rational) ->
+    not (r `IntervalSet.member` IntervalSet.empty)
+
+prop_member_singleton =
+  forAll arbitrary $ \(r1 :: Rational) (r2 :: Rational) ->
+    r1 `IntervalSet.member` IntervalSet.singleton (Interval.singleton r2) ==
+      (r1 == r2)
+
 prop_notMember_empty =
-  forAll arbitrary $ \(r::Rational) ->
+  forAll arbitrary $ \(r :: Rational) ->
     r `IntervalSet.notMember` IntervalSet.empty
 
 {--------------------------------------------------------------------
   isSubsetOf
 --------------------------------------------------------------------}
+
+case_isSubsetOf_1 = IntervalSet.isSubsetOf a b @?= False
+  where
+    a = IntervalSet.singleton (NegInf <..<= 2)
+    b = IntervalSet.singleton (NegInf <..<= 1)
+
+case_isSubsetOf_2 = IntervalSet.isSubsetOf a b @?= False
+  where
+    a = IntervalSet.singleton (1 <=..< PosInf)
+    b = IntervalSet.singleton (2 <=..< PosInf)
+
+case_isSubsetOf_3 = IntervalSet.isSubsetOf a b @?= False
+  where
+    a = IntervalSet.singleton (0 <=..< 1)
+    b = IntervalSet.singleton (2 <..< PosInf)
+
+case_isSubsetOf_4 = IntervalSet.isSubsetOf a b @?= False
+  where
+    a = IntervalSet.singleton (0 <=..<= 1)
+    b = IntervalSet.singleton (2 <..< PosInf)
+
+case_isSubsetOf_5 = IntervalSet.isSubsetOf a b @?= False
+  where
+    a = IntervalSet.singleton (0 <..< 1)
+    b = IntervalSet.singleton (2 <=..< PosInf)
+
+case_isSubsetOf_6 = IntervalSet.isSubsetOf a b @?= False
+  where
+    a = IntervalSet.singleton (0 <..< 1)
+    b = IntervalSet.singleton (2 <..< PosInf)
+
+case_isSubsetOf_7 = IntervalSet.isSubsetOf a b @?= False
+  where
+    a = IntervalSet.singleton (0 <..<= 1)
+    b = IntervalSet.fromList [NegInf <..<= 0, 1 <=..< PosInf]
+
+case_isSubsetOf_8 = IntervalSet.isSubsetOf a b @?= False
+  where
+    a = IntervalSet.singleton (0 <..< 1)
+    b = IntervalSet.fromList [NegInf <..< 0, 1 <=..< PosInf]
+
+case_isSubsetOf_9 = IntervalSet.isSubsetOf a b @?= True
+  where
+    a = IntervalSet.singleton (-3 <..< 1)
+    b = IntervalSet.singleton (-4 <..< 2)
+
+case_isSubsetOf_10 = IntervalSet.isSubsetOf a b @?= True
+  where
+    a = IntervalSet.singleton (14 <=..<= 16)
+    b = IntervalSet.singleton (-8 <=..< PosInf)
+
+case_isSubsetOf_11 = IntervalSet.isSubsetOf a b @?= False
+  where
+    a = IntervalSet.singleton (0 <=..<= 1)
+    b = IntervalSet.fromList [0 <=..<= 0, 1 <=..< PosInf]
 
 prop_isSubsetOf_reflexive =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
@@ -289,6 +402,14 @@ prop_isProperSubsetOf_irreflexive =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
     not (a `IntervalSet.isProperSubsetOf` a)
 
+prop_isSubsetOf_empty =
+  forAll arbitrary $ \(a :: IntervalSet Rational) ->
+    IntervalSet.empty `IntervalSet.isSubsetOf` a
+
+prop_isSubsetOf_whole =
+  forAll arbitrary $ \(a :: IntervalSet Rational) ->
+    a `IntervalSet.isSubsetOf` IntervalSet.whole
+
 {--------------------------------------------------------------------
   toList / fromList
 --------------------------------------------------------------------}
@@ -296,6 +417,15 @@ prop_isProperSubsetOf_irreflexive =
 prop_fromList_toList_id =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
     IntervalSet.fromList (IntervalSet.toList a) == a
+
+prop_fromAscList_toAscList_id =
+  forAll arbitrary $ \(a :: IntervalSet Rational) ->
+    IntervalSet.fromAscList (IntervalSet.toAscList a) == a
+
+case_toDescList_simple = xs @?= xs
+  where
+    xs = IntervalSet.toDescList $
+      IntervalSet.fromList [NegInf <..< Finite (-1), Finite 1 <..< PosInf]
 
 prop_toAscList_toDescList =
   forAll arbitrary $ \(a :: IntervalSet Rational) ->
