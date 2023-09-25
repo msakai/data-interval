@@ -329,9 +329,37 @@ isSubsetOf is1 is2 = Old.isSubsetOf (toOld is1) (toOld is2)
 isProperSubsetOf :: Ord r => IntervalSet r -> IntervalSet r -> Bool
 isProperSubsetOf is1 is2 = isSubsetOf is1 is2 && is1 /= is2
 
+minElement :: Ord r => IntervalSet r -> Maybe (Extended r, Boundary)
+minElement EmptySet = Nothing
+minElement (NonEmptySet m) = case Map.minViewWithKey m of
+  Nothing -> Just (NegInf, Open)
+  Just ((x, t), _) -> case t of
+    StartOpen      -> Just (Finite x, Open)
+    StartClosed    -> Just (Finite x, Closed)
+    StartAndFinish -> Just (Finite x, Closed)
+    FinishOpen     -> Just (NegInf, Open)
+    FinishClosed   -> Just (NegInf, Open)
+    FinishAndStart -> Just (NegInf, Open)
+
+maxElement :: Ord r => IntervalSet r -> Maybe (Extended r, Boundary)
+maxElement EmptySet = Nothing
+maxElement (NonEmptySet m) = case Map.maxViewWithKey m of
+  Nothing -> Just (PosInf, Open)
+  Just ((x, t), _) -> case t of
+    StartOpen      -> Just (PosInf, Open)
+    StartClosed    -> Just (PosInf, Open)
+    StartAndFinish -> Just (Finite x, Closed)
+    FinishOpen     -> Just (Finite x, Open)
+    FinishClosed   -> Just (Finite x, Closed)
+    FinishAndStart -> Just (PosInf, Open)
+
 -- | convex hull of a set of intervals.
 span :: Ord r => IntervalSet r -> Interval r
-span = Old.span . toOld
+span s
+  | Just mn <- minElement s, Just mx <- maxElement s
+  = Interval.interval mn mx
+  | otherwise
+  = Empty
 
 -- -----------------------------------------------------------------------
 
