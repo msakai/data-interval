@@ -5,10 +5,12 @@ module TestIntervalSet (intervalSetTestGroup) where
 import qualified Algebra.Lattice as L
 #endif
 import Control.Applicative ((<$>))
+import Control.Arrow (first)
 import Control.DeepSeq
 import Control.Monad
 import Data.Generics.Schemes
 import Data.Hashable
+import qualified Data.List as L
 import Data.Maybe
 import Data.Monoid
 import Data.Ratio
@@ -626,29 +628,32 @@ instance Arbitrary Interval.Boundary where
 instance Arbitrary r => Arbitrary (Extended r) where
   arbitrary =
     oneof
-    [ return NegInf
-    , return PosInf
-    , liftM Finite arbitrary
+    [ pure NegInf
+    , pure PosInf
+    , fmap Finite arbitrary
     ]
 
 instance (Arbitrary r, Ord r) => Arbitrary (Interval r) where
-  arbitrary = do
-    lb <- arbitrary
-    ub <- arbitrary
-    return $ Interval.interval lb ub
+  arbitrary =
+    Interval.interval <$> arbitrary <*> arbitrary
 
 instance (Arbitrary r, Ord r) => Arbitrary (IntervalSet r) where
-  arbitrary =  do
+  arbitrary = do
+    tabStops <- L.sort <$> arbitrary
+    let is = IntervalSet.fromList $ go tabStops
     b <- arbitrary
-    if b then
-      return IntervalSet.whole
-    else do
-      xs <- IntervalSet.fromList <$> listOf arbitrary
-      b2 <- arbitrary
-      if b2 then
-        return xs
-      else
-        return $ IntervalSet.complement xs
+    pure $ if b then is else IntervalSet.complement is
+    where
+      go [] = []
+      go [(x, LT)] = [Finite x <..< PosInf]
+      go [(x, GT)] = [Finite x <=..< PosInf]
+      go ((x, EQ) : rest) = Interval.singleton x : go rest
+      go ((x, LT) : (y, LT) : rest) = (Finite x <..< Finite y) : go rest
+      go ((x, LT) : (y, GT) : rest) = (Finite x <..<= Finite y) : go rest
+      go ((x, GT) : (y, LT) : rest) = (Finite x <=..< Finite y) : go rest
+      go ((x, GT) : (y, GT) : rest) = (Finite x <=..<= Finite y) : go rest
+      go ((x, LT) : (y, EQ) : rest) = (Finite x <..< Finite y) : go ((y, LT) : rest)
+      go ((x, GT) : (y, EQ) : rest) = (Finite x <=..< Finite y) : go ((y, LT) : rest)
 
 intervals :: Gen (Interval Rational)
 intervals = arbitrary
