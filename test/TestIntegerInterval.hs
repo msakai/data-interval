@@ -276,6 +276,20 @@ prop_width_singleton =
     IntegerInterval.width (IntegerInterval.singleton x) == 0
 
 {--------------------------------------------------------------------
+  memberCount
+--------------------------------------------------------------------}
+
+case_memberCount_null =
+  IntegerInterval.memberCount IntegerInterval.empty @?= Just 0
+
+case_memberCount_positive =
+  IntegerInterval.memberCount (0 <=..< 10) @?= Just 10
+
+prop_memberCount_singleton =
+  forAll arbitrary $ \x ->
+    IntegerInterval.memberCount (IntegerInterval.singleton x) == Just 1
+
+{--------------------------------------------------------------------
   map
 --------------------------------------------------------------------}
 
