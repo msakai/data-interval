@@ -50,6 +50,7 @@ module Data.IntegerInterval
   , lowerBound'
   , upperBound'
   , width
+  , memberCount
 
   -- * Universal comparison operators
   , (<!), (<=!), (==!), (>=!), (>!), (/=!)
@@ -308,6 +309,17 @@ width x
       case (lowerBound x, upperBound x) of
         (Finite lb, Finite ub) -> ub - lb
         _ -> error "Data.IntegerInterval.width: unbounded interval"
+
+-- | How many integers lie within the (bounded) interval.
+-- Equal to @Just (width + 1)@ for non-empty, bounded intervals.
+-- The @memberCount@ of an unbounded interval is @Nothing@.
+memberCount :: IntegerInterval -> Maybe Integer
+memberCount x
+  | null x = Just 0
+  | otherwise =
+      case (lowerBound x, upperBound x) of
+        (Finite lb, Finite ub) -> Just (ub - lb + 1)
+        _ -> Nothing
 
 -- | pick up an element from the interval if the interval is not empty.
 pickup :: IntegerInterval -> Maybe Integer
