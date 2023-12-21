@@ -5,7 +5,7 @@ License-File:	COPYING
 Author:		Masahiro Sakai (masahiro.sakai@gmail.com)
 Maintainer:	masahiro.sakai@gmail.com
 Category:	Data, Math
-Cabal-Version:	>= 1.10
+Cabal-Version:	2.0
 Synopsis:	Interval datatype, interval arithmetic and interval-based containers
 Description:
    Interval datatype, interval arithmetic and interval-based containers for Haskell.
@@ -13,9 +13,8 @@ Description:
    this package provides both open and closed intervals and is intended to be used
    with exact number types such as Rational and Integer.
 Bug-Reports:	https://github.com/msakai/data-interval/issues
-Extra-Source-Files:
+Extra-Doc-Files:
    README.md
-   COPYING
    CHANGELOG.markdown
 Build-Type: Simple
 Tested-With:
@@ -32,7 +31,7 @@ Tested-With:
 
 source-repository head
   type:     git
-  location: git://github.com/msakai/data-interval.git
+  location: https://github.com/msakai/data-interval
 
 flag lattices
   description: Derive lattice instances
