@@ -42,8 +42,8 @@ Library
   Hs-source-dirs: src
   Build-Depends:
        base >=4.10 && <5
-     , containers >= 0.5.8
-     , deepseq
+     , containers >= 0.5.8 && < 0.8
+     , deepseq < 1.6
      , hashable >=1.1.2.5 && <1.5
      , extended-reals >=0.2 && <1.0
   if flag(lattices)
