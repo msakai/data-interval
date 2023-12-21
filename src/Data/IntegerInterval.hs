@@ -137,8 +137,6 @@ upperBound' x =
     ub@_ -> (ub, Open)
 
 #ifdef MIN_VERSION_lattices
-#if MIN_VERSION_lattices(2,0,0)
-
 instance Lattice IntegerInterval where
   (\/) = hull
   (/\) = intersection
@@ -148,26 +146,6 @@ instance BoundedJoinSemiLattice IntegerInterval where
 
 instance BoundedMeetSemiLattice IntegerInterval where
   top = whole
-
-#else
-
-instance JoinSemiLattice IntegerInterval where
-  join = hull
-
-instance MeetSemiLattice IntegerInterval where
-  meet = intersection
-
-instance Lattice IntegerInterval
-
-instance BoundedJoinSemiLattice IntegerInterval where
-  bottom = empty
-
-instance BoundedMeetSemiLattice IntegerInterval where
-  top = whole
-
-instance BoundedLattice IntegerInterval
-
-#endif
 #endif
 
 instance Show IntegerInterval where

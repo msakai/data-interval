@@ -119,8 +119,6 @@ infix 4 >??
 infix 4 /=??
 
 #ifdef MIN_VERSION_lattices
-#if MIN_VERSION_lattices(2,0,0)
-
 instance (Ord r) => Lattice (Interval r) where
   (\/) = hull
   (/\) = intersection
@@ -130,26 +128,6 @@ instance (Ord r) => BoundedJoinSemiLattice (Interval r) where
 
 instance (Ord r) => BoundedMeetSemiLattice (Interval r) where
   top = whole
-
-#else
-
-instance (Ord r) => JoinSemiLattice (Interval r) where
-  join = hull
-
-instance (Ord r) => MeetSemiLattice (Interval r) where
-  meet = intersection
-
-instance (Ord r) => Lattice (Interval r)
-
-instance (Ord r) => BoundedJoinSemiLattice (Interval r) where
-  bottom = empty
-
-instance (Ord r) => BoundedMeetSemiLattice (Interval r) where
-  top = whole
-
-instance (Ord r) => BoundedLattice (Interval r)
-
-#endif
 #endif
 
 instance (Ord r, Show r) => Show (Interval r) where

@@ -48,7 +48,7 @@ Library
      , extended-reals >=0.2 && <1.0
   if flag(lattices)
     build-depends:
-     lattices >=1.2.1.1 && <2.3
+     lattices >=2 && <2.3
   Default-Language: Haskell2010
   Other-Extensions:
      ScopedTypeVariables

@@ -135,8 +135,6 @@ instance Hashable r => Hashable (IntervalSet r) where
   hashWithSalt s (IntervalSet m) = hashWithSalt s (Map.toList m)
 
 #ifdef MIN_VERSION_lattices
-#if MIN_VERSION_lattices(2,0,0)
-
 instance (Ord r) => Lattice (IntervalSet r) where
   (\/) = union
   (/\) = intersection
@@ -146,26 +144,6 @@ instance (Ord r) => BoundedJoinSemiLattice (IntervalSet r) where
 
 instance (Ord r) => BoundedMeetSemiLattice (IntervalSet r) where
   top = whole
-
-#else
-
-instance (Ord r) => JoinSemiLattice (IntervalSet r) where
-  join = union
-
-instance (Ord r) => MeetSemiLattice (IntervalSet r) where
-  meet = intersection
-
-instance (Ord r) => Lattice (IntervalSet r)
-
-instance (Ord r) => BoundedJoinSemiLattice (IntervalSet r) where
-  bottom = empty
-
-instance (Ord r) => BoundedMeetSemiLattice (IntervalSet r) where
-  top = whole
-
-instance (Ord r) => BoundedLattice (IntervalSet r)
-
-#endif
 #endif
 
 instance Ord r => Monoid (IntervalSet r) where
