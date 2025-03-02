@@ -41,7 +41,7 @@ Library
   Hs-source-dirs: src
   Build-Depends:
        base >=4.10 && <5
-     , containers >= 0.5.8 && < 0.8
+     , containers >= 0.5.8 && < 0.9
      , deepseq < 1.6
      , hashable >=1.1.2.5 && <1.6
      , extended-reals >=0.2 && <1.0
@@ -90,7 +90,7 @@ Test-suite test-interval
      , syb
      , tasty >=0.10.1
      , tasty-hunit >=0.9 && <0.11
-     , tasty-quickcheck >=0.8.1 && <0.11
+     , tasty-quickcheck >=0.8.1 && <0.12
      , tasty-th
      , HUnit
      , QuickCheck >=2.5 && <3
