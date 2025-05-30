@@ -1,0 +1,5 @@
+resolver: lts-18.28
+packages:
+- .
+extra-deps:
+- extended-reals-0.2.7.0

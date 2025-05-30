@@ -9,9 +9,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - ghc: '8.10.2'
+          - ghc: '8.10.7'
             os: ubuntu-latest
-            stack_yaml: 'stack-8.10.2.yaml'
+            stack_yaml: 'stack-8.10.7.yaml'
             flags: ''
     steps:
       - uses: actions/checkout@v4
@@ -42,5 +42,5 @@ jobs:
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         run: |
-          curl -L https://github.com/lehins/stack-hpc-coveralls/releases/download/v0.0.6.0/shc.tar.gz | tar xz shc
+          curl -L https://github.com/rubik/stack-hpc-coveralls/releases/download/v0.0.7.0/shc-Linux-X64.tar.bz2 | tar xj shc
           ./shc --repo-token="$COVERALLS_REPO_TOKEN" data-interval test-interval
