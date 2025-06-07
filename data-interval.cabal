@@ -44,7 +44,7 @@ Library
      , containers >= 0.5.8 && < 0.9
      , deepseq < 1.6
      , hashable >=1.1.2.5 && <1.6
-     , extended-reals >=0.2 && <1.0
+     , extended-reals >=0.2.7 && <1.0
   if flag(lattices)
     build-depends:
      lattices >=2 && <2.3
@@ -64,6 +64,7 @@ Library
      Data.IntervalRelation
      Data.IntervalSet
      Data.IntegerInterval
+     Data.RealFloatInterval
   Other-Modules:
      Data.Interval.Internal
      Data.IntegerInterval.Internal
