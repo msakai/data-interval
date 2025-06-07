@@ -75,9 +75,6 @@ import Data.Maybe
 import qualified Data.Semigroup as Semigroup
 import Data.Interval (Interval, Boundary(..))
 import qualified Data.Interval as Interval
-#if __GLASGOW_HASKELL__ < 804
-import Data.Monoid (Monoid(..))
-#endif
 import qualified GHC.Exts as GHCExts
 
 -- | A set comprising zero or more non-empty, /disconnected/ intervals.

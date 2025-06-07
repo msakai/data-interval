@@ -18,8 +18,6 @@ Extra-Doc-Files:
    CHANGELOG.markdown
 Build-Type: Simple
 Tested-With:
-   GHC ==8.2.2
-   GHC ==8.4.4
    GHC ==8.6.5
    GHC ==8.8.4
    GHC ==8.10.7
@@ -42,7 +40,7 @@ flag lattices
 Library
   Hs-source-dirs: src
   Build-Depends:
-       base >=4.10 && <5
+       base >=4.12 && <5
      , containers >= 0.5.8 && < 0.9
      , deepseq < 1.6
      , hashable >=1.1.2.5 && <1.6

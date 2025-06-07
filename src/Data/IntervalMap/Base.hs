@@ -102,9 +102,6 @@ import Data.Interval (Interval)
 import qualified Data.Interval as Interval
 import Data.IntervalSet (IntervalSet)
 import qualified Data.IntervalSet as IntervalSet
-#if __GLASGOW_HASKELL__ < 804
-import Data.Monoid (Monoid(..))
-#endif
 import qualified GHC.Exts as GHCExts
 
 -- ------------------------------------------------------------------------

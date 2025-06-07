@@ -10,9 +10,6 @@ import qualified Data.Foldable as F
 import Data.Generics.Schemes
 import Data.Hashable
 import Data.Maybe
-#if __GLASGOW_HASKELL__ < 804
-import Data.Semigroup ((<>))
-#endif
 import Data.Typeable
 
 import Test.ChasingBottoms.IsBottom
