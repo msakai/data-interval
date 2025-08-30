@@ -9,7 +9,6 @@
 --
 -- Maintainer  :  masahiro.sakai@gmail.com
 -- Stability   :  provisional
--- Portability :  non-portable (CPP, DeriveDataTypeable, DeriveGeneric)
 --
 -- Interval relations and their algebra.
 --
@@ -20,7 +19,7 @@ module Data.IntervalRelation
   )
   where
 
-import Data.Data
+import Data.Data (Data)
 import GHC.Generics (Generic)
 
 -- | Describes how two intervals @x@ and @y@ can be related.
@@ -62,7 +61,7 @@ data Relation
   -- ^ Inverse of 'JustBefore'.
   | After
   -- ^ Inverse of 'Before'.
-  deriving (Eq, Ord, Enum, Bounded, Show, Read, Generic, Data, Typeable)
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Generic, Data)
 
 -- | Inverts a relation, such that @'invert' ('Data.Interval.relate' x y) = 'Data.Interval.relate' y x@
 invert :: Relation -> Relation

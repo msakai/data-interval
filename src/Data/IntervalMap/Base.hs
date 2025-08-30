@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE CPP, LambdaCase, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE CPP, LambdaCase, ScopedTypeVariables, TypeFamilies, MultiWayIf, GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE RoleAnnotations #-}
 -----------------------------------------------------------------------------
@@ -10,7 +10,6 @@
 --
 -- Maintainer  :  masahiro.sakai@gmail.com
 -- Stability   :  provisional
--- Portability :  non-portable (CPP, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf, GeneralizedNewtypeDeriving)
 --
 -- Interval datatype and interval arithmetic.
 --
@@ -118,7 +117,6 @@ newtype IntervalMap r a = IntervalMap (Map (LB r) (Interval r, a))
       -- ^ Note that this Ord is derived and not semantically meaningful.
       -- The primary intended use case is to allow using 'IntervalSet'
       -- in maps and sets that require ordering.
-    , Typeable
     )
 
 type role IntervalMap nominal representational
@@ -179,7 +177,7 @@ instance Ord k => GHCExts.IsList (IntervalMap k a) where
 -- ------------------------------------------------------------------------
 
 newtype LB r = LB (Extended r, Interval.Boundary)
-  deriving (Eq, NFData, Typeable)
+  deriving (Eq, NFData)
 
 instance Ord r => Ord (LB r) where
   compare (LB (lb1, lb1in)) (LB (lb2, lb2in)) =

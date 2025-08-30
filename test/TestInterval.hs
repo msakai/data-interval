@@ -11,8 +11,9 @@ import Data.Generics.Schemes
 import Data.Hashable
 import Data.Int
 import Data.Maybe
+import Data.Proxy (Proxy(..))
 import Data.Ratio
-import Data.Typeable
+import Data.Typeable (cast)
 
 import Test.Tasty
 import Test.Tasty.QuickCheck

@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wall -fno-warn-orphans #-}
-{-# LANGUAGE CPP, ScopedTypeVariables, DeriveDataTypeable #-}
+{-# LANGUAGE CPP, ScopedTypeVariables #-}
 {-# LANGUAGE Safe #-}
 -----------------------------------------------------------------------------
 -- |
@@ -9,7 +9,6 @@
 --
 -- Maintainer  :  masahiro.sakai@gmail.com
 -- Stability   :  provisional
--- Portability :  non-portable (ScopedTypeVariables, DeriveDataTypeable)
 --
 -- Interval datatype and interval arithmetic over integers.
 --
@@ -90,9 +89,9 @@ import Algebra.Lattice
 import Control.Exception (assert)
 import Control.Monad hiding (join)
 import Data.ExtendedReal
-import Data.List (foldl')
+import Data.Foldable hiding (null)
 import Data.Maybe
-import Prelude hiding (null)
+import Prelude hiding (Foldable(..))
 import Data.IntegerInterval.Internal
 import Data.Interval.Internal (Boundary(..))
 import qualified Data.Interval.Internal as Interval

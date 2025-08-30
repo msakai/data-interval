@@ -14,7 +14,7 @@ import qualified Data.List as L
 import Data.Maybe
 import Data.Monoid
 import Data.Ratio
-import Data.Typeable
+import Data.Typeable (cast)
 
 import Test.Tasty
 import Test.Tasty.QuickCheck

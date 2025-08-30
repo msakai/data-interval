@@ -103,8 +103,9 @@ module Data.IntervalMap.Strict
   where
 
 
-import Prelude hiding (null, lookup, map, filter, span)
+import Prelude hiding (Foldable(..), lookup, map, filter, span)
 import Data.ExtendedReal
+import Data.Foldable hiding (null, toList)
 import Data.Interval (Interval)
 import qualified Data.Interval as Interval
 import Data.IntervalMap.Base hiding
@@ -124,7 +125,6 @@ import Data.IntervalMap.Base hiding
   )
 import qualified Data.IntervalMap.Base as B
 import qualified Data.IntervalSet as IntervalSet
-import Data.List (foldl')
 import qualified Data.Map.Strict as Map
 
 -- $strictness

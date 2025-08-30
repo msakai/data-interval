@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE CPP, LambdaCase, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf #-}
+{-# LANGUAGE CPP, LambdaCase, ScopedTypeVariables, TypeFamilies, MultiWayIf #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE RoleAnnotations #-}
 -----------------------------------------------------------------------------
@@ -10,7 +10,6 @@
 --
 -- Maintainer  :  masahiro.sakai@gmail.com
 -- Stability   :  provisional
--- Portability :  non-portable (CPP, ScopedTypeVariables, TypeFamilies, DeriveDataTypeable, MultiWayIf)
 --
 -- Interval datatype and interval arithmetic.
 --
@@ -59,16 +58,17 @@ module Data.IntervalSet
   )
   where
 
-import Prelude hiding (null, span)
+import Prelude hiding (Foldable(..), span)
 #ifdef MIN_VERSION_lattices
 import Algebra.Lattice
 #endif
 import Control.DeepSeq
 import Data.Data
 import Data.ExtendedReal
+import Data.Foldable hiding (null, toList)
 import Data.Function
 import Data.Hashable
-import Data.List (sortBy, foldl')
+import Data.List (sortBy)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe
@@ -87,7 +87,6 @@ newtype IntervalSet r = IntervalSet (Map (Extended r) (Interval r))
       -- ^ Note that this Ord is derived and not semantically meaningful.
       -- The primary intended use case is to allow using 'IntervalSet'
       -- in maps and sets that require ordering.
-    , Typeable
     )
 
 type role IntervalSet nominal

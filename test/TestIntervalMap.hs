@@ -10,7 +10,7 @@ import qualified Data.Foldable as F
 import Data.Generics.Schemes
 import Data.Hashable
 import Data.Maybe
-import Data.Typeable
+import Data.Typeable (cast)
 
 import Test.ChasingBottoms.IsBottom
 import Test.QuickCheck.Function

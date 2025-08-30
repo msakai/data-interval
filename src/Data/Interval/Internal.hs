@@ -29,7 +29,7 @@ import GHC.Generics (Generic)
 data Boundary
   = Open
   | Closed
-  deriving (Eq, Ord, Enum, Bounded, Show, Read, Generic, Data, Typeable)
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Generic, Data)
 
 instance NFData Boundary
 
@@ -56,7 +56,6 @@ data Interval r
       -- ^ Note that this Ord is derived and not semantically meaningful.
       -- The primary intended use case is to allow using 'Interval'
       -- in maps and sets that require ordering.
-    , Typeable
     )
 
 peekInterval :: (Applicative m, Monad m, Ord r) => m Int8 -> m r -> m r -> m (Interval r)
