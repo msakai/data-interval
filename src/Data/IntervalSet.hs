@@ -55,6 +55,19 @@ module Data.IntervalSet
   , toAscList
   , toDescList
   , fromAscList
+
+  -- ** Folds
+  , Data.IntervalSet.foldr
+  , Data.IntervalSet.foldl'
+  , Data.IntervalSet.foldMap
+
+  -- * Operations on the keys of 'Data.Map'
+  , restrictMapKeysToIntervalSet
+  , withoutMapKeysFromIntervalSet
+
+  -- * Operations on 'Data.Set'
+  , intersectionSetAndIntervalSet
+  , differenceSetAndIntervalSet
   )
   where
 
@@ -65,18 +78,19 @@ import Algebra.Lattice
 import Control.DeepSeq
 import Data.Data
 import Data.ExtendedReal
-import Data.Foldable hiding (null, toList)
+import qualified Data.Foldable as Foldable hiding (null, toList)
 import Data.Function
 import Data.Hashable
 import Data.List (sortBy)
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.Set (Set)
+import qualified Data.Set as Set
 import Data.Maybe
 import qualified Data.Semigroup as Semigroup
 import Data.Interval (Interval, Boundary(..))
 import qualified Data.Interval as Interval
 import qualified GHC.Exts as GHCExts
-
 -- | A set comprising zero or more non-empty, /disconnected/ intervals.
 --
 -- Any connected intervals are merged together, and empty intervals are ignored.
@@ -88,6 +102,7 @@ newtype IntervalSet r = IntervalSet (Map (Extended r) (Interval r))
       -- The primary intended use case is to allow using 'IntervalSet'
       -- in maps and sets that require ordering.
     )
+
 
 type role IntervalSet nominal
 
@@ -315,12 +330,12 @@ delete i (IntervalSet is) = IntervalSet $
 union :: Ord r => IntervalSet r -> IntervalSet r -> IntervalSet r
 union is1@(IntervalSet m1) is2@(IntervalSet m2) =
   if Map.size m1 >= Map.size m2
-  then foldl' (\is i -> insert i is) is1 (toList is2)
-  else foldl' (\is i -> insert i is) is2 (toList is1)
+  then Foldable.foldl' (\is i -> insert i is) is1 (toList is2)
+  else Foldable.foldl' (\is i -> insert i is) is2 (toList is1)
 
 -- | union of a list of interval sets
 unions :: Ord r => [IntervalSet r] -> IntervalSet r
-unions = foldl' union empty
+unions = Foldable.foldl' union empty
 
 -- | intersection of two interval sets
 intersection :: Ord r => IntervalSet r -> IntervalSet r -> IntervalSet r
@@ -328,12 +343,12 @@ intersection is1 is2 = difference is1 (complement is2)
 
 -- | intersection of a list of interval sets
 intersections :: Ord r => [IntervalSet r] -> IntervalSet r
-intersections = foldl' intersection whole
+intersections = Foldable.foldl' intersection whole
 
 -- | difference of two interval sets
 difference :: Ord r => IntervalSet r -> IntervalSet r -> IntervalSet r
 difference is1 is2 =
-  foldl' (\is i -> delete i is) is1 (toList is2)
+  Foldable.foldl' (\is i -> delete i is) is1 (toList is2)
 
 -- -----------------------------------------------------------------------
 
@@ -405,3 +420,197 @@ notB :: Boundary -> Boundary
 notB = \case
   Open   -> Closed
   Closed -> Open
+
+------------------------------------------------------------------------------
+
+foldr :: Ord r => (Interval r -> b -> b) -> b -> IntervalSet r -> b
+foldr f z (IntervalSet m) = Map.foldr f z m
+
+foldl' :: Ord r => (a -> Interval r -> a) -> a -> IntervalSet r -> a
+foldl' f z (IntervalSet m) = Map.foldl' f z m
+
+foldMap :: (Ord r, Monoid m) => (Interval r -> m) -> IntervalSet r -> m
+foldMap f (IntervalSet m) = Map.foldr (\i acc -> f i `mappend` acc) mempty m
+
+---------------------------------- Map.Map -----------------------------------
+
+-- internal helper for restrictMapKeysToIntervalSet and withoutMapKeysFromIntervalSet
+restrictMapKeysToIntervalSetFold :: Ord k => Map k a -> IntervalSet k -> Map k a
+restrictMapKeysToIntervalSetFold m is = foldr f Map.empty is
+  where f i acc = Map.union acc (Interval.restrictMapKeysToInterval m i)
+{-# INLINE restrictMapKeysToIntervalSetFold #-}
+
+-- the ratio size of the map / size of the interval set when
+-- restrictMapKeysToIntervalSetFold and Map.filterWithKey have similar performance.
+foldFilterMapRatio :: Int
+foldFilterMapRatio = 4
+
+-- | Restrict a 'Map' to the keys contained in a given 'Interval'.
+--
+-- >>> restrictMapKeysToIntervalSet m i == filterKeys (\k -> IntervalSet.member k i) m
+--
+-- [Usage:]
+--
+-- >>> m = Map.fromList [(-2.5,0),(3.1,1),(5,2), (8.5,3)] :: Map Rational Int
+-- >>> restrictMapKeysToIntervalSet m (IntervalSet.fromList [ -inf <..<= 3, 8 <..< inf])
+-- fromList [((-5) % 2,0),(17 % 2,3)]
+--
+-- [Performance:] \(O(\min (n \log i, i + m \log m)\), with \(n\), the size of
+-- the input map, \(m\) the size of the output map, and \(i\) the number of
+-- intervals in the IntervalSet.
+--
+--  This will always have better or similar performance than 'Map.filterKeys'.
+--
+restrictMapKeysToIntervalSet :: Ord k => Map k a -> IntervalSet k -> Map k a
+restrictMapKeysToIntervalSet m is@(IntervalSet mi) =
+  if foldFilterMapRatio * Map.size mi <= Map.size m then
+    restrictMapKeysToIntervalSetFold m is
+  else
+    -- faster when the interval set is large compared to the map
+    Map.filterWithKey (\k _ -> member k is) m
+{-# INLINE restrictMapKeysToIntervalSet #-}
+
+------------------------------  Complexity proof -------------------------------
+--
+-- The performance of restrictMapKeysToIntervalSet is O(i + m log m) with m the size
+-- of the output map and i the number of intervals in the IntervalSet.
+--
+-- Since we swich to Map.filterWithKey when the size of the interval set is
+-- larger then the map, we get the best of both worlds.
+--
+----- Proof:
+--
+-- Map.union is O(a log(b/a + 1)) where a <= b, and we know that all intevals
+-- within the IntervalSet are disjoint.
+--
+-- At the kth step of the fold, when we add the new interval restriction result
+-- to the accumulator, there are two cases:
+--
+-- 1. The interval restriction is empty, in which case the cost of the union is
+--    O(1).
+-- 2. The interval restriction has m_k keys, and the accumulator has a_k keys, in which case,
+--    * if a_k < m_k, the cost of the Map.union is O(a_k log(m_k/a_k + 1))
+--      But log(m_k/a_k + 1) <= m_k log(m + 1) because m_k <= m and a_k < m_k,
+--      so the complexity is O(m_k log(m + 1))
+--    * if m_k <= a_k, the cost of the Map.union is O(m_k log(a_k/m_k + 1))
+--      But this means that m_k log(a_k/m_k + 1) <= m_k log(m + 1), because a_k
+--      <= m.
+--
+-- So the cost of the steps for which m_k >= 1 (non-empty interval) is
+--
+-- O( Σ m_k log(m + 1) )
+--
+-- but m = Σ m_k, so the overall complexity is O( m log(m + 1) ) = O(m log m).
+--
+-- The number of steps for which m_k = 0 is at most i, the number of intervals
+-- in the interval set.
+--
+-- So the overall complexity is O(i + m log m).
+--
+-- If the bound of Map.union is tight, then this bound is also tight. Indeed
+-- consider the case where at each step, m_k <= 1, with i far bigger than m.
+--
+-- Then the cost of the non empty steps is
+--
+-- Θ( Σ log(k + 1) ) = Θ(m log m)
+--
+-- (see Stirling's approximation)
+--
+--------------------------------------------------------------------------------
+-- Discussion:
+--
+-- In most cases, this function performs better than 'filterKeys'. There are three cases to consider
+--
+--  1. If the 'IntervalSet' covers only a small portion of the map (m is small
+--     compared to n), then this function is technically logarithmic in n, while
+--     'filterKeys' is linear in n.
+--
+--  2. If the 'IntervalSet' consists of few large intervals, then this function
+--     performs a lot better than 'filterKeys'.
+--
+-- 3. If the 'IntervalSet' consists of many small intervals and covers a
+--    significant portion of the map, 'filterKeys' outperforms
+--    'restrictMapKeysToIntervalSet'.
+--
+-- Benchmark suggests that the break-even point is when the size of the
+-- intervalSet is 1/4 the size of the map, which is why we switch
+-- implementations when this happens.
+--
+--------------------------------------------------------------------------------
+
+
+-- | Delete keys contained in a given 'IntervalSet' from a 'Map'.
+--
+-- >>> withoutMapKeysFromIntervalSet i m == filterKeys (\k -> not (IntervalSet.member k i)) m
+--
+-- [Usage:]
+--
+-- >>> m = Map.fromList [(-2.5,0),(3.1,1),(5,2), (8.5,3)] :: Map Rational Int
+-- >>> withoutMapKeysFromIntervalSet (IntervalSet.fromList [ -inf <..<= 3, 8 <..< inf]) m
+-- fromList [(31 % 10,1),(5 % 1,2)]
+--
+-- See performance note for 'restrictMapKeysToIntervalSet'.
+withoutMapKeysFromIntervalSet :: Ord k => IntervalSet k -> Map k a -> Map k a
+withoutMapKeysFromIntervalSet is@(IntervalSet mi) m =
+  if foldFilterMapRatio * Map.size mi <= Map.size m then
+    restrictMapKeysToIntervalSet m $ complement is
+    -- This is faster in most cases than folding withoutKeysFromInterval. See
+    -- benchmark.
+  else
+    Map.filterWithKey (\k _ -> notMember k is) m
+{-# INLINE withoutMapKeysFromIntervalSet #-}
+
+---------------------------------- Set.Set -----------------------------------
+
+-- internal helper for intersectionSetAndIntervalSet and differenceSetAndIntervalSet
+intersectionSetAndIntervalSetFold :: Ord k => Set k -> IntervalSet k -> Set k
+intersectionSetAndIntervalSetFold s is = foldr f Set.empty is
+  where f i acc = Set.union acc (Interval.intersectionSetAndInterval s i)
+{-# INLINE intersectionSetAndIntervalSetFold #-}
+
+-- the ratio size of the set / size of the interval set when
+-- intersectionSetAndIntervalSetFold and Map.filterWithKey have similar performance.
+foldFilterSetRatio :: Int
+foldFilterSetRatio = 4
+
+-- | Restrict a 'Set' to the keys contained in a given 'Interval'.
+--
+-- >>> intersectionSetAndIntervalSet s i == filter (\k -> IntervalSet.member k i) s
+--
+-- [Usage:]
+--
+-- >>> s = Set.fromList [-2.5, 3.1, 5 , 8.5] :: Set Rational
+-- >>> intersectionSetAndIntervalSet s (IntervalSet.fromList [ -inf <..<= 3, 8 <..< inf])
+-- fromList [(-5) % 2,17 % 2]
+--
+-- [Performance:] \(O(\min (n \log i, i + m \log m)\), with \(n\), the size of
+-- the input set, \(m\) the size of the output set, and \(i\) the number of
+-- intervals in the IntervalSet.
+--
+--  This will always have better or similar performance than 'Set.filter'.
+intersectionSetAndIntervalSet :: Ord k => Set k -> IntervalSet k -> Set k
+intersectionSetAndIntervalSet s is@(IntervalSet mi) =
+  if foldFilterSetRatio * Map.size mi <= Set.size s then
+    intersectionSetAndIntervalSetFold s is
+  else
+    Set.filter (\k -> member k is) s
+{-# INLINE intersectionSetAndIntervalSet #-}
+
+-- | Delete keys contained in a given 'Interval' from a 'Set'.
+--
+-- >>> differenceSetAndIntervalSet i s == filter (\k -> not (Interval.member k i)) s
+--
+-- [Usage:]
+--
+-- >>> s = Set.fromList [-2.5, 3.1, 5 , 8.5] :: Set Rational
+-- >>> differenceSetAndIntervalSet (3 <=..< 8.5) s
+-- fromList [(-5) % 2,17 % 2]
+--
+-- See performance note for 'intersectionSetAndIntervalSet'.
+differenceSetAndIntervalSet :: Ord k => Set k -> IntervalSet k ->  Set k
+differenceSetAndIntervalSet s is@(IntervalSet mi) =
+  if foldFilterSetRatio * Map.size mi <= Set.size s then
+    intersectionSetAndIntervalSetFold s (complement is)
+  else
+    Set.filter (\k -> notMember k is) s
+{-# INLINE differenceSetAndIntervalSet #-}

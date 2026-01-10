@@ -10,6 +10,10 @@ module Data.Interval.Internal
   , upperBound'
   , interval
   , empty
+  , restrictMapKeysToInterval
+  , withoutMapKeysFromInterval
+  , intersectionSetAndInterval
+  , differenceSetAndInterval
   ) where
 
 import Control.DeepSeq
@@ -21,6 +25,10 @@ import Foreign.Marshal.Array
 import Foreign.Ptr
 import Foreign.Storable
 import GHC.Generics (Generic)
+import qualified Data.Map as Map
+import Data.Map (Map)
+import qualified Data.Set as Set
+import Data.Set (Set)
 
 -- | Boundary of an interval may be
 -- open (excluding an endpoint) or closed (including an endpoint).
@@ -223,3 +231,133 @@ interval = \case
     (PosInf, _) -> GreaterOrEqual p
   (PosInf, _) -> const Empty
 {-# INLINE interval #-}
+
+-- | \(O(\log n)\). Restrict a 'Map' to the keys contained in a given
+-- 'Interval'.
+--
+-- >>> restrictMapKeysToInterval m i == filterKeys (\k -> Interval.member k i) m
+--
+-- [Usage:]
+--
+-- >>> m = Map.fromList [(-2.5,0),(3.1,1),(5,2), (8.5,3)] :: Map Rational Int
+-- >>> restrictMapKeysToInterval m (3 <=..< 8.5)
+-- fromList [(31 % 10,1),(5 % 1,2)]
+--
+-- [Performance:]
+-- This outperforms 'filterKeys' which is \(O(n)\).
+--
+restrictMapKeysToInterval :: Ord k => Map k a -> Interval k -> Map k a
+restrictMapKeysToInterval m = \case
+  Whole -> m
+  Empty -> Map.empty
+  Point k -> maybe Map.empty (Map.singleton k) (Map.lookup k m)
+  LessThan k -> Map.takeWhileAntitone (< k) m
+  LessOrEqual k -> Map.takeWhileAntitone (<= k) m
+  GreaterThan k -> Map.dropWhileAntitone (<= k) m
+  GreaterOrEqual k -> Map.dropWhileAntitone (< k) m
+  BothClosed lk uk ->
+    Map.takeWhileAntitone (<= uk) $ Map.dropWhileAntitone (< lk) m
+  LeftOpen lk uk ->
+    Map.takeWhileAntitone (<= uk) $ Map.dropWhileAntitone (<= lk) m
+  RightOpen lk uk ->
+    Map.takeWhileAntitone (< uk) $ Map.dropWhileAntitone (< lk) m
+  BothOpen lk uk ->
+    Map.takeWhileAntitone (< uk) $ Map.dropWhileAntitone (<= lk) m
+{-# INLINE restrictMapKeysToInterval #-}
+
+-- | \(O(n)\). Delete keys contained in a given 'Interval' from a 'Map'.
+--
+-- >>> withoutMapKeysFromInterval i m == filterKeys (\k -> Interval.notMember k i) m
+--
+-- [Usage:]
+--
+-- >>> m = Map.fromList [(-2.5,0),(3.1,1),(5,2), (8.5,3)] :: Map Rational Int
+-- >>> withoutMapKeysFromInterval (3 <=..< 8.5) m
+-- fromList [((-5) % 2,0),(17 % 2,3)]
+--
+-- [Performance:] In practice, this outperforms 'filterKeys'.
+--
+withoutMapKeysFromInterval :: Ord k => Interval k -> Map k a -> Map k a
+withoutMapKeysFromInterval i m = case i of
+  Whole -> Map.empty
+  Empty -> m
+  Point k -> Map.delete k m
+  LessThan k -> restrictMapKeysToInterval m (GreaterOrEqual k)
+  LessOrEqual k -> restrictMapKeysToInterval m (GreaterThan k)
+  GreaterThan k -> restrictMapKeysToInterval m (LessOrEqual k)
+  GreaterOrEqual k -> restrictMapKeysToInterval m (LessThan k)
+  BothClosed lk uk -> let (lt,_,gt) = Map.splitLookup uk m in
+    restrictMapKeysToInterval lt (LessThan lk) `Map.union` gt
+  LeftOpen lk uk -> let (lt,_,gt) = Map.splitLookup uk m in
+    restrictMapKeysToInterval lt (LessOrEqual lk) `Map.union` gt
+  RightOpen lk uk -> let (lt,_,gt) = Map.splitLookup lk m in
+    lt `Map.union` restrictMapKeysToInterval gt (GreaterOrEqual uk)
+  BothOpen lk uk ->
+    restrictMapKeysToInterval m (LessOrEqual lk)
+    `Map.union` restrictMapKeysToInterval m (GreaterOrEqual uk)
+{-# INLINE withoutMapKeysFromInterval #-}
+
+------------------------------------------------------------------------------
+
+-- | \(O(\log n)\). Restrict a 'Set' to the keys contained in a given
+-- 'Interval'.
+--
+-- >>> intersectionSetAndInterval s i == Set.filter (\k -> Interval.member k i) s
+--
+-- [Usage:]
+--
+-- >>> s = Set.fromList [-2.5, 3.1, 5 , 8.5] :: Set Rational
+-- >>> intersectionSetAndInterval s (3 <=..< 8.5)
+-- fromList [31 % 10,5 % 1]
+--
+-- [Performance:] This outperforms 'Set.filter' which is \(O(n)\).
+--
+intersectionSetAndInterval :: Ord k => Set k -> Interval k -> Set k
+intersectionSetAndInterval s = \case
+  Whole -> s
+  Empty -> Set.empty
+  Point k -> if Set.member k s then Set.singleton k else Set.empty
+  LessThan k -> Set.takeWhileAntitone (< k) s
+  LessOrEqual k -> Set.takeWhileAntitone (<= k) s
+  GreaterThan k -> Set.dropWhileAntitone (<= k) s
+  GreaterOrEqual k -> Set.dropWhileAntitone (< k) s
+  BothClosed lk uk ->
+    Set.takeWhileAntitone (<= uk) $ Set.dropWhileAntitone (< lk) s
+  LeftOpen lk uk ->
+    Set.takeWhileAntitone (<= uk) $ Set.dropWhileAntitone (<= lk) s
+  RightOpen lk uk ->
+    Set.takeWhileAntitone (< uk) $ Set.dropWhileAntitone (< lk) s
+  BothOpen lk uk ->
+    Set.takeWhileAntitone (< uk) $ Set.dropWhileAntitone (<= lk) s
+{-# INLINE intersectionSetAndInterval #-}
+
+-- | \(O(n)\). Delete keys contained in a given 'Interval' from a 'Set'.
+--
+-- >>> differenceSetAndInterval i s == Set.filter (\k -> Interval.notMember k i) s
+--
+-- [Usage:]
+--
+-- >>> s = Set.fromList [-2.5, 3.1, 5 , 8.5] :: Set Rational
+-- >>> differenceSetAndInterval s (3 <=..< 8.5)
+-- fromList [(-5) % 2,17 % 2]
+--
+-- [Performance:] In practice, this outperforms 'Set.filter'.
+--
+differenceSetAndInterval :: Ord k => Set k -> Interval k -> Set k
+differenceSetAndInterval s i = case i of
+  Whole -> Set.empty
+  Empty -> s
+  Point k -> Set.delete k s
+  LessThan k -> intersectionSetAndInterval s (GreaterOrEqual k)
+  LessOrEqual k -> intersectionSetAndInterval s (GreaterThan k)
+  GreaterThan k -> intersectionSetAndInterval s (LessOrEqual k)
+  GreaterOrEqual k -> intersectionSetAndInterval s (LessThan k)
+  BothClosed lk uk -> let (lt,_,gt) = Set.splitMember uk s in
+    Set.takeWhileAntitone (< lk) lt `Set.union` gt
+  LeftOpen lk uk -> let (lt,_,gt) = Set.splitMember uk s in
+    Set.takeWhileAntitone (<= lk) lt `Set.union` gt
+  RightOpen lk uk -> let (lt,_,gt) = Set.splitMember lk s in
+    lt `Set.union` Set.dropWhileAntitone (< uk) gt
+  BothOpen lk uk ->
+    Set.takeWhileAntitone (<= lk) s `Set.union` Set.dropWhileAntitone (< uk) s
+{-# INLINE differenceSetAndInterval #-}

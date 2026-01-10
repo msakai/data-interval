@@ -102,3 +102,17 @@ Test-suite test-interval
   Other-Extensions:
      TemplateHaskell
      ScopedTypeVariables
+
+Benchmark bench-interval
+  Type:              exitcode-stdio-1.0
+  HS-Source-Dirs:    bench
+  Main-is:           Main.hs
+  Other-Modules:
+     BenchInterval
+     BenchIntervalSet
+  Build-depends:
+       base >=4 && <5
+     , data-interval
+     , containers
+     , tasty-bench >= 0.4 && <0.6
+  Default-Language: Haskell2010
