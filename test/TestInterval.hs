@@ -96,6 +96,19 @@ prop_distinct_singleton_intersection =
       == Interval.empty
 
 {--------------------------------------------------------------------
+  fromUnorderedBounds
+--------------------------------------------------------------------}
+
+prop_fromUnorderedBounds_consistent_with_interval =
+  forAll arbitrary $ \ (a :: Extended Rational) bounda b boundb ->
+    if a <= b then
+      Interval.interval (a, bounda) (b, boundb) ==
+      Interval.fromUnorderedBounds (a, bounda) (b, boundb)
+    else
+      Interval.interval (b, boundb) (a, bounda) ==
+      Interval.fromUnorderedBounds (a, bounda) (b, boundb)
+
+{--------------------------------------------------------------------
   Intersection
 --------------------------------------------------------------------}
 
