@@ -35,6 +35,7 @@ module Data.Interval
   , (<..<=)
   , (<=..<)
   , (<..<)
+  , fromUnorderedBounds
   , whole
   , empty
   , singleton

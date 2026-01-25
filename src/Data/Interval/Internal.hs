@@ -9,6 +9,7 @@ module Data.Interval.Internal
   , lowerBound'
   , upperBound'
   , interval
+  , fromUnorderedBounds
   , empty
   , restrictMapKeysToInterval
   , withoutMapKeysFromInterval
@@ -231,6 +232,50 @@ interval = \case
     (PosInf, _) -> GreaterOrEqual p
   (PosInf, _) -> const Empty
 {-# INLINE interval #-}
+
+-- | Same as 'interval' but swaps the lower and upper bounds when given in
+-- reverse order.
+fromUnorderedBounds
+  :: (Ord r)
+  => (Extended r, Boundary) -- ^ lower or upper bound and whether it is included
+  -> (Extended r, Boundary) -- ^ upper or upper bound and whether it is included
+  -> Interval r
+fromUnorderedBounds = \case
+  (NegInf, _) -> \case
+    (NegInf, _) -> Empty
+    (Finite r, Open) -> LessThan r
+    (Finite r, Closed) -> LessOrEqual r
+    (PosInf, _) -> Whole
+  (Finite p, Open) -> \case
+    (NegInf, _) -> LessThan p
+    (Finite q, Open) -> case p `compare` q of
+      LT -> BothOpen p q
+      GT -> BothOpen q p
+      EQ -> Empty
+    (Finite q, Closed) -> case p `compare` q of
+      LT -> LeftOpen p q
+      GT -> RightOpen q p
+      EQ -> Empty
+    (PosInf, _) -> GreaterThan p
+  (Finite p, Closed) -> \case
+    (NegInf, _) -> LessOrEqual p
+    (Finite q, Open) -> case p `compare` q of
+      LT -> RightOpen p q
+      GT -> LeftOpen q p
+      EQ -> Empty
+    (Finite q, Closed) -> case p `compare` q of
+      LT -> BothClosed p q
+      EQ -> Point p
+      GT -> BothClosed q p
+    (PosInf, _) -> GreaterOrEqual p
+  (PosInf, _) -> \case
+    (NegInf, _) -> Whole
+    (Finite r, Open) -> GreaterThan r
+    (Finite r, Closed) -> GreaterOrEqual r
+    (PosInf, _) -> Empty
+{-# INLINE fromUnorderedBounds #-}
+
+------------------------------------------------------------------------------
 
 -- | \(O(\log n)\). Restrict a 'Map' to the keys contained in a given
 -- 'Interval'.
